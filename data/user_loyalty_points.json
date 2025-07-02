@@ -2360,5 +2360,29 @@
         "timestamp": "2025-07-02T09:13:23.205Z"
       }
     ]
+  },
+  "guest-1751480117268-evq3": {
+    "user_id": "guest-1751480117268-evq3",
+    "total_points": 2,
+    "earned_points": 2,
+    "redeemed_points": 0,
+    "history": [
+      {
+        "points": 1,
+        "action": "view على المقال",
+        "details": {
+          "article_id": "856cb972-9054-4e2e-aff7-2203c37f6dde"
+        },
+        "timestamp": "2025-07-02T18:15:24.903Z"
+      },
+      {
+        "points": 1,
+        "action": "view على المقال",
+        "details": {
+          "article_id": "856cb972-9054-4e2e-aff7-2203c37f6dde"
+        },
+        "timestamp": "2025-07-02T18:15:25.949Z"
+      }
+    ]
   }
 }

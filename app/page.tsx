@@ -1742,10 +1742,10 @@ function NewspaperHomePage(): React.ReactElement {
         <DeepAnalysisWidget insights={deepInsights} />
       )}
 
-      {/* Smart Blocks - Top Banner - مخفي للنسخة المطورة */}
-      {/* <div className="max-w-7xl mx-auto px-6 py-4">
+      {/* Smart Blocks - Top Banner */}
+      <div className="max-w-7xl mx-auto px-6 py-4">
         <SmartSlot position="topBanner" />
-      </div> */}
+      </div>
 
       {/* Smart Blocks - After Highlights - مخفي للنسخة المطورة */}
       {/* <SmartSlot position="afterHighlights" /> */}

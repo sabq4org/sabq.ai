@@ -2661,6 +2661,22 @@
       "timestamp": "2025-07-02T17:41:59.698Z",
       "source": "article_page",
       "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "guest-1751480117268-evq3",
+      "article_id": "856cb972-9054-4e2e-aff7-2203c37f6dde",
+      "interaction_type": "view",
+      "timestamp": "2025-07-02T18:15:24.888Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "guest-1751480117268-evq3",
+      "article_id": "856cb972-9054-4e2e-aff7-2203c37f6dde",
+      "interaction_type": "view",
+      "timestamp": "2025-07-02T18:15:25.948Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
     }
   ]
 }
