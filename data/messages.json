@@ -1,0 +1,32 @@
+[
+  {
+    "id": "4eca4270-8794-4444-af96-bb4fd1483139",
+    "type": "suggestion",
+    "subject": "بسم الله الرحمن الرحيم",
+    "message": "السلام عليكم ورحمة الله وبركاته \n\nأول رسالة للقائمين على صحيفة سبق الالكترونية\n\nوتقبلوا تحياتي\nعلي الحازمي",
+    "email": "aalhazmi@sabq.org",
+    "file_url": "/uploads/images/1750263690692-vy7qt.JPG",
+    "status": "new",
+    "created_at": "2025-06-18T16:21:30.694Z"
+  },
+  {
+    "id": "22f3b5a7-6d25-420e-a137-180deee6ec09",
+    "type": "inquiry",
+    "subject": "jehfjegfbej",
+    "message": "السلام عليكم ورحمة الله وبركاته ",
+    "email": "test@test.com",
+    "file_url": null,
+    "status": "new",
+    "created_at": "2025-06-19T07:07:25.759Z"
+  },
+  {
+    "id": "5675413b-bd08-497b-981e-fb029810ec5a",
+    "type": "complaint",
+    "subject": "مشكلة في الهيدر",
+    "message": "السلام عليكم ورحمة الله وبركاته \nالسلام عليكم ورحمة الله وبركاته \nالسلام عليكم ورحمة الله وبركاته \n",
+    "email": "sabqsabq@me.com.com",
+    "file_url": null,
+    "status": "new",
+    "created_at": "2025-06-19T23:29:29.508Z"
+  }
+]

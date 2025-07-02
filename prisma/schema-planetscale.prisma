@@ -1,0 +1,338 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+// نموذج المستخدم الأساسي
+model User {
+  id                String            @id @default(uuid())
+  email             String            @unique
+  passwordHash      String?           @map("password_hash")
+  name              String?
+  avatar            String?           @db.Text
+  role              String            @default("user")
+  isAdmin           Boolean           @default(false) @map("is_admin")
+  isVerified        Boolean           @default(false) @map("is_verified")
+  verificationToken String?           @map("verification_token")
+  resetToken        String?           @map("reset_token")
+  resetTokenExpiry  DateTime?         @map("reset_token_expiry")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  
+  // العلاقات
+  articles          Article[]
+  interactions      Interaction[]
+  activityLogs      ActivityLog[]
+  sentMessages      Message[]         @relation("SentMessages")
+  receivedMessages  Message[]         @relation("ReceivedMessages")
+  loyaltyPoints     LoyaltyPoint[]
+  preferences       UserPreference[]
+  userRoles         UserRole[]
+  comments          Comment[]
+  
+  @@map("users")
+  @@index([email])
+  @@index([role])
+}
+
+// نموذج التصنيفات
+model Category {
+  id            String        @id @default(uuid())
+  name          String        @unique
+  slug          String        @unique
+  description   String?       @db.Text
+  displayOrder  Int           @default(0) @map("display_order")
+  isActive      Boolean       @default(true) @map("is_active")
+  parentId      String?       @map("parent_id")
+  parent        Category?     @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children      Category[]    @relation("CategoryHierarchy")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  
+  articles      Article[]
+  
+  @@map("categories")
+  @@index([slug])
+  @@index([parentId])
+}
+
+// نموذج الكلمات المفتاحية
+model Keyword {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  count     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  articles  ArticleKeyword[]
+  
+  @@map("keywords")
+  @@index([slug])
+}
+
+// نموذج المقالات
+model Article {
+  id              String        @id @default(uuid())
+  title           String        @db.VarChar(500)
+  slug            String        @unique @db.VarChar(500)
+  content         String        @db.Text
+  excerpt         String?       @db.Text
+  authorId        String        @map("author_id")
+  author          User          @relation(fields: [authorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  categoryId      String?       @map("category_id")
+  category        Category?     @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  status          String        @default("draft")
+  featured        Boolean       @default(false)
+  breaking        Boolean       @default(false)
+  featuredImage   String?       @map("featured_image") @db.Text
+  publishedAt     DateTime?     @map("published_at")
+  scheduledFor    DateTime?     @map("scheduled_for")
+  views           Int           @default(0)
+  readingTime     Int?          @map("reading_time")
+  seoTitle        String?       @map("seo_title")
+  seoDescription  String?       @map("seo_description")
+  seoKeywords     String?       @map("seo_keywords")
+  socialImage     String?       @map("social_image")
+  allowComments   Boolean       @default(true) @map("allow_comments")
+  metadata        Json?
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  
+  // العلاقات
+  interactions    Interaction[]
+  deepAnalysis    DeepAnalysis?
+  keywords        ArticleKeyword[]
+  comments        Comment[]
+  
+  @@map("articles")
+  @@index([slug])
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([status, publishedAt])
+}
+
+// نموذج التفاعلات
+model Interaction {
+  id        String          @id @default(uuid())
+  userId    String          @map("user_id")
+  user      User            @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  articleId String          @map("article_id")
+  article   Article         @relation(fields: [articleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  type      InteractionType
+  createdAt DateTime        @default(now()) @map("created_at")
+  
+  @@unique([userId, articleId, type])
+  @@map("interactions")
+  @@index([userId])
+  @@index([articleId])
+}
+
+enum InteractionType {
+  like
+  save
+  share
+  comment
+  view
+}
+
+// نموذج نقاط الولاء
+model LoyaltyPoint {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  user          User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  points        Int
+  action        String   @db.VarChar(100)
+  referenceId   String?  @map("reference_id")
+  referenceType String?  @map("reference_type")
+  metadata      Json?
+  createdAt     DateTime @default(now()) @map("created_at")
+  
+  @@map("loyalty_points")
+  @@index([userId])
+}
+
+// نموذج التحليل العميق
+model DeepAnalysis {
+  id                 String   @id @default(uuid())
+  articleId          String   @unique @map("article_id")
+  article            Article  @relation(fields: [articleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  aiSummary          String?  @map("ai_summary") @db.Text
+  keyTopics          Json?    @map("key_topics")
+  tags               Json?
+  sentiment          String?
+  readabilityScore   Decimal? @map("readability_score") @db.Decimal(5, 2)
+  engagementScore    Int?     @map("engagement_score")
+  suggestedHeadlines Json?    @map("suggested_headlines")
+  relatedArticles    Json?    @map("related_articles")
+  metadata           Json?
+  analyzedAt         DateTime @default(now()) @map("analyzed_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  
+  @@map("deep_analyses")
+  @@index([articleId])
+}
+
+// ربط المقالات بالكلمات المفتاحية
+model ArticleKeyword {
+  id        String   @id @default(uuid())
+  articleId String   @map("article_id")
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  keywordId String   @map("keyword_id")
+  keyword   Keyword  @relation(fields: [keywordId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  @@unique([articleId, keywordId])
+  @@map("article_keywords")
+  @@index([articleId])
+  @@index([keywordId])
+}
+
+// نموذج الرسائل
+model Message {
+  id            String    @id @default(uuid())
+  fromUserId    String?   @map("from_user_id")
+  fromUser      User?     @relation("SentMessages", fields: [fromUserId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  toUserId      String?   @map("to_user_id")
+  toUser        User?     @relation("ReceivedMessages", fields: [toUserId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  email         String
+  subject       String?   @db.VarChar(500)
+  message       String    @db.Text
+  status        String    @default("unread")
+  repliedAt     DateTime? @map("replied_at")
+  replyContent  String?   @map("reply_content") @db.Text
+  metadata      Json?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  
+  @@map("messages")
+  @@index([status])
+  @@index([fromUserId])
+  @@index([toUserId])
+}
+
+// نموذج سجلات النشاط
+model ActivityLog {
+  id          String   @id @default(uuid())
+  userId      String?  @map("user_id")
+  user        User?    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  action      String
+  entityType  String?  @map("entity_type")
+  entityId    String?  @map("entity_id")
+  oldValue    Json?    @map("old_value")
+  newValue    Json?    @map("new_value")
+  metadata    Json?
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  userAgent   String?  @map("user_agent") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  @@map("activity_logs")
+  @@index([userId])
+  @@index([action])
+  @@index([entityType, entityId])
+}
+
+// نموذج الأدوار
+model Role {
+  id          String     @id @default(uuid())
+  name        String     @unique @db.VarChar(100)
+  slug        String?    @unique
+  displayName String?    @map("display_name")
+  description String?    @db.Text
+  permissions Json?
+  isSystem    Boolean    @default(false) @map("is_system")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  
+  userRoles   UserRole[]
+  
+  @@map("roles")
+}
+
+// ربط المستخدمين بالأدوار
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  roleId    String   @map("role_id")
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  grantedBy String?  @map("granted_by")
+  grantedAt DateTime @default(now()) @map("granted_at")
+  expiresAt DateTime? @map("expires_at")
+  
+  @@unique([userId, roleId])
+  @@map("user_roles")
+  @@index([userId])
+  @@index([roleId])
+}
+
+// نموذج تفضيلات المستخدم
+model UserPreference {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  key       String
+  value     Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@unique([userId, key])
+  @@map("user_preferences")
+  @@index([userId])
+}
+
+// نموذج التعليقات
+model Comment {
+  id          String    @id @default(uuid())
+  articleId   String    @map("article_id")
+  article     Article   @relation(fields: [articleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  userId      String?   @map("user_id")
+  user        User?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parentId    String?   @map("parent_id")
+  parent      Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies     Comment[] @relation("CommentReplies")
+  content     String    @db.Text
+  status      String    @default("pending")
+  likes       Int       @default(0)
+  metadata    Json?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  
+  @@map("comments")
+  @@index([articleId])
+  @@index([userId])
+  @@index([parentId])
+  @@index([status])
+}
+
+// نموذج التحليلات
+model AnalyticsData {
+  id          String   @id @default(uuid())
+  date        DateTime @db.Date
+  metricName  String   @map("metric_name") @db.VarChar(100)
+  metricValue Decimal  @map("metric_value") @db.Decimal(15, 2)
+  dimensions  Json?
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  @@unique([date, metricName])
+  @@map("analytics_data")
+  @@index([date])
+  @@index([metricName])
+}
+
+// نموذج إعدادات الموقع
+model SiteSettings {
+  id        String   @id @default(uuid())
+  section   String   @unique @db.VarChar(50) // identity, seo, social, ai, security, backup
+  data      Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@map("site_settings")
+  @@index([section])
+} 

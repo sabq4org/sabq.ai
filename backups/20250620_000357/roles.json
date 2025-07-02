@@ -1,0 +1,107 @@
+[
+  {
+    "id": "role-admin",
+    "name": "مشرف عام",
+    "description": "صلاحيات كاملة على النظام",
+    "permissions": [
+      "all"
+    ],
+    "color": "red",
+    "users": 0
+  },
+  {
+    "id": "role-editor-chief",
+    "name": "رئيس تحرير",
+    "description": "إدارة شاملة للمحتوى والفريق",
+    "permissions": [
+      "create_articles",
+      "edit_articles",
+      "delete_articles",
+      "publish_articles",
+      "manage_users",
+      "view_analytics"
+    ],
+    "color": "blue",
+    "users": 0
+  },
+  {
+    "id": "role-editor",
+    "name": "محرر",
+    "description": "كتابة وتحرير المقالات",
+    "permissions": [
+      "create_articles",
+      "edit_articles",
+      "publish_articles"
+    ],
+    "color": "green",
+    "users": 0
+  },
+  {
+    "id": "role-reporter",
+    "name": "مراسل",
+    "description": "كتابة الأخبار والتقارير",
+    "permissions": [
+      "create_articles",
+      "edit_articles"
+    ],
+    "color": "cyan",
+    "users": 0
+  },
+  {
+    "id": "role-proofreader",
+    "name": "مدقق لغوي",
+    "description": "مراجعة وتدقيق المحتوى",
+    "permissions": [
+      "edit_articles",
+      "review_articles"
+    ],
+    "color": "purple",
+    "users": 0
+  },
+  {
+    "id": "role-media-manager",
+    "name": "مدير وسائط",
+    "description": "إدارة الصور والفيديوهات",
+    "permissions": [
+      "manage_media",
+      "edit_articles"
+    ],
+    "color": "orange",
+    "users": 0
+  },
+  {
+    "id": "role-ai-supervisor",
+    "name": "مسؤول AI",
+    "description": "إدارة أدوات الذكاء الاصطناعي",
+    "permissions": [
+      "manage_ai",
+      "view_analytics",
+      "edit_articles"
+    ],
+    "color": "purple",
+    "users": 0
+  },
+  {
+    "id": "role-engagement-supervisor",
+    "name": "مشرف تفاعل",
+    "description": "إدارة التفاعل مع الجمهور",
+    "permissions": [
+      "manage_comments",
+      "view_analytics",
+      "share_articles"
+    ],
+    "color": "green",
+    "users": 0
+  },
+  {
+    "id": "role-viewer",
+    "name": "Viewer",
+    "description": "صلاحيات المشاهدة فقط",
+    "permissions": [
+      "view_articles",
+      "view_analytics"
+    ],
+    "color": "gray",
+    "users": 0
+  }
+]

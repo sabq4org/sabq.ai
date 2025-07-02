@@ -1,0 +1,394 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../lib/generated/prisma"
+  binaryTargets = ["native", "debian-openssl-1.1.x", "rhel-openssl-1.1.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String                @id @default(uuid())
+  email             String                @unique
+  passwordHash      String?               @map("password_hash")
+  name              String?
+  avatar            String?
+  role              String                @default("user")
+  isAdmin           Boolean               @default(false) @map("is_admin")
+  isVerified        Boolean               @default(false) @map("is_verified")
+  verificationToken String?               @map("verification_token")
+  resetToken        String?               @map("reset_token")
+  createdAt         DateTime              @default(now()) @map("created_at")
+  updatedAt         DateTime              @updatedAt @map("updated_at")
+  resetTokenExpiry  DateTime?             @map("reset_token_expiry")
+  interests         UserInterest[]
+  loyaltyPoints     LoyaltyPoint[]
+  preferences       UserPreference[]
+  sessions          Session[]
+  impressions       Impression[]
+  recommendations   Recommendation[]
+  behaviorPatterns  UserBehaviorPattern[]
+  readingHistory    ReadingHistory[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model Category {
+  id           String    @id @default(uuid())
+  name         String    @unique
+  slug         String    @unique
+  description  String?
+  parentId     String?   @map("parent_id")
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  displayOrder Int       @default(0) @map("display_order")
+  color        String?
+  icon         String?
+  metadata     String?
+  nameEn       String?   @map("name_en")
+  articles     Article[]
+
+  @@index([slug])
+  @@index([parentId])
+  @@map("categories")
+}
+
+model Keyword {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  count     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([slug])
+  @@map("keywords")
+}
+
+model Article {
+  id              String           @id @default(uuid())
+  title           String
+  slug            String           @unique
+  content         String
+  excerpt         String?
+  authorId        String           @map("author_id")
+  categoryId      String?          @map("category_id")
+  status          String           @default("draft")
+  views           Int              @default(0)
+  featured        Boolean          @default(false)
+  breaking        Boolean          @default(false)
+  featuredImage   String?          @map("featured_image")
+  metadata        String?
+  publishedAt     DateTime?        @map("published_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  allowComments   Boolean          @default(true) @map("allow_comments")
+  readingTime     Int?             @map("reading_time")
+  scheduledFor    DateTime?        @map("scheduled_for")
+  seoDescription  String?          @map("seo_description")
+  seoKeywords     String?          @map("seo_keywords")
+  seoTitle        String?          @map("seo_title")
+  socialImage     String?          @map("social_image")
+  category        Category?        @relation(fields: [categoryId], references: [id])
+  impressions     Impression[]
+  recommendations Recommendation[]
+  readingHistory  ReadingHistory[]
+
+  @@index([slug])
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([status, publishedAt])
+  @@map("articles")
+}
+
+model Interaction {
+  id        String          @id @default(uuid())
+  userId    String          @map("user_id")
+  articleId String          @map("article_id")
+  type      InteractionType
+  createdAt DateTime        @default(now()) @map("created_at")
+
+  @@unique([userId, articleId, type])
+  @@index([userId])
+  @@index([articleId])
+  @@map("interactions")
+}
+
+model LoyaltyPoint {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  points        Int
+  action        String
+  referenceId   String?  @map("reference_id")
+  referenceType String?  @map("reference_type")
+  metadata      String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("loyalty_points")
+}
+
+model DeepAnalysis {
+  id                 String        @id @default(uuid())
+  articleId          String        @unique @map("article_id")
+  aiSummary          String?       @map("ai_summary")
+  tags               String?
+  sentiment          String?
+  readabilityScore   Float?        @map("readability_score")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+  analyzedAt         DateTime      @default(now()) @map("analyzed_at")
+  engagementScore    Int?          @map("engagement_score")
+  keyTopics          String?       @map("key_topics")
+  metadata           String?
+  relatedArticles    String?       @map("related_articles")
+  suggestedHeadlines String?       @map("suggested_headlines")
+  analysisType       AnalysisType? @default(manual) @map("analysis_type")
+
+  @@index([articleId])
+  @@map("deep_analyses")
+}
+
+model ArticleKeyword {
+  id        String   @id @default(uuid())
+  articleId String   @map("article_id")
+  keywordId String   @map("keyword_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([articleId, keywordId])
+  @@index([articleId])
+  @@index([keywordId])
+  @@map("article_keywords")
+}
+
+model Message {
+  id           String    @id @default(uuid())
+  email        String
+  subject      String?
+  message      String
+  status       String    @default("unread")
+  repliedAt    DateTime? @map("replied_at")
+  replyContent String?   @map("reply_content")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  fromUserId   String?   @map("from_user_id")
+  metadata     String?
+  toUserId     String?   @map("to_user_id")
+
+  @@index([status])
+  @@index([fromUserId])
+  @@index([toUserId])
+  @@map("messages")
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  userId     String?  @map("user_id")
+  action     String
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  oldValue   String?  @map("old_value")
+  newValue   String?  @map("new_value")
+  metadata   String?
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@map("activity_logs")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  displayName String?  @map("display_name")
+  description String?
+  permissions String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  userRoles   UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  roleId String @map("role_id")
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model UserPreference {
+  id       String @id @default(uuid())
+  userId   String @map("user_id")
+  key      String
+  value    String
+  user     User   @relation(fields: [userId], references: [id])
+
+  @@unique([userId, key])
+  @@index([userId])
+  @@map("user_preferences")
+}
+
+model UserInterest {
+  id       String @id @default(uuid())
+  userId   String @map("user_id")
+  interest String
+  score    Float  @default(1)
+  source   String @default("explicit")
+  user     User   @relation(fields: [userId], references: [id])
+
+  @@unique([userId, interest])
+  @@index([userId])
+  @@map("user_interests")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  articleId String   @map("article_id")
+  userId    String   @map("user_id")
+  content   String
+  parentId  String?  @map("parent_id")
+  status    String   @default("pending")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([articleId])
+  @@index([userId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model AnalyticsData {
+  id          String   @id @default(uuid())
+  date        DateTime
+  metricName  String   @map("metric_name")
+  metricValue Float    @map("metric_value")
+  metadata    String?
+
+  @@index([date])
+  @@index([metricName])
+  @@map("analytics_data")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  token        String   @unique
+  expiresAt    DateTime @map("expires_at")
+  isActive     Boolean  @default(true) @map("is_active")
+  duration     Int?
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  referrer     String?
+  metadata     String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  lastActivity DateTime @default(now()) @map("last_activity")
+  user         User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model Impression {
+  id           String   @id @default(uuid())
+  articleId    String   @map("article_id")
+  userId       String?  @map("user_id")
+  type         String   @default("view")
+  duration     Int?
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  referrer     String?
+  metadata     String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  article      Article  @relation(fields: [articleId], references: [id])
+  user         User?    @relation(fields: [userId], references: [id])
+
+  @@index([articleId])
+  @@index([userId])
+  @@index([type])
+  @@map("impressions")
+}
+
+model Recommendation {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  articleId String   @map("article_id")
+  score     Float
+  reason    String
+  metadata  String?
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id])
+  article   Article  @relation(fields: [articleId], references: [id])
+
+  @@unique([userId, articleId])
+  @@index([userId])
+  @@index([articleId])
+  @@map("recommendations")
+}
+
+model UserBehaviorPattern {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  pattern   String
+  frequency Int      @default(1)
+  metadata  String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, pattern])
+  @@index([userId])
+  @@map("user_behavior_patterns")
+}
+
+model ReadingHistory {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  articleId String   @map("article_id")
+  readAt    DateTime @default(now()) @map("read_at")
+  duration  Int?
+  progress  Float?   @default(0)
+  user      User     @relation(fields: [userId], references: [id])
+  article   Article  @relation(fields: [articleId], references: [id])
+
+  @@unique([userId, articleId])
+  @@index([userId])
+  @@index([articleId])
+  @@map("reading_history")
+}
+
+model SiteSettings {
+  id        String @id @default(uuid())
+  section   String @unique
+  settings  String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("site_settings")
+}
+
+enum InteractionType {
+  like
+  share
+  bookmark
+  comment
+  view
+}
+
+enum AnalysisType {
+  manual
+  automatic
+  ai_enhanced
+} 

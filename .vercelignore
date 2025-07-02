@@ -1,0 +1,160 @@
+# Dependencies
+node_modules
+frontend/node_modules
+
+# Build outputs
+.next
+out
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# Logs
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# Coverage directory
+coverage
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode
+.idea
+
+# Temporary files
+*.tmp
+*.temp
+
+# Backup files
+backups/
+__dev__/
+reports/
+
+# Documentation (keep only essential)
+*.md
+!README.md
+!DEPLOYMENT_GUIDE.md
+
+# Test files
+test/
+tests/
+__tests__/
+
+# Scripts (development only)
+scripts/
+
+# Large unnecessary files
+*.backup
+*.bak
+
+# Development files
+__dev__/
+frontend/
+
+# Cache and build files
+.next/
+node_modules/
+.cache/
+
+# Logs
+*.log
+logs/
+
+# Documentation (optional - remove if you want docs in production)
+docs/
+reports/
+*.md
+!README.md
+
+# Scripts (development only)
+scripts/
+
+# Test files
+test/
+tests/
+*.test.*
+*.spec.*
+
+# Environment files (will be handled by Vercel environment variables)
+.env.local
+.env.development
+.env.test
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Git files
+.git/
+.gitignore
+
+# Package manager files
+yarn.lock
+package-lock.json
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Prisma generated files (force regeneration)
+lib/generated/
+
+# Development files and scripts
+__dev__/
+scripts/
+docs/
+reports/
+backups/
+database/*.sql
+*.md
+
+# Node.js files
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git files
+.git/
+.gitignore
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Coverage files
+coverage/
+.nyc_output/
+*.test.js
+*.spec.js
+
+# Local development files
+public/uploads/
+*.log 

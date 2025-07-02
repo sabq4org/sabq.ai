@@ -1,0 +1,203 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      skip_backup:
+        description: 'Skip backup (not recommended)'
+        required: false
+        default: 'false'
+
+env:
+  NODE_VERSION: '20.x'
+
+jobs:
+  safety-check:
+    name: 🔍 Safety Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Run Safety Check
+        run: |
+          node scripts/check-production-safety.js
+      
+      - name: Check for Dangerous Files
+        run: |
+          if [ -d "data/mock" ] || [ -d "data/seed" ]; then
+            echo "❌ خطأ: مجلدات البيانات التجريبية موجودة!"
+            exit 1
+          fi
+
+  backup:
+    name: 💾 Backup Current Production
+    runs-on: ubuntu-latest
+    needs: safety-check
+    if: github.event.inputs.skip_backup != 'true'
+    steps:
+      - name: SSH Backup
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.PROD_SERVER_HOST }}
+          username: ${{ secrets.PROD_SERVER_USER }}
+          key: ${{ secrets.PROD_SERVER_SSH_KEY }}
+          script: |
+            cd /var/www/jur3a-cms
+            ./scripts/backup-production.sh
+
+  build:
+    name: 🏗️ Build Production
+    runs-on: ubuntu-latest
+    needs: backup
+    if: always() && needs.safety-check.result == 'success'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install Dependencies
+        run: npm ci
+      
+      - name: Create Production Env
+        run: |
+          echo "NODE_ENV=production" > .env.production
+          echo "SEED_FAKE_DATA=false" >> .env.production
+          echo "USE_MOCK_DATA=false" >> .env.production
+          echo "DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}" >> .env.production
+          echo "NEXTAUTH_URL=${{ secrets.PROD_URL }}" >> .env.production
+          echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" >> .env.production
+      
+      - name: Build
+        env:
+          NODE_ENV: production
+          SEED_FAKE_DATA: false
+          USE_MOCK_DATA: false
+        run: npm run build:production
+      
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-build
+          path: |
+            .next/
+            public/
+            package.json
+            package-lock.json
+            next.config.js
+            middleware.ts
+          retention-days: 7
+
+  deploy:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: production
+      url: https://jur3a.ai
+    steps:
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: production-build
+      
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.PROD_SERVER_HOST }}
+          username: ${{ secrets.PROD_SERVER_USER }}
+          key: ${{ secrets.PROD_SERVER_SSH_KEY }}
+          script: |
+            cd /var/www/jur3a-cms
+            
+            # إيقاف التطبيق
+            pm2 stop jur3a-cms || true
+            
+            # نسخ احتياطية سريعة
+            cp -r .next .next.backup
+            
+            # مسح الملفات القديمة (باستثناء المهم)
+            find . -maxdepth 1 ! -name 'uploads' ! -name 'backups' ! -name '.env.production' ! -name 'data' -exec rm -rf {} +
+            
+            # فك الملفات الجديدة
+            tar -xzf /tmp/production-build.tar.gz
+            
+            # تثبيت dependencies
+            npm ci --production
+            
+            # تشغيل migrations
+            npm run db:migrate:deploy
+            
+            # بدء التطبيق
+            pm2 start ecosystem.config.js
+            
+            # التحقق من الصحة
+            sleep 10
+            curl -f http://localhost:3000/api/health || exit 1
+            
+            echo "✅ تم النشر بنجاح!"
+
+  verify:
+    name: ✅ Verify Deployment
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Check Site
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://jur3a.ai)
+          if [ $response -eq 200 ]; then
+            echo "✅ الموقع يعمل بنجاح!"
+          else
+            echo "❌ خطأ: الموقع لا يستجيب (HTTP $response)"
+            exit 1
+          fi
+      
+      - name: Send Notification
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            النشر إلى الإنتاج: ${{ job.status }}
+            الفرع: ${{ github.ref }}
+            المطور: ${{ github.actor }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  rollback:
+    name: 🔄 Rollback if Failed
+    runs-on: ubuntu-latest
+    needs: verify
+    if: failure()
+    steps:
+      - name: Rollback via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.PROD_SERVER_HOST }}
+          username: ${{ secrets.PROD_SERVER_USER }}
+          key: ${{ secrets.PROD_SERVER_SSH_KEY }}
+          script: |
+            cd /var/www/jur3a-cms
+            
+            echo "⚠️ بدء عملية الاستعادة..."
+            
+            # إيقاف التطبيق
+            pm2 stop jur3a-cms
+            
+            # استعادة النسخة السابقة
+            rm -rf .next
+            mv .next.backup .next
+            
+            # بدء التطبيق
+            pm2 start ecosystem.config.js
+            
+            echo "✅ تمت الاستعادة بنجاح!" 

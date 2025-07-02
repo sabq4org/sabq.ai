@@ -1,0 +1,32 @@
+[
+  {
+    "id": "tm-1751399001687-mzf35dwd4",
+    "name": "علي عبده",
+    "email": "aaali@sabq.org",
+    "password": "$2b$10$7rcRD3U5kB6j1gOV8qlVwO/DvUnc.DKiMtmALOgVbviRXVD2dUs8G",
+    "roleId": "correspondent",
+    "isActive": true,
+    "isVerified": true,
+    "createdAt": "2025-07-01T19:43:21.687Z"
+  },
+  {
+    "id": "tm-1751399001688-abc123def",
+    "name": "أحمد محمد",
+    "email": "ahmed@sabq.org",
+    "password": "$2b$10$7rcRD3U5kB6j1gOV8qlVwO/DvUnc.DKiMtmALOgVbviRXVD2dUs8G",
+    "roleId": "editor",
+    "isActive": true,
+    "isVerified": true,
+    "createdAt": "2025-07-01T20:00:00.000Z"
+  },
+  {
+    "id": "tm-1751399001689-xyz789ghi",
+    "name": "فاطمة علي",
+    "email": "fatima@sabq.org",
+    "password": "$2b$10$7rcRD3U5kB6j1gOV8qlVwO/DvUnc.DKiMtmALOgVbviRXVD2dUs8G",
+    "roleId": "author",
+    "isActive": true,
+    "isVerified": true,
+    "createdAt": "2025-07-01T21:00:00.000Z"
+  }
+]

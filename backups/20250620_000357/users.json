@@ -1,0 +1,31 @@
+{
+  "users": [
+    {
+      "id": "user-1750229554450-9uudnk37n",
+      "name": "علي عبده",
+      "email": "sabq@icloud.com",
+      "password": "$2b$10$GLInZzLrd0JCqiLthGf3PeciOgDxBQn3FPtSXgtTk4UZjJHBCptgO",
+      "email_verified": false,
+      "isVerified": false,
+      "status": "active",
+      "role": "regular",
+      "loyaltyPoints": 140,
+      "created_at": "2025-06-18T06:52:34.450Z",
+      "updated_at": "2025-06-18T06:52:34.450Z"
+    },
+    {
+      "id": "user-1750236579398-3h4rt6gu7",
+      "name": "علي عبده",
+      "email": "ali@alhazm.org",
+      "password": "$2b$10$af8cnsJUz.uRe3ZUhdbgr.hmukRnh.OJ3pAa4oibLCTffvSJDyzX2",
+      "email_verified": true,
+      "created_at": "2025-06-18T08:49:39.398Z",
+      "updated_at": "2025-06-19T06:24:54.465Z",
+      "avatar": "/uploads/avatars/avatar_user-1750236579398-3h4rt6gu7_1750237004741.jpg",
+      "status": "active",
+      "role": "admin",
+      "isVerified": true,
+      "loyaltyPoints": 1250
+    }
+  ]
+}

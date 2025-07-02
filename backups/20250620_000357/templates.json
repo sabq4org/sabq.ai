@@ -1,0 +1,183 @@
+[
+  {
+    "id": 1,
+    "name": "الهيدر الافتراضي",
+    "description": "قالب الهيدر الأساسي للموقع",
+    "type": "header",
+    "content": {
+      "logo": {
+        "url": "/uploads/logos/1750251843592-o8l84n.png",
+        "alt": "شعار الموقع"
+      }
+    },
+    "is_active": true,
+    "is_default": true,
+    "logo_url": "/uploads/logos/1750251843592-o8l84n.png",
+    "logo_alt": "شعار الموقع",
+    "primary_color": "#e3f2fd",
+    "secondary_color": "#000000",
+    "social_links": [
+      {
+        "platform": "twitter",
+        "url": "https://twitter.com/sabqorg"
+      },
+      {
+        "platform": "facebook",
+        "url": "https://facebook.com/sabqorg"
+      },
+      {
+        "platform": "youtube",
+        "url": "https://youtube.com/sabqorg"
+      }
+    ],
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2025-06-18T13:04:05.725Z"
+  },
+  {
+    "id": 2,
+    "name": "هيدر رمضان",
+    "description": "قالب خاص بشهر رمضان المبارك مع تصميم إسلامي",
+    "type": "header",
+    "content": {
+      "logo": {
+        "url": "/images/sabq-ramadan-logo.png",
+        "alt": "سبق - رمضان كريم"
+      },
+      "navigation": {
+        "items": [
+          {
+            "label": "الرئيسية",
+            "url": "/",
+            "order": 1
+          },
+          {
+            "label": "رمضانيات",
+            "url": "/ramadan",
+            "order": 2
+          },
+          {
+            "label": "مواقيت الصلاة",
+            "url": "/prayer-times",
+            "order": 3
+          },
+          {
+            "label": "إمساكية",
+            "url": "/imsakia",
+            "order": 4
+          },
+          {
+            "label": "فتاوى",
+            "url": "/fatwa",
+            "order": 5
+          }
+        ]
+      },
+      "topBar": {
+        "showBreakingNews": true,
+        "showDateTime": true,
+        "showWeather": false
+      }
+    },
+    "is_active": false,
+    "is_default": false,
+    "starts_at": "2024-03-11T00:00:00Z",
+    "ends_at": "2024-04-10T23:59:59Z",
+    "logo_url": "/images/sabq-ramadan-logo.png",
+    "logo_alt": "سبق - رمضان كريم",
+    "logo_width": 180,
+    "logo_height": 60,
+    "primary_color": "#1a365d",
+    "secondary_color": "#fbbf24",
+    "custom_styles": ".header { background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%); } .nav-link { color: #fbbf24 !important; }",
+    "social_links": [
+      {
+        "platform": "twitter",
+        "url": "https://twitter.com/sabqorg"
+      },
+      {
+        "platform": "facebook",
+        "url": "https://facebook.com/sabqorg"
+      },
+      {
+        "platform": "youtube",
+        "url": "https://youtube.com/sabqorg"
+      }
+    ],
+    "created_at": "2024-02-01T00:00:00Z",
+    "updated_at": "2024-02-15T00:00:00Z"
+  },
+  {
+    "id": 3,
+    "name": "هيدر اليوم الوطني",
+    "description": "قالب خاص باليوم الوطني السعودي",
+    "type": "header",
+    "content": {
+      "logo": {
+        "url": "/images/sabq-national-day.png",
+        "alt": "سبق - اليوم الوطني السعودي"
+      },
+      "navigation": {
+        "items": [
+          {
+            "label": "الرئيسية",
+            "url": "/",
+            "order": 1
+          },
+          {
+            "label": "اليوم الوطني",
+            "url": "/national-day",
+            "order": 2
+          },
+          {
+            "label": "فعاليات",
+            "url": "/events",
+            "order": 3
+          },
+          {
+            "label": "تاريخ المملكة",
+            "url": "/history",
+            "order": 4
+          },
+          {
+            "label": "إنجازات",
+            "url": "/achievements",
+            "order": 5
+          }
+        ]
+      },
+      "topBar": {
+        "showBreakingNews": true,
+        "showDateTime": true,
+        "showWeather": false
+      }
+    },
+    "is_active": false,
+    "is_default": false,
+    "starts_at": "2024-09-20T00:00:00Z",
+    "ends_at": "2024-09-25T23:59:59Z",
+    "country_code": "SA",
+    "logo_url": "/images/sabq-national-day.png",
+    "logo_alt": "سبق - اليوم الوطني السعودي",
+    "logo_width": 200,
+    "logo_height": 70,
+    "primary_color": "#006C35",
+    "secondary_color": "#FFFFFF",
+    "custom_styles": ".header { background: #006C35; } .nav-link { color: #FFFFFF !important; font-weight: bold; }",
+    "social_links": [
+      {
+        "platform": "twitter",
+        "url": "https://twitter.com/sabqorg"
+      },
+      {
+        "platform": "facebook",
+        "url": "https://facebook.com/sabqorg"
+      },
+      {
+        "platform": "youtube",
+        "url": "https://youtube.com/sabqorg"
+      }
+    ],
+    "created_at": "2024-08-01T00:00:00Z",
+    "updated_at": "2024-08-15T00:00:00Z"
+  }
+]

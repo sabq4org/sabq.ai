@@ -1,0 +1,123 @@
+{
+  "user-1750236579398-3h4rt6gu7": {
+    "user_id": "user-1750236579398-3h4rt6gu7",
+    "categories": {
+      "1": 2,
+      "4": 16
+    },
+    "authors": {},
+    "topics": [],
+    "reading_time": {
+      "preferred_hours": [
+        14,
+        15,
+        21,
+        23
+      ],
+      "average_duration": 0
+    },
+    "last_updated": "2025-06-27T20:42:28.319Z"
+  },
+  "guest-1751024999527-iqrk": {
+    "user_id": "guest-1751024999527-iqrk",
+    "categories": {
+      "4": 3
+    },
+    "authors": {},
+    "topics": [],
+    "reading_time": {
+      "preferred_hours": [
+        14
+      ],
+      "average_duration": 0
+    },
+    "last_updated": "2025-06-27T11:51:13.682Z"
+  },
+  "guest-1751025080442-7j0f": {
+    "user_id": "guest-1751025080442-7j0f",
+    "categories": {
+      "4": 3
+    },
+    "authors": {},
+    "topics": [],
+    "reading_time": {
+      "preferred_hours": [
+        14
+      ],
+      "average_duration": 0
+    },
+    "last_updated": "2025-06-27T11:57:06.345Z"
+  },
+  "guest-1751023849064-8nm0": {
+    "user_id": "guest-1751023849064-8nm0",
+    "categories": {
+      "4": 4
+    },
+    "authors": {},
+    "topics": [],
+    "reading_time": {
+      "preferred_hours": [
+        14,
+        15
+      ],
+      "average_duration": 0
+    },
+    "last_updated": "2025-06-27T12:20:30.212Z"
+  },
+  "guest-1751025896624-4nts": {
+    "user_id": "guest-1751025896624-4nts",
+    "categories": {
+      "1": 11,
+      "4": 2
+    },
+    "authors": {},
+    "topics": [],
+    "reading_time": {
+      "preferred_hours": [
+        15
+      ],
+      "average_duration": 0
+    },
+    "last_updated": "2025-06-27T12:25:16.989Z"
+  },
+  "preferences": [
+    {
+      "id": "pref-1751098359432-l4mvun0qw",
+      "user_id": "user-1750236579398-3h4rt6gu7",
+      "category_id": 2,
+      "source": "update",
+      "created_at": "2025-06-28T08:12:39.432Z",
+      "updated_at": "2025-06-28T08:12:39.433Z"
+    }
+  ],
+  "guest-1751056683560-ef0b": {
+    "user_id": "guest-1751056683560-ef0b",
+    "categories": {
+      "4": 4
+    },
+    "authors": {},
+    "topics": [],
+    "reading_time": {
+      "preferred_hours": [
+        23
+      ],
+      "average_duration": 0
+    },
+    "last_updated": "2025-06-27T20:39:46.013Z"
+  },
+  "guest-1751058403517-bysw": {
+    "user_id": "guest-1751058403517-bysw",
+    "categories": {
+      "4": 1
+    },
+    "authors": {},
+    "topics": [],
+    "reading_time": {
+      "preferred_hours": [
+        0
+      ],
+      "average_duration": 0
+    },
+    "last_updated": "2025-06-27T21:06:44.709Z"
+  }
+}

@@ -1,0 +1,155 @@
+{
+  "name": "سبق الذكية - Sabq AI CMS",
+  "version": "1.0.0",
+  "description": "منصة إدارة المحتوى الذكية للأخبار العربية",
+  "description_en": "Smart Arabic News Content Management System",
+  "repository": "https://github.com/sabq4org/sabq-ai-cms",
+  "live_demo": "https://sabq-ai-cms.vercel.app",
+  "license": "MIT",
+  "author": {
+    "name": "Ali Alhazmi",
+    "github": "sabq4org",
+    "role": "مطور رئيسي"
+  },
+  "statistics": {
+    "total_files": 93,
+    "total_lines": 17064,
+    "languages": {
+      "TypeScript": "65%",
+      "JavaScript": "20%",
+      "CSS": "10%",
+      "Other": "5%"
+    },
+    "components": 25,
+    "api_endpoints": 15,
+    "pages": 12
+  },
+  "features": {
+    "authentication": {
+      "name": "نظام المصادقة الذكي",
+      "icon": "🔐",
+      "status": "مكتمل"
+    },
+    "loyalty": {
+      "name": "نظام الولاء والنقاط",
+      "icon": "🏆",
+      "status": "مكتمل",
+      "levels": ["برونزي", "فضي", "ذهبي", "بلاتيني"]
+    },
+    "ai_recommendations": {
+      "name": "التوصيات الذكية",
+      "icon": "🤖",
+      "status": "مكتمل"
+    },
+    "categories": {
+      "name": "نظام التصنيفات",
+      "icon": "📚",
+      "status": "مكتمل",
+      "count": 10
+    },
+    "smart_summary": {
+      "name": "الملخص الذكي",
+      "icon": "✨",
+      "status": "مكتمل"
+    },
+    "text_to_speech": {
+      "name": "تحويل النص لصوت",
+      "icon": "🔊",
+      "status": "مكتمل"
+    }
+  },
+  "technologies": {
+    "frontend": [
+      {"name": "Next.js", "version": "15.3.3", "icon": "⚡"},
+      {"name": "TypeScript", "version": "5.x", "icon": "📘"},
+      {"name": "Tailwind CSS", "version": "3.x", "icon": "🎨"},
+      {"name": "React", "version": "19.x", "icon": "⚛️"}
+    ],
+    "backend": [
+      {"name": "Supabase", "version": "Latest", "icon": "🗄️"},
+      {"name": "PostgreSQL", "version": "15.x", "icon": "🐘"},
+      {"name": "Next.js API", "version": "15.3.3", "icon": "🚀"}
+    ],
+    "tools": [
+      {"name": "Turbopack", "version": "Latest", "icon": "🔥"},
+      {"name": "ESLint", "version": "8.x", "icon": "🔍"},
+      {"name": "Prettier", "version": "3.x", "icon": "💅"}
+    ]
+  },
+  "design_system": {
+    "colors": {
+      "primary": "Blue to Purple Gradient",
+      "categories": {
+        "تقنية": "#8B5CF6",
+        "اقتصاد": "#10B981",
+        "رياضة": "#3B82F6",
+        "سياسة": "#EF4444",
+        "ثقافة": "#F59E0B",
+        "صحة": "#EC4899",
+        "محلي": "#6366F1",
+        "دولي": "#06B6D4",
+        "منوعات": "#F97316",
+        "ترفيه": "#A855F7"
+      }
+    },
+    "typography": {
+      "primary_font": "system-ui",
+      "arabic_font": "Cairo, Tajawal",
+      "sizes": ["text-xs", "text-sm", "text-base", "text-lg", "text-xl", "text-2xl"]
+    },
+    "spacing": {
+      "corners": ["rounded-2xl", "rounded-3xl"],
+      "shadows": ["shadow-sm", "shadow-md", "shadow-lg", "shadow-xl"],
+      "transitions": "transition-all duration-300"
+    }
+  },
+  "performance": {
+    "lighthouse_score": {
+      "performance": 95,
+      "accessibility": 98,
+      "best_practices": 100,
+      "seo": 100
+    },
+    "optimization": [
+      "Turbopack للتطوير السريع",
+      "تحسين الصور التلقائي",
+      "Lazy Loading للمكونات",
+      "Static Generation للصفحات"
+    ]
+  },
+  "deployment": {
+    "platform": "Vercel",
+    "auto_deploy": true,
+    "environments": ["development", "staging", "production"],
+    "ci_cd": "GitHub Actions"
+  },
+  "documentation": {
+    "readme": "✅ مكتمل",
+    "project_docs": "✅ مكتمل",
+    "api_docs": "🚧 قيد التطوير",
+    "contributing": "✅ مكتمل",
+    "changelog": "✅ مكتمل"
+  },
+  "future_roadmap": [
+    {
+      "feature": "نظام التعليقات الذكي",
+      "priority": "عالية",
+      "eta": "Q3 2025"
+    },
+    {
+      "feature": "تطبيق الهاتف",
+      "priority": "متوسطة",
+      "eta": "Q4 2025"
+    },
+    {
+      "feature": "واجهة برمجية عامة",
+      "priority": "متوسطة",
+      "eta": "Q3 2025"
+    },
+    {
+      "feature": "تحليلات متقدمة",
+      "priority": "عالية",
+      "eta": "Q2 2025"
+    }
+  ]
+} 

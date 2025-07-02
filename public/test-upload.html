@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار رفع الصور</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .preview {
+            max-width: 100%;
+            max-height: 300px;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 اختبار رفع الصور</h1>
+        
+        <div class="upload-area">
+            <p>📁 اختر صورة لرفعها</p>
+            <input type="file" id="fileInput" accept="image/*">
+            <select id="typeSelect">
+                <option value="featured">صورة مميزة</option>
+                <option value="article">صورة مقال</option>
+                <option value="avatar">صورة شخصية</option>
+            </select>
+        </div>
+        
+        <button onclick="uploadFile()" id="uploadBtn">رفع الصورة</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const typeSelect = document.getElementById('typeSelect');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const result = document.getElementById('result');
+            
+            const file = fileInput.files[0];
+            if (!file) {
+                showResult('يرجى اختيار ملف أولاً', 'error');
+                return;
+            }
+
+            // إظهار معلومات الملف
+            console.log('📄 معلومات الملف:', {
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                lastModified: new Date(file.lastModified)
+            });
+
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'جاري الرفع...';
+            showResult('🔄 جاري رفع الصورة...', 'loading');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('type', typeSelect.value);
+
+                console.log('🚀 بدء رفع الصورة...');
+
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('📡 استجابة الخادم:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok
+                });
+
+                const data = await response.json();
+                console.log('📋 بيانات الاستجابة:', data);
+
+                if (response.ok && data.success) {
+                    showResult(`✅ تم رفع الصورة بنجاح!
+                    
+📂 الملف: ${data.data.originalName}
+🔗 الرابط: ${data.data.url}
+📏 الحجم: ${(data.data.size / 1024).toFixed(2)} KB
+🎭 النوع: ${data.data.type}
+📁 فئة الرفع: ${data.data.uploadType}`, 'success');
+                    
+                    // إظهار معاينة للصورة
+                    const img = document.createElement('img');
+                    img.src = data.data.url;
+                    img.className = 'preview';
+                    img.alt = 'معاينة الصورة المرفوعة';
+                    result.appendChild(img);
+                } else {
+                    throw new Error(data.error || 'حدث خطأ غير معروف');
+                }
+            } catch (error) {
+                console.error('💥 خطأ في رفع الصورة:', error);
+                showResult(`❌ فشل رفع الصورة: ${error.message}`, 'error');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'رفع الصورة';
+            }
+        }
+
+        function showResult(message, type) {
+            const result = document.getElementById('result');
+            result.textContent = message;
+            result.className = `result ${type}`;
+        }
+
+        // إضافة مستمع لتغيير الملف لإظهار معلومات أساسية
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                console.log('📄 تم اختيار ملف:', {
+                    name: file.name,
+                    size: `${(file.size / 1024).toFixed(2)} KB`,
+                    type: file.type
+                });
+            }
+        });
+    </script>
+</body>
+</html> 

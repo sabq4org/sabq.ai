@@ -1,0 +1,190 @@
+{
+  "timestamp": "2025-06-23T14:22:43.020Z",
+  "total_images_needed": 29,
+  "created_images_count": 0,
+  "images_by_category": {
+    "تقنية": 4,
+    "رياضة": 5,
+    "اقتصاد": 4,
+    "سياسة": 5,
+    "محليات": 5,
+    "ثقافة ومجتمع": 3,
+    "صحة": 3
+  },
+  "created_images": [
+    {
+      "name": "tech-default.jpg",
+      "category": "تقنية",
+      "description": "صورة عامة للتقنية",
+      "path": "/uploads/featured/tech-default.jpg"
+    },
+    {
+      "name": "ai-technology.jpg",
+      "category": "تقنية",
+      "description": "الذكاء الاصطناعي",
+      "path": "/uploads/featured/ai-technology.jpg"
+    },
+    {
+      "name": "tech-health.jpg",
+      "category": "تقنية",
+      "description": "التقنية في الصحة",
+      "path": "/uploads/featured/tech-health.jpg"
+    },
+    {
+      "name": "tech-innovation.jpg",
+      "category": "تقنية",
+      "description": "الابتكار التقني",
+      "path": "/uploads/featured/tech-innovation.jpg"
+    },
+    {
+      "name": "sports-default.jpg",
+      "category": "رياضة",
+      "description": "صورة عامة للرياضة",
+      "path": "/uploads/featured/sports-default.jpg"
+    },
+    {
+      "name": "football-stadium.jpg",
+      "category": "رياضة",
+      "description": "ملعب كرة القدم",
+      "path": "/uploads/featured/football-stadium.jpg"
+    },
+    {
+      "name": "hilal-logo.jpg",
+      "category": "رياضة",
+      "description": "شعار الهلال",
+      "path": "/uploads/featured/hilal-logo.jpg"
+    },
+    {
+      "name": "nassr-logo.jpg",
+      "category": "رياضة",
+      "description": "شعار النصر",
+      "path": "/uploads/featured/nassr-logo.jpg"
+    },
+    {
+      "name": "asian-champions.jpg",
+      "category": "رياضة",
+      "description": "دوري أبطال آسيا",
+      "path": "/uploads/featured/asian-champions.jpg"
+    },
+    {
+      "name": "economy-default.jpg",
+      "category": "اقتصاد",
+      "description": "صورة عامة للاقتصاد",
+      "path": "/uploads/featured/economy-default.jpg"
+    },
+    {
+      "name": "aramco-building.jpg",
+      "category": "اقتصاد",
+      "description": "مبنى أرامكو",
+      "path": "/uploads/featured/aramco-building.jpg"
+    },
+    {
+      "name": "oil-industry.jpg",
+      "category": "اقتصاد",
+      "description": "صناعة النفط",
+      "path": "/uploads/featured/oil-industry.jpg"
+    },
+    {
+      "name": "stock-market.jpg",
+      "category": "اقتصاد",
+      "description": "سوق الأسهم",
+      "path": "/uploads/featured/stock-market.jpg"
+    },
+    {
+      "name": "politics-default.jpg",
+      "category": "سياسة",
+      "description": "صورة عامة للسياسة",
+      "path": "/uploads/featured/politics-default.jpg"
+    },
+    {
+      "name": "arab-summit.jpg",
+      "category": "سياسة",
+      "description": "القمة العربية",
+      "path": "/uploads/featured/arab-summit.jpg"
+    },
+    {
+      "name": "international-relations.jpg",
+      "category": "سياسة",
+      "description": "العلاقات الدولية",
+      "path": "/uploads/featured/international-relations.jpg"
+    },
+    {
+      "name": "gaza-palestine.jpg",
+      "category": "سياسة",
+      "description": "غزة وفلسطين",
+      "path": "/uploads/featured/gaza-palestine.jpg"
+    },
+    {
+      "name": "trump-politics.jpg",
+      "category": "سياسة",
+      "description": "ترامب والسياسة",
+      "path": "/uploads/featured/trump-politics.jpg"
+    },
+    {
+      "name": "local-default.jpg",
+      "category": "محليات",
+      "description": "صورة عامة للمحليات",
+      "path": "/uploads/featured/local-default.jpg"
+    },
+    {
+      "name": "riyadh-city.jpg",
+      "category": "محليات",
+      "description": "مدينة الرياض",
+      "path": "/uploads/featured/riyadh-city.jpg"
+    },
+    {
+      "name": "entertainment-complex.jpg",
+      "category": "محليات",
+      "description": "مجمع ترفيهي",
+      "path": "/uploads/featured/entertainment-complex.jpg"
+    },
+    {
+      "name": "saudi-tourism.jpg",
+      "category": "محليات",
+      "description": "السياحة السعودية",
+      "path": "/uploads/featured/saudi-tourism.jpg"
+    },
+    {
+      "name": "security-forces.jpg",
+      "category": "محليات",
+      "description": "قوات الأمن",
+      "path": "/uploads/featured/security-forces.jpg"
+    },
+    {
+      "name": "culture-default.jpg",
+      "category": "ثقافة ومجتمع",
+      "description": "صورة عامة للثقافة",
+      "path": "/uploads/featured/culture-default.jpg"
+    },
+    {
+      "name": "cultural-festival.jpg",
+      "category": "ثقافة ومجتمع",
+      "description": "مهرجان ثقافي",
+      "path": "/uploads/featured/cultural-festival.jpg"
+    },
+    {
+      "name": "saudi-heritage.jpg",
+      "category": "ثقافة ومجتمع",
+      "description": "التراث السعودي",
+      "path": "/uploads/featured/saudi-heritage.jpg"
+    },
+    {
+      "name": "health-default.jpg",
+      "category": "صحة",
+      "description": "صورة عامة للصحة",
+      "path": "/uploads/featured/health-default.jpg"
+    },
+    {
+      "name": "sleep-health.jpg",
+      "category": "صحة",
+      "description": "صحة النوم",
+      "path": "/uploads/featured/sleep-health.jpg"
+    },
+    {
+      "name": "medical-research.jpg",
+      "category": "صحة",
+      "description": "البحث الطبي",
+      "path": "/uploads/featured/medical-research.jpg"
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+/* إصلاحات صفحة التصنيفات */
+
+/* إزالة أي فراغات بيضاء */
+body {
+  background-color: rgb(249 250 251) !important;
+}
+
+.dark body {
+  background-color: rgb(17 24 39) !important;
+}
+
+/* التأكد من عدم وجود فراغات بين الأقسام */
+header + main {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+main + footer {
+  margin-top: 0 !important;
+}
+
+/* إصلاح الخط الأبيض أسفل الهيدر */
+header {
+  border-bottom: 1px solid rgb(229 231 235) !important;
+}
+
+.dark header {
+  border-bottom: 1px solid rgb(55 65 81) !important;
+}
+
+/* التأكد من امتداد الخلفية */
+main {
+  background-color: transparent !important;
+}
+
+main.flex-1.flex.flex-col {
+  background-color: transparent !important;
+}
+
+/* إصلاح CTA Section */
+main > section:last-of-type {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* إصلاح البطاقات في الوضع الليلي */
+.dark .bg-white.dark\:bg-gray-800 {
+  background-color: rgb(31 41 55) !important;
+}
+
+/* إصلاح الحدود في الوضع الليلي */
+.dark .border-gray-200.dark\:border-gray-700 {
+  border-color: rgb(55 65 81) !important;
+}
+
+/* إصلاح خلفية الصفحة */
+.min-h-screen.flex.flex-col.bg-gray-50.dark\:bg-gray-900 {
+  background-color: rgb(249 250 251) !important;
+}
+
+.dark .min-h-screen.flex.flex-col.bg-gray-50.dark\:bg-gray-900 {
+  background-color: rgb(17 24 39) !important;
+}
+
+/* إصلاح الأقسام */
+section.border-b {
+  background-color: transparent !important;
+}
+
+.dark section.border-b {
+  background-color: transparent !important;
+}
+
+/* إصلاح قسم CTA */
+section.bg-gradient-to-r {
+  background: rgb(239 246 255) !important; /* blue-50 */
+}
+
+.dark section.bg-gradient-to-r {
+  background: rgb(17 24 39) !important; /* gray-900 */
+}
+
+/* إزالة الخط الأبيض نهائياً */
+header.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+  border-bottom: none !important;
+}
+
+.dark header.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+  border-bottom: none !important;
+}
+
+/* التأكد من عدم وجود فراغ أبيض */
+main > section:last-child {
+  background-color: rgb(17 24 39) !important;
+}
+
+.dark main > section:last-child {
+  background-color: rgb(17 24 39) !important;
+}
+
+/* إصلاح حدود قسم التحكم */
+section.sticky.top-0 {
+  border-bottom-width: 1px !important;
+}
+
+.dark section.sticky.top-0 {
+  border-bottom-color: rgb(55 65 81) !important;
+}
+
+/* التأكد من عدم ظهور حدود بيضاء */
+.border-gray-100 {
+  border-color: rgb(229 231 235) !important;
+}
+
+.dark .border-gray-100 {
+  border-color: rgb(55 65 81) !important;
+} 

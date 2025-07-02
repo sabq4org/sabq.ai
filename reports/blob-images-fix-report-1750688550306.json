@@ -1,0 +1,48 @@
+{
+  "timestamp": "2025-06-23T14:22:30.306Z",
+  "total_fixed": 5,
+  "fixed_articles": [
+    {
+      "id": "article-1750688021715-og56vs051",
+      "title": "كأس العالم للأندية 2025: الهلال يتعثر بالتعادل السلبي أمام سالزبورغ النمساوي",
+      "category_id": 2,
+      "old_image": "blob:http://localhost:3000/df74330e-ef6f-45e4-baa5-9a21371934d8",
+      "new_image": "/uploads/featured/hilal-logo.jpg"
+    },
+    {
+      "id": "article-1750687587617-5q2ppvwbx",
+      "title": "\"وضع المنطقة وأميركا على مسار كارثي\".. \"ترامب\" يشن ضربات جوية على إيران ويطالبها بالتزام الصمت",
+      "category_id": 4,
+      "old_image": "blob:http://localhost:3000/3d0c6aa2-982a-461e-b759-0afb1473a5df",
+      "new_image": "/uploads/featured/trump-politics.jpg"
+    },
+    {
+      "id": "article-1750687109989-m2pr7he2w",
+      "title": "صندوق الاستثمارات العامة يطلق برنامجًا عالميًا للأوراق التجارية ويحصل على أعلى تصنيفات ائتمانية",
+      "category_id": 3,
+      "old_image": "blob:http://localhost:3000/88eeda8b-3006-4652-9147-2149abd79bc7",
+      "new_image": "/uploads/featured/economy-default.jpg"
+    },
+    {
+      "id": "article-السعودية-تحقق-رقماً--1750685779795-v592jj",
+      "title": "السعودية تحقق رقماً قياسياً في صادرات النفط",
+      "old_image": "لا توجد صورة",
+      "new_image": "/uploads/featured/tech-default.jpg"
+    },
+    {
+      "id": "article-إطلاق-مشروع-نيوم-الج-1750685779796-7edn6u",
+      "title": "إطلاق مشروع نيوم الجديد للطيران المتقدم",
+      "old_image": "لا توجد صورة",
+      "new_image": "/uploads/featured/tech-default.jpg"
+    }
+  ],
+  "default_images_used": {
+    "1": "/uploads/featured/tech-default.jpg",
+    "2": "/uploads/featured/sports-default.jpg",
+    "3": "/uploads/featured/economy-default.jpg",
+    "4": "/uploads/featured/politics-default.jpg",
+    "5": "/uploads/featured/local-default.jpg",
+    "6": "/uploads/featured/culture-default.jpg",
+    "7": "/uploads/featured/health-default.jpg"
+  }
+}

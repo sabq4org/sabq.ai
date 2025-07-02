@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مثال تصميم جُرعة</title>
+    
+    <!-- خط Tajawal -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- أيقونات Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- أنماط جرعة -->
+    <link rel="stylesheet" href="jur3a-colors.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f9fafb;
+            color: #111827;
+            line-height: 1.8;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header */
+        .header {
+            background: white;
+            box-shadow: var(--shadow-sm);
+            padding: 20px 0;
+            margin-bottom: 40px;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .stat-info h3 {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 8px 0;
+        }
+        
+        .stat-info p {
+            color: var(--gray-500);
+            font-size: 14px;
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+        
+        /* Table */
+        .table-section {
+            margin-bottom: 40px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        /* Buttons Section */
+        .buttons-section {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+        
+        /* Cards Section */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        
+        .card-content {
+            padding: 24px;
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .card-description {
+            color: var(--gray-600);
+            margin-bottom: 16px;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--gray-500);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-coffee"></i>
+                </div>
+                <h1 class="gradient-text">تصميم جُرعة</h1>
+            </div>
+            <button class="btn-primary">
+                <i class="fas fa-download"></i>
+                تحميل التصميم
+            </button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Stats Section -->
+        <section class="animate-fadeIn">
+            <h2 class="section-title" style="margin-bottom: 24px;">بطاقات الإحصائيات</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-info">
+                            <p>إجمالي المقالات</p>
+                            <h3>1,234</h3>
+                        </div>
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #3b82f6dd);">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-info">
+                            <p>المستخدمون النشطون</p>
+                            <h3>456</h3>
+                        </div>
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #10b981dd);">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-info">
+                            <p>معدل النمو</p>
+                            <h3>+12.5%</h3>
+                        </div>
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #f59e0bdd);">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-info">
+                            <p>التفاعل اليومي</p>
+                            <h3>89%</h3>
+                        </div>
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #8b5cf6dd);">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Table Section -->
+        <section class="table-section animate-slideUp">
+            <div class="section-header">
+                <h2 class="section-title">جدول البيانات</h2>
+                <button class="btn-secondary">
+                    <i class="fas fa-filter"></i>
+                    فلتر
+                </button>
+            </div>
+            
+            <div class="data-table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>العنوان</th>
+                            <th>التصنيف</th>
+                            <th>الحالة</th>
+                            <th>التاريخ</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>تطورات الذكاء الاصطناعي في 2025</td>
+                            <td><span class="badge badge-primary">تقنية</span></td>
+                            <td><span class="badge badge-success">مكتمل</span></td>
+                            <td>15 يونيو 2025</td>
+                            <td>
+                                <button class="btn-primary" style="padding: 8px 16px; font-size: 14px;">
+                                    عرض
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>نتائج دوري المحترفين السعودي</td>
+                            <td><span class="badge badge-success">رياضة</span></td>
+                            <td><span class="badge badge-warning">قيد المراجعة</span></td>
+                            <td>14 يونيو 2025</td>
+                            <td>
+                                <button class="btn-primary" style="padding: 8px 16px; font-size: 14px;">
+                                    عرض
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>تحليل الأسواق المالية العالمية</td>
+                            <td><span class="badge badge-warning">اقتصاد</span></td>
+                            <td><span class="badge badge-primary">قيد التحليل</span></td>
+                            <td>13 يونيو 2025</td>
+                            <td>
+                                <button class="btn-primary" style="padding: 8px 16px; font-size: 14px;">
+                                    عرض
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Buttons Section -->
+        <section class="animate-fadeIn">
+            <h2 class="section-title" style="margin-bottom: 24px;">أنماط الأزرار</h2>
+            <div class="buttons-section">
+                <button class="btn-primary">
+                    <i class="fas fa-plus"></i>
+                    زر رئيسي
+                </button>
+                <button class="btn-secondary">
+                    <i class="fas fa-cog"></i>
+                    زر ثانوي
+                </button>
+                <button class="btn-primary" style="background: linear-gradient(135deg, #10b981, #06b6d4);">
+                    <i class="fas fa-check"></i>
+                    زر نجاح
+                </button>
+                <button class="btn-primary" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    زر تحذير
+                </button>
+            </div>
+        </section>
+
+        <!-- Cards Section -->
+        <section>
+            <h2 class="section-title" style="margin-bottom: 24px;">بطاقات المحتوى</h2>
+            <div class="cards-grid">
+                <div class="glass-effect card-content">
+                    <h3 class="card-title">تأثير الزجاج</h3>
+                    <p class="card-description">
+                        بطاقة بتأثير Glass Morphism المميز مع خلفية شفافة وحواف ناعمة.
+                    </p>
+                    <div style="display: flex; gap: 8px;">
+                        <span class="badge badge-primary">جديد</span>
+                        <span class="badge badge-success">مميز</span>
+                    </div>
+                </div>
+                
+                <div class="section-container" style="margin-bottom: 0;">
+                    <h3 class="card-title">حاوية القسم</h3>
+                    <p class="card-description">
+                        حاوية بتصميم أنيق مع تدرج خفيف وظلال ناعمة لعرض المحتوى.
+                    </p>
+                    <button class="btn-primary" style="margin-top: 16px;">
+                        اكتشف المزيد
+                    </button>
+                </div>
+                
+                <div class="stat-card animate-float">
+                    <h3 class="card-title">بطاقة متحركة</h3>
+                    <p class="card-description">
+                        بطاقة مع تأثير الطفو المستمر لجذب الانتباه.
+                    </p>
+                    <div style="margin-top: 16px;">
+                        <input type="text" class="input-field" placeholder="أدخل نصاً هنا...">
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>تصميم جُرعة - جميع الحقوق محفوظة © 2025</p>
+    </footer>
+</body>
+</html> 

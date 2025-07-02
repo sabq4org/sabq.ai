@@ -1,0 +1,30 @@
+{
+  "teamMembers": [
+    {
+      "id": "team-1750324687554-0x2b942bh",
+      "userId": "user-1750236579398-3h4rt6gu7",
+      "name": "علي عبده",
+      "email": "ali@alhazm.org",
+      "phone": "",
+      "roleId": "role-reporter",
+      "role": "محرر",
+      "department": "إدارة المحتوى",
+      "joinDate": "2025-06-19T09:18:07.554Z",
+      "lastActive": "2025-06-19T12:03:19.137Z",
+      "status": "active",
+      "avatar": "/uploads/avatars/avatar_user-1750236579398-3h4rt6gu7_1750237004741.jpg",
+      "permissions": [
+        "create_articles",
+        "edit_articles",
+        "delete_articles",
+        "publish_articles",
+        "review_articles",
+        "manage_media",
+        "manage_comments",
+        "view_analytics",
+        "share_articles"
+      ]
+    }
+  ],
+  "updated_at": "2025-06-19T12:03:19.138Z"
+}

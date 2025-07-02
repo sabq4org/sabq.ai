@@ -1,0 +1,70 @@
+[
+  {
+    "id": "1",
+    "name": "أخبار اليوم الوطني",
+    "position": "afterHighlights",
+    "type": "smart",
+    "status": "inactive",
+    "displayType": "grid",
+    "keywords": [
+      "اليوم الوطني"
+    ],
+    "articlesCount": 6,
+    "theme": {
+      "primaryColor": "#00BFA6",
+      "backgroundColor": "#f8fafc",
+      "textColor": "#1a1a1a"
+    },
+    "order": 1,
+    "createdAt": "2025-06-27T06:53:04.687Z",
+    "updatedAt": "2025-06-27T11:42:02.621Z"
+  },
+  {
+    "id": "2",
+    "name": "أخبار الرياضة",
+    "position": "afterCards",
+    "type": "smart",
+    "status": "inactive",
+    "displayType": "cards",
+    "keywords": [
+      "رياضة"
+    ],
+    "category": "رياضة",
+    "articlesCount": 4,
+    "theme": {
+      "primaryColor": "#3b82f6",
+      "backgroundColor": "#ffffff",
+      "textColor": "#1f2937"
+    },
+    "order": 2,
+    "createdAt": "2025-06-27T06:53:04.687Z",
+    "updatedAt": "2025-07-01T11:39:48.017Z"
+  },
+  {
+    "name": "يوم القهوة العالمي",
+    "position": "afterHighlights",
+    "type": "smart",
+    "status": "inactive",
+    "displayType": "grid",
+    "keywords": [
+      "القهوة"
+    ],
+    "category": "",
+    "articlesCount": 1,
+    "theme": {
+      "primaryColor": "#8B4513",
+      "backgroundColor": "#FFF8DC",
+      "textColor": "#4A2C2A"
+    },
+    "customHtml": "",
+    "schedule": {
+      "startDate": "",
+      "endDate": "",
+      "isAlwaysActive": true
+    },
+    "id": "1751090696916",
+    "order": 3,
+    "createdAt": "2025-06-28T06:04:56.916Z",
+    "updatedAt": "2025-07-01T11:39:50.909Z"
+  }
+]

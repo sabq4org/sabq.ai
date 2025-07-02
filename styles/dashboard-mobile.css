@@ -1,0 +1,241 @@
+/* تحسينات لوحة التحكم للموبايل */
+
+/* إخفاء شريط التمرير في الموبايل */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* تحسين القائمة الجانبية للموبايل */
+@media (max-width: 768px) {
+  /* تقليل المسافات في القائمة الجانبية */
+  aside nav > div {
+    margin-bottom: 0.75rem;
+  }
+  
+  /* تحسين أحجام النصوص */
+  aside nav button,
+  aside nav a {
+    font-size: 0.875rem;
+  }
+  
+  /* تحسين الأيقونات */
+  aside nav .w-10 {
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  /* إخفاء النصوص الفرعية في الموبايل */
+  aside nav p:last-child {
+    display: none;
+  }
+  
+  /* تحسين زر تسجيل الخروج */
+  aside > div:last-child {
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
+}
+
+/* تحسين الجداول للموبايل */
+@media (max-width: 640px) {
+  /* استخدام البطاقات بدلاً من الجداول */
+  .table-mobile-card {
+    background: var(--card-bg);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--border-color);
+  }
+  
+  .table-mobile-card h4 {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+  
+  .table-mobile-card .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.25rem 0;
+    font-size: 0.75rem;
+  }
+}
+
+/* تحسين البطاقات الإحصائية */
+@media (max-width: 640px) {
+  /* تقليل padding في البطاقات */
+  .stats-card {
+    padding: 0.75rem;
+  }
+  
+  /* تحسين حجم الأيقونات */
+  .stats-card .icon-wrapper {
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  .stats-card .icon {
+    width: 1rem;
+    height: 1rem;
+  }
+  
+  /* إخفاء النص الفرعي في الموبايل */
+  .stats-card .subtitle {
+    display: none;
+  }
+}
+
+/* تحسين أزرار التنقل */
+@media (max-width: 640px) {
+  .nav-tabs {
+    padding: 0.375rem;
+  }
+  
+  .nav-tab {
+    min-width: 80px;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.625rem;
+  }
+  
+  .nav-tab svg {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+/* تحسين النظام الذكي */
+@media (max-width: 640px) {
+  .smart-system-card {
+    padding: 0.5rem;
+  }
+  
+  .smart-system-card .icon-box {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  
+  .smart-system-card .icon {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+  
+  .smart-system-card .title {
+    font-size: 0.625rem;
+  }
+  
+  .smart-system-card .status {
+    font-size: 0.5rem;
+  }
+}
+
+/* تحسين Header للموبايل */
+@media (max-width: 640px) {
+  header {
+    padding: 0.75rem;
+  }
+  
+  /* تقليل حجم الشعار */
+  header .logo {
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  /* إخفاء العنوان الفرعي */
+  header .subtitle {
+    display: none;
+  }
+  
+  /* تقليل حجم أزرار الأدوات */
+  header button {
+    padding: 0.5rem;
+  }
+  
+  header button svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+/* تحسينات عامة للأداء */
+@media (max-width: 768px) {
+  /* تقليل الظلال لتحسين الأداء */
+  .shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+  
+  .shadow-md {
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+  }
+  
+  /* تقليل التأثيرات الانتقالية */
+  .transition-all {
+    transition-duration: 200ms;
+  }
+  
+  /* تحسين التمرير */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* تحسين الوضع المظلم للموبايل */
+@media (max-width: 768px) {
+  .dark {
+    --card-bg: #1f2937;
+    --border-color: #374151;
+    --text-primary: #f3f4f6;
+    --text-secondary: #9ca3af;
+  }
+  
+  :not(.dark) {
+    --card-bg: #ffffff;
+    --border-color: #e5e7eb;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+  }
+}
+
+/* تحسين التفاعل باللمس */
+@media (hover: none) and (pointer: coarse) {
+  /* زيادة مساحة اللمس */
+  button,
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* إزالة hover effects في الأجهزة اللمسية */
+  .hover\:bg-gray-50:hover,
+  .hover\:bg-gray-700:hover {
+    background-color: transparent;
+  }
+  
+  /* استخدام active state بدلاً من hover */
+  button:active,
+  a:active {
+    opacity: 0.8;
+  }
+}
+
+/* تحسين الطباعة للموبايل */
+@media print {
+  /* إخفاء العناصر غير الضرورية */
+  header,
+  aside,
+  .nav-tabs,
+  button {
+    display: none !important;
+  }
+  
+  /* تحسين المحتوى للطباعة */
+  main {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+} 

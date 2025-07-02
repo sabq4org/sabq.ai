@@ -1,0 +1,142 @@
+[
+  {
+    "id": "admin",
+    "name": "مدير النظام",
+    "description": "صلاحيات كاملة على جميع أجزاء النظام",
+    "color": "#DC2626",
+    "permissions": [
+      "articles.create",
+      "articles.edit",
+      "articles.delete",
+      "articles.publish",
+      "articles.schedule",
+      "articles.review",
+      "submissions.view",
+      "submissions.approve",
+      "submissions.comment",
+      "ai.generate",
+      "ai.enhance",
+      "ai.analyze",
+      "analytics.view_own",
+      "analytics.view_all",
+      "analytics.export",
+      "calendar.view",
+      "calendar.edit",
+      "calendar.assign",
+      "blocks.create",
+      "blocks.edit",
+      "blocks.delete",
+      "blocks.reorder",
+      "team.view",
+      "team.add",
+      "team.edit",
+      "team.remove",
+      "logs.view",
+      "logs.export",
+      "logs.filter",
+      "settings.view",
+      "settings.edit",
+      "comments.moderate",
+      "comments.reply",
+      "media.upload",
+      "media.manage",
+      "templates.edit",
+      "templates.create"
+    ],
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z",
+    "isSystem": true
+  },
+  {
+    "id": "content-manager",
+    "name": "مدير محتوى",
+    "description": "مدير المحتوى مسؤول عن استقبال الأخبار من المراسلين، مراجعتها، تعديلها، ومن ثم نشرها رسميًا في الصحيفة. بإمكانه أيضًا حذف المحتوى غير المناسب، والتفاعل مع فرق التحرير الأخرى لتنسيق العمل.",
+    "color": "#4B82F2",
+    "permissions": [
+      "articles.create",
+      "articles.edit",
+      "articles.delete",
+      "articles.publish",
+      "articles.schedule",
+      "articles.review",
+      "submissions.view",
+      "submissions.approve",
+      "submissions.comment",
+      "ai.generate",
+      "ai.enhance",
+      "analytics.view_own",
+      "media.upload",
+      "media.manage"
+    ],
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z",
+    "isSystem": true
+  },
+  {
+    "id": "editor",
+    "name": "محرر",
+    "description": "يمكنه كتابة وتعديل المقالات ولكن يحتاج موافقة للنشر",
+    "color": "#10B981",
+    "permissions": [
+      "articles.create",
+      "articles.edit",
+      "articles.review",
+      "ai.generate",
+      "ai.enhance",
+      "analytics.view_own",
+      "media.upload"
+    ],
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z",
+    "isSystem": true
+  },
+  {
+    "id": "reviewer",
+    "name": "مراجع",
+    "description": "يراجع المقالات ويضع الملاحظات ولكن لا يمكنه النشر مباشرة",
+    "color": "#F59E0B",
+    "permissions": [
+      "articles.review",
+      "submissions.view",
+      "submissions.comment",
+      "analytics.view_own"
+    ],
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z",
+    "isSystem": true
+  },
+  {
+    "id": "correspondent",
+    "name": "مراسل",
+    "description": "يرسل الأخبار والمقالات للمراجعة",
+    "color": "#8B5CF6",
+    "permissions": [
+      "analytics.view_own",
+      "media.upload",
+      "articles.create",
+      "articles.edit",
+      "articles.delete",
+      "articles.publish",
+      "articles.schedule",
+      "articles.review"
+    ],
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2025-06-22T18:52:10.453Z",
+    "isSystem": true
+  },
+  {
+    "id": "author",
+    "name": "كاتب",
+    "description": "كاتب محتوى يمكنه إنشاء وتعديل المقالات",
+    "color": "#06B6D4",
+    "permissions": [
+      "articles.create",
+      "articles.edit",
+      "analytics.view_own",
+      "media.upload"
+    ],
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2025-07-01T22:00:00.000Z",
+    "isSystem": true
+  }
+]

@@ -1,0 +1,204 @@
+/* ألوان ناعمة مريحة للعين */
+
+/* الألوان الأساسية */
+:root {
+  /* ألوان الخلفية الناعمة */
+  --bg-cream: #FAFAF9;
+  --bg-soft-white: #F7F7F5;
+  --bg-warm-gray: #F5F5F4;
+  --bg-light-beige: #F9F7F4;
+  
+  /* ألوان النصوص */
+  --text-primary: #2D2D2D;
+  --text-secondary: #5A5A5A;
+  --text-muted: #8A8A8A;
+  
+  /* ألوان التأكيد */
+  --accent-soft-blue: #E6F2FF;
+  --accent-soft-green: #E6F7E6;
+  --accent-soft-orange: #FFF4E6;
+  --accent-soft-purple: #F3E8FF;
+  
+  /* الظلال الناعمة */
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-large: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+/* الوضع المظلم */
+.dark {
+  --bg-cream: #0F0F11;
+  --bg-soft-white: #18181B;
+  --bg-warm-gray: #27272A;
+  --bg-light-beige: #1C1C1F;
+  
+  --text-primary: #FAFAFA;
+  --text-secondary: #A1A1AA;
+  --text-muted: #71717A;
+  
+  --accent-soft-blue: #172554;
+  --accent-soft-green: #14532D;
+  --accent-soft-orange: #451A03;
+  --accent-soft-purple: #2E1065;
+}
+
+/* تطبيق الألوان على الصفحة الرئيسية */
+body {
+  background-color: var(--bg-cream);
+  color: var(--text-primary);
+}
+
+/* البطاقات والحاويات */
+.container,
+.card,
+[class*="rounded"] {
+  background-color: var(--bg-soft-white);
+  box-shadow: var(--shadow-soft);
+}
+
+/* الهيدر والفوتر */
+header {
+  background-color: var(--bg-soft-white);
+  backdrop-filter: blur(10px);
+  background-color: rgba(250, 250, 249, 0.95);
+}
+
+.dark header {
+  background-color: rgba(15, 15, 17, 0.95);
+}
+
+footer {
+  background-color: var(--bg-warm-gray);
+}
+
+/* المقالات */
+.article-card {
+  background-color: var(--bg-soft-white);
+  transition: all 0.3s ease;
+}
+
+.article-card:hover {
+  background-color: var(--bg-warm-gray);
+  box-shadow: var(--shadow-medium);
+}
+
+/* الأزرار */
+button {
+  transition: all 0.2s ease;
+}
+
+/* تطبيق الخلفية الناعمة على الأزرار بدون فئات خلفية محددة */
+button:not(.bg-blue-500):not(.bg-green-500):not(.bg-red-500):not(.bg-gradient-to-r):not(.bg-gray-100):not(.bg-gray-200) {
+  background-color: var(--bg-warm-gray);
+}
+
+button:not(.bg-blue-500):not(.bg-green-500):not(.bg-red-500):not(.bg-gradient-to-r):not(.bg-gray-100):not(.bg-gray-200):hover {
+  background-color: var(--bg-light-beige);
+}
+
+/* النماذج */
+input,
+textarea,
+select {
+  background-color: var(--bg-soft-white);
+  border-color: var(--bg-warm-gray);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  background-color: var(--bg-cream);
+  border-color: var(--accent-soft-blue);
+}
+
+/* القوائم المنسدلة */
+.dropdown-menu,
+[role="menu"] {
+  background-color: var(--bg-soft-white);
+  box-shadow: var(--shadow-large);
+}
+
+/* الجداول */
+table {
+  background-color: var(--bg-soft-white);
+}
+
+tr:nth-child(even) {
+  background-color: var(--bg-cream);
+}
+
+tr:hover {
+  background-color: var(--bg-warm-gray);
+}
+
+/* شريط التمرير */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-warm-gray);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* تحسينات خاصة للقراءة */
+.reading-mode {
+  background-color: var(--bg-light-beige);
+  color: var(--text-primary);
+  line-height: 1.8;
+}
+
+.reading-mode p {
+  color: var(--text-secondary);
+}
+
+/* تأثيرات التحميل */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-cream) 0%,
+    var(--bg-warm-gray) 50%,
+    var(--bg-cream) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* تحسينات الطباعة */
+@media print {
+  body {
+    background-color: white;
+    color: black;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* تحسينات الأداء */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+} 

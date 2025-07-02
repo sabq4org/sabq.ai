@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: production
+    image: jur3a-cms:latest
+    container_name: jur3a-cms-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      - API_SECRET_KEY=${API_SECRET_KEY}
+    volumes:
+      - ./uploads:/app/public/uploads
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - jur3a-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: jur3a-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./public:/usr/share/nginx/html:ro
+    depends_on:
+      - app
+    networks:
+      - jur3a-network
+
+  backup:
+    image: mysql:8
+    container_name: jur3a-backup
+    restart: "no"
+    environment:
+      - MYSQL_HOST=${DB_HOST}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
+    volumes:
+      - ./backups:/backups
+    command: >
+      sh -c "
+        while true; do
+          mysqldump -h$$MYSQL_HOST -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE > /backups/backup-$$(date +%Y%m%d-%H%M%S).sql
+          find /backups -name 'backup-*.sql' -mtime +30 -delete
+          sleep 86400
+        done
+      "
+    networks:
+      - jur3a-network
+
+networks:
+  jur3a-network:
+    driver: bridge 

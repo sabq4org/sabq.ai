@@ -1,0 +1,422 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../lib/generated/prisma"
+  binaryTargets = ["native", "debian-openssl-1.1.x", "rhel-openssl-1.1.x"]
+}
+
+datasource db {
+  provider     = "sqlite"
+  url          = env("DATABASE_URL")
+  
+}
+
+model User {
+  id                String                @id @default(uuid())
+  email             String                @unique
+  passwordHash      String?               @map("password_hash")
+  name              String?
+  avatar            String?               @db.Text
+  role              String                @default("user")
+  isAdmin           Boolean               @default(false) @map("is_admin")
+  isVerified        Boolean               @default(false) @map("is_verified")
+  verificationToken String?               @map("verification_token")
+  resetToken        String?               @map("reset_token")
+  createdAt         DateTime              @default(now()) @map("created_at")
+  updatedAt         DateTime              @updatedAt @map("updated_at")
+  resetTokenExpiry  DateTime?             @map("reset_token_expiry")
+  interests         UserInterest[]
+  loyaltyPoints     LoyaltyPoint[]
+  preferences       UserPreference[]
+  sessions          Session[]
+  impressions       Impression[]
+  recommendations   Recommendation[]
+  behaviorPatterns  UserBehaviorPattern[]
+  readingHistory    ReadingHistory[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model Category {
+  id           String    @id @default(uuid())
+  name         String    @unique
+  slug         String    @unique
+  description  String?   @db.Text
+  parentId     String?   @map("parent_id")
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  displayOrder Int       @default(0) @map("display_order")
+  color        String?   @db.VarChar(7)
+  icon         String?   @db.VarChar(10)
+  metadata     Json?
+  nameEn       String?   @map("name_en")
+  articles     Article[]
+
+  @@index([slug])
+  @@index([parentId])
+  @@map("categories")
+}
+
+model Keyword {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  count     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([slug])
+  @@map("keywords")
+}
+
+model Article {
+  id              String           @id @default(uuid())
+  title           String           @db.VarChar(500)
+  slug            String           @unique @db.VarChar(500)
+  content         String           @db.Text
+  excerpt         String?          @db.Text
+  authorId        String           @map("author_id")
+  categoryId      String?          @map("category_id")
+  status          String           @default("draft")
+  views           Int              @default(0)
+  featured        Boolean          @default(false)
+  breaking        Boolean          @default(false)
+  featuredImage   String?          @map("featured_image") @db.Text
+  metadata        Json?
+  publishedAt     DateTime?        @map("published_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  allowComments   Boolean          @default(true) @map("allow_comments")
+  readingTime     Int?             @map("reading_time")
+  scheduledFor    DateTime?        @map("scheduled_for")
+  seoDescription  String?          @map("seo_description")
+  seoKeywords     String?          @map("seo_keywords")
+  seoTitle        String?          @map("seo_title")
+  socialImage     String?          @map("social_image")
+  category        Category?        @relation(fields: [categoryId], references: [id])
+  impressions     Impression[]
+  recommendations Recommendation[]
+  readingHistory  ReadingHistory[]
+
+  @@index([slug])
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([status, publishedAt])
+  @@map("articles")
+}
+
+model Interaction {
+  id        String          @id @default(uuid())
+  userId    String          @map("user_id")
+  articleId String          @map("article_id")
+  type      InteractionType
+  createdAt DateTime        @default(now()) @map("created_at")
+
+  @@unique([userId, articleId, type])
+  @@index([userId])
+  @@index([articleId])
+  @@map("interactions")
+}
+
+model LoyaltyPoint {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  points        Int
+  action        String   @db.VarChar(100)
+  referenceId   String?  @map("reference_id")
+  referenceType String?  @map("reference_type")
+  metadata      Json?
+  createdAt     DateTime @default(now()) @map("created_at")
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("loyalty_points")
+}
+
+model DeepAnalysis {
+  id                 String        @id @default(uuid())
+  articleId          String        @unique @map("article_id")
+  aiSummary          String?       @map("ai_summary") @db.Text
+  tags               Json?
+  sentiment          String?
+  readabilityScore   Decimal?      @map("readability_score") @db.Decimal(5, 2)
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+  analyzedAt         DateTime      @default(now()) @map("analyzed_at")
+  engagementScore    Int?          @map("engagement_score")
+  keyTopics          Json?         @map("key_topics")
+  metadata           Json?
+  relatedArticles    Json?         @map("related_articles")
+  suggestedHeadlines Json?         @map("suggested_headlines")
+  analysisType       AnalysisType? @default(manual) @map("analysis_type")
+
+  @@index([articleId])
+  @@map("deep_analyses")
+}
+
+model ArticleKeyword {
+  id        String   @id @default(uuid())
+  articleId String   @map("article_id")
+  keywordId String   @map("keyword_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([articleId, keywordId])
+  @@index([articleId])
+  @@index([keywordId])
+  @@map("article_keywords")
+}
+
+model Message {
+  id           String    @id @default(uuid())
+  email        String
+  subject      String?   @db.VarChar(500)
+  message      String    @db.Text
+  status       String    @default("unread")
+  repliedAt    DateTime? @map("replied_at")
+  replyContent String?   @map("reply_content") @db.Text
+  createdAt    DateTime  @default(now()) @map("created_at")
+  fromUserId   String?   @map("from_user_id")
+  metadata     Json?
+  toUserId     String?   @map("to_user_id")
+
+  @@index([status])
+  @@index([fromUserId])
+  @@index([toUserId])
+  @@map("messages")
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  userId     String?  @map("user_id")
+  action     String
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  oldValue   Json?    @map("old_value")
+  newValue   Json?    @map("new_value")
+  metadata   Json?
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  userAgent  String?  @map("user_agent") @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@map("activity_logs")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique @db.VarChar(100)
+  displayName String?  @map("display_name")
+  description String?  @db.Text
+  permissions Json?
+  isSystem    Boolean  @default(false) @map("is_system")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  slug        String?  @unique
+
+  @@map("roles")
+}
+
+model UserRole {
+  userId    String    @map("user_id")
+  roleId    String    @map("role_id")
+  expiresAt DateTime? @map("expires_at")
+  grantedAt DateTime  @default(now()) @map("granted_at")
+  grantedBy String?   @map("granted_by")
+  id        String    @id @default(uuid())
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model UserPreference {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  key       String
+  value     Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, key])
+  @@index([userId])
+  @@map("user_preferences")
+}
+
+model UserInterest {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  interest  String   @db.VarChar(100)
+  score     Float    @default(1)
+  source    String   @default("explicit") @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, interest])
+  @@index([userId])
+  @@index([interest])
+  @@map("user_interests")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  articleId String   @map("article_id")
+  userId    String?  @map("user_id")
+  parentId  String?  @map("parent_id")
+  content   String   @db.Text
+  status    String   @default("pending")
+  likes     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  metadata  Json?
+
+  @@index([articleId])
+  @@index([userId])
+  @@index([parentId])
+  @@index([status])
+  @@map("comments")
+}
+
+model AnalyticsData {
+  id          String   @id @default(uuid())
+  date        DateTime @db.Date
+  metricName  String   @map("metric_name") @db.VarChar(100)
+  metricValue Decimal  @map("metric_value") @db.Decimal(15, 2)
+  dimensions  Json?
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([date, metricName])
+  @@index([date])
+  @@index([metricName])
+  @@map("analytics_data")
+}
+
+model Session {
+  id                String       @id @default(uuid())
+  userId            String?      @map("user_id")
+  deviceFingerprint String       @map("device_fingerprint")
+  startedAt         DateTime     @default(now()) @map("started_at")
+  endedAt           DateTime?    @map("ended_at")
+  duration          Int?
+  ipAddress         String?      @map("ip_address") @db.VarChar(45)
+  userAgent         String?      @map("user_agent") @db.Text
+  referrer          String?      @db.Text
+  metadata          Json?
+  user              User?        @relation(fields: [userId], references: [id])
+  impressions       Impression[]
+
+  @@index([userId])
+  @@index([deviceFingerprint])
+  @@index([startedAt])
+  @@map("sessions")
+}
+
+model Impression {
+  id              String    @id @default(uuid())
+  userId          String?   @map("user_id")
+  articleId       String    @map("article_id")
+  sessionId       String    @map("session_id")
+  startedAt       DateTime  @default(now()) @map("started_at")
+  endedAt         DateTime? @map("ended_at")
+  durationSeconds Int?      @map("duration_seconds")
+  scrollDepth     Int?      @map("scroll_depth")
+  readingComplete Boolean   @default(false) @map("reading_complete")
+  activeTime      Int?      @map("active_time")
+  metadata        Json?
+  user            User?     @relation(fields: [userId], references: [id])
+  article         Article   @relation(fields: [articleId], references: [id])
+  session         Session   @relation(fields: [sessionId], references: [id])
+
+  @@index([userId])
+  @@index([articleId])
+  @@index([sessionId])
+  @@index([startedAt])
+  @@map("impressions")
+}
+
+model Recommendation {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  articleId String    @map("article_id")
+  reason    String    @db.Text
+  score     Float     @default(0)
+  isClicked Boolean   @default(false) @map("is_clicked")
+  clickedAt DateTime? @map("clicked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  expiresAt DateTime? @map("expires_at")
+  metadata  Json?
+  user      User      @relation(fields: [userId], references: [id])
+  article   Article   @relation(fields: [articleId], references: [id])
+
+  @@index([userId])
+  @@index([articleId])
+  @@index([createdAt])
+  @@index([score])
+  @@map("recommendations")
+}
+
+model UserBehaviorPattern {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  patternType String   @map("pattern_type")
+  patternData Json     @map("pattern_data")
+  confidence  Float    @default(0)
+  lastUpdated DateTime @updatedAt @map("last_updated")
+  createdAt   DateTime @default(now()) @map("created_at")
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, patternType])
+  @@index([userId])
+  @@index([patternType])
+  @@map("user_behavior_patterns")
+}
+
+model ReadingHistory {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  articleId       String   @map("article_id")
+  readingProgress Int      @default(0) @map("reading_progress")
+  lastReadAt      DateTime @updatedAt @map("last_read_at")
+  totalReadTime   Int      @default(0) @map("total_read_time")
+  readCount       Int      @default(1) @map("read_count")
+  createdAt       DateTime @default(now()) @map("created_at")
+  user            User     @relation(fields: [userId], references: [id])
+  article         Article  @relation(fields: [articleId], references: [id])
+
+  @@unique([userId, articleId])
+  @@index([userId])
+  @@index([articleId])
+  @@index([lastReadAt])
+  @@map("reading_history")
+}
+
+enum InteractionType {
+  like
+  save
+  share
+  comment
+  view
+}
+
+enum AnalysisType {
+  manual
+  ai
+  mixed
+}
+
+// نموذج إعدادات الموقع
+model SiteSettings {
+  id        String   @id @default(uuid())
+  section   String   @unique @db.VarChar(50) // identity, seo, social, ai, security, backup
+  data      Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@map("site_settings")
+  @@index([section])
+}

@@ -1,0 +1,12 @@
+{
+  "users": [
+    {
+      "id": "user-1750163933737-lnfbqpewm",
+      "name": "علي الحازمي",
+      "email": "ali@alhazmi.org",
+      "password": "$2b$10$eb2g/1lK8ho4iiP9Eq/l3OKoyBMWjk9QfldE7Kdpuf3X1uUxw15/W",
+      "created_at": "2025-06-17T12:38:53.737Z",
+      "updated_at": "2025-06-17T12:38:53.737Z"
+    }
+  ]
+}

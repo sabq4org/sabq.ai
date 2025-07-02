@@ -1,0 +1,242 @@
+{
+  "preferences": [
+    {
+      "user_id": "user-1750163933737-lnfbqpewm",
+      "preferences": {
+        "categories": {
+          "1": 0.9,
+          "2": 0.7,
+          "3": 0.5,
+          "4": 0.3,
+          "5": 0.8,
+          "6": 0.4,
+          "7": 0.6,
+          "8": 0.2
+        },
+        "topics": [
+          "تقنية",
+          "ذكاء اصطناعي",
+          "أعمال",
+          "ابتكار",
+          "رقمنة"
+        ],
+        "reading_time": "5-10",
+        "notification_settings": {
+          "breaking_news": true,
+          "daily_digest": true,
+          "weekly_summary": false
+        }
+      },
+      "last_updated": "2025-06-18T06:08:32.081Z"
+    },
+    {
+      "id": "pref-1750229666776-ho4o0fdgg",
+      "user_id": "user-1750229554450-9uudnk37n",
+      "category_id": 1,
+      "source": "update",
+      "created_at": "2025-06-18T06:54:26.776Z",
+      "updated_at": "2025-06-18T06:54:26.776Z"
+    },
+    {
+      "id": "pref-1750229666776-lhghlfr2d",
+      "user_id": "user-1750229554450-9uudnk37n",
+      "category_id": 2,
+      "source": "update",
+      "created_at": "2025-06-18T06:54:26.776Z",
+      "updated_at": "2025-06-18T06:54:26.776Z"
+    },
+    {
+      "id": "pref-1750229666776-d60hjqkue",
+      "user_id": "user-1750229554450-9uudnk37n",
+      "category_id": 3,
+      "source": "update",
+      "created_at": "2025-06-18T06:54:26.776Z",
+      "updated_at": "2025-06-18T06:54:26.776Z"
+    },
+    {
+      "id": "pref-1750229666776-vlv2ocjea",
+      "user_id": "user-1750229554450-9uudnk37n",
+      "category_id": 4,
+      "source": "update",
+      "created_at": "2025-06-18T06:54:26.776Z",
+      "updated_at": "2025-06-18T06:54:26.776Z"
+    },
+    {
+      "id": "pref-1750229666776-anze9sgh2",
+      "user_id": "user-1750229554450-9uudnk37n",
+      "category_id": 5,
+      "source": "update",
+      "created_at": "2025-06-18T06:54:26.776Z",
+      "updated_at": "2025-06-18T06:54:26.776Z"
+    },
+    {
+      "id": "pref-1750229666776-zyl375u1j",
+      "user_id": "user-1750229554450-9uudnk37n",
+      "category_id": 6,
+      "source": "update",
+      "created_at": "2025-06-18T06:54:26.776Z",
+      "updated_at": "2025-06-18T06:54:26.776Z"
+    },
+    {
+      "id": "pref-1750229666776-7ne21pqyg",
+      "user_id": "user-1750229554450-9uudnk37n",
+      "category_id": 7,
+      "source": "update",
+      "created_at": "2025-06-18T06:54:26.776Z",
+      "updated_at": "2025-06-18T06:54:26.776Z"
+    },
+    {
+      "id": "pref-1750229666776-gfiozkq7u",
+      "user_id": "user-1750229554450-9uudnk37n",
+      "category_id": 8,
+      "source": "update",
+      "created_at": "2025-06-18T06:54:26.776Z",
+      "updated_at": "2025-06-18T06:54:26.776Z"
+    },
+    {
+      "id": "pref-1750231413535-gqlyo11wt",
+      "user_id": "test-user",
+      "category_id": 1,
+      "source": "update",
+      "created_at": "2025-06-18T07:23:33.535Z",
+      "updated_at": "2025-06-18T07:23:33.535Z"
+    },
+    {
+      "id": "pref-1750231413535-oa60cn66e",
+      "user_id": "test-user",
+      "category_id": 2,
+      "source": "update",
+      "created_at": "2025-06-18T07:23:33.535Z",
+      "updated_at": "2025-06-18T07:23:33.535Z"
+    },
+    {
+      "id": "pref-1750231413535-9rwp48r9g",
+      "user_id": "test-user",
+      "category_id": 3,
+      "source": "update",
+      "created_at": "2025-06-18T07:23:33.535Z",
+      "updated_at": "2025-06-18T07:23:33.535Z"
+    },
+    {
+      "id": "pref-1750231413535-e7kghefdt",
+      "user_id": "test-user",
+      "category_id": 4,
+      "source": "update",
+      "created_at": "2025-06-18T07:23:33.535Z",
+      "updated_at": "2025-06-18T07:23:33.535Z"
+    },
+    {
+      "id": "pref-1750231413535-mabqqcuzn",
+      "user_id": "test-user",
+      "category_id": 5,
+      "source": "update",
+      "created_at": "2025-06-18T07:23:33.535Z",
+      "updated_at": "2025-06-18T07:23:33.535Z"
+    },
+    {
+      "id": "pref-1750231413535-3s2bnypfu",
+      "user_id": "test-user",
+      "category_id": 6,
+      "source": "update",
+      "created_at": "2025-06-18T07:23:33.535Z",
+      "updated_at": "2025-06-18T07:23:33.535Z"
+    },
+    {
+      "id": "pref-1750231413535-6pijyowld",
+      "user_id": "test-user",
+      "category_id": 7,
+      "source": "update",
+      "created_at": "2025-06-18T07:23:33.535Z",
+      "updated_at": "2025-06-18T07:23:33.535Z"
+    },
+    {
+      "id": "pref-1750231413535-ofngqbnvy",
+      "user_id": "test-user",
+      "category_id": 8,
+      "source": "update",
+      "created_at": "2025-06-18T07:23:33.535Z",
+      "updated_at": "2025-06-18T07:23:33.535Z"
+    },
+    {
+      "id": "pref-1750261534173-gcs5xosmg",
+      "user_id": "user-1750236579398-3h4rt6gu7",
+      "category_id": 1,
+      "source": "update",
+      "created_at": "2025-06-18T15:45:34.173Z",
+      "updated_at": "2025-06-18T15:45:34.173Z"
+    },
+    {
+      "id": "pref-1750261534173-v2k60ugk3",
+      "user_id": "user-1750236579398-3h4rt6gu7",
+      "category_id": 2,
+      "source": "update",
+      "created_at": "2025-06-18T15:45:34.173Z",
+      "updated_at": "2025-06-18T15:45:34.173Z"
+    },
+    {
+      "id": "pref-1750261534173-97b82jdi6",
+      "user_id": "user-1750236579398-3h4rt6gu7",
+      "category_id": 3,
+      "source": "update",
+      "created_at": "2025-06-18T15:45:34.173Z",
+      "updated_at": "2025-06-18T15:45:34.173Z"
+    },
+    {
+      "id": "pref-1750261534173-nucg3xbjs",
+      "user_id": "user-1750236579398-3h4rt6gu7",
+      "category_id": 4,
+      "source": "update",
+      "created_at": "2025-06-18T15:45:34.173Z",
+      "updated_at": "2025-06-18T15:45:34.173Z"
+    },
+    {
+      "id": "pref-1750261534173-04wdxyfnc",
+      "user_id": "user-1750236579398-3h4rt6gu7",
+      "category_id": 5,
+      "source": "update",
+      "created_at": "2025-06-18T15:45:34.173Z",
+      "updated_at": "2025-06-18T15:45:34.173Z"
+    },
+    {
+      "id": "pref-1750261534173-zs0medq06",
+      "user_id": "user-1750236579398-3h4rt6gu7",
+      "category_id": 6,
+      "source": "update",
+      "created_at": "2025-06-18T15:45:34.173Z",
+      "updated_at": "2025-06-18T15:45:34.173Z"
+    },
+    {
+      "id": "pref-1750261534173-y4ctxl6zi",
+      "user_id": "user-1750236579398-3h4rt6gu7",
+      "category_id": 8,
+      "source": "update",
+      "created_at": "2025-06-18T15:45:34.173Z",
+      "updated_at": "2025-06-18T15:45:34.173Z"
+    },
+    {
+      "id": "pref-1750261534173-jbi2c7ked",
+      "user_id": "user-1750236579398-3h4rt6gu7",
+      "category_id": 7,
+      "source": "update",
+      "created_at": "2025-06-18T15:45:34.173Z",
+      "updated_at": "2025-06-18T15:45:34.173Z"
+    }
+  ],
+  "test-user": {
+    "categories": {
+      "2": 0.8999999999999999,
+      "4": 0.5,
+      "8": 0.8
+    },
+    "lastUpdated": "2025-06-19T05:52:53.174Z"
+  },
+  "user-1750236579398-3h4rt6gu7": {
+    "categories": {
+      "1": 2.8,
+      "2": 1.4,
+      "5": 0.5,
+      "8": 0.5
+    },
+    "lastUpdated": "2025-06-19T10:02:07.444Z"
+  }
+}

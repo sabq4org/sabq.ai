@@ -1,0 +1,201 @@
+{
+  "timestamp": "2025-06-23T12:47:42.020Z",
+  "analysis": {
+    "total_articles": 29,
+    "published_articles": 22,
+    "articles_with_images": 22,
+    "articles_without_images": 0,
+    "broken_images": 13,
+    "data_images": 0,
+    "external_images": 5,
+    "local_images": 17,
+    "missing_alt_text": 12,
+    "articles_by_category": {
+      "1": {
+        "total": 2,
+        "with_images": 2,
+        "without_images": 0
+      },
+      "2": {
+        "total": 8,
+        "with_images": 8,
+        "without_images": 0
+      },
+      "3": {
+        "total": 2,
+        "with_images": 2,
+        "without_images": 0
+      },
+      "4": {
+        "total": 4,
+        "with_images": 4,
+        "without_images": 0
+      },
+      "5": {
+        "total": 4,
+        "with_images": 4,
+        "without_images": 0
+      },
+      "6": {
+        "total": 1,
+        "with_images": 1,
+        "without_images": 0
+      },
+      "8": {
+        "total": 1,
+        "with_images": 1,
+        "without_images": 0
+      }
+    },
+    "problematic_articles": [
+      {
+        "id": "article-hilal-1750599575769-1",
+        "title": "الهلال يحقق فوزاً تاريخياً في كأس العالم للأندية 2025",
+        "issue": "صورة محلية مفقودة",
+        "image_path": "/uploads/featured/hilal-victory-1.jpg"
+      },
+      {
+        "id": "article-hilal-1750599575769-2",
+        "title": "نيمار يقود الهلال لتحقيق رقم قياسي جديد في دوري روشن",
+        "issue": "صورة محلية مفقودة",
+        "image_path": "/uploads/featured/neymar-hilal-2.jpg"
+      },
+      {
+        "id": "article-hilal-1750599575769-3",
+        "title": "جماهير الهلال تحتفل بالذكرى الـ98 لتأسيس النادي",
+        "issue": "صورة محلية مفقودة",
+        "image_path": "/uploads/featured/hilal-anniversary-3.jpg"
+      },
+      {
+        "id": "article-hilal-1750599575769-4",
+        "title": "الهلال يعلن عن صفقة جديدة تهز عالم كرة القدم",
+        "issue": "صورة محلية مفقودة",
+        "image_path": "/uploads/featured/hilal-signing-4.jpg"
+      },
+      {
+        "id": "article-hilal-1750599575769-5",
+        "title": "تحليل: كيف غيّر الهلال وجه كرة القدم السعودية؟",
+        "issue": "صورة محلية مفقودة",
+        "image_path": "/uploads/featured/hilal-analysis-5.jpg"
+      },
+      {
+        "id": "article-hilal-1750599575769-6",
+        "title": "الهلال يستعد لمواجهة قوية في دوري أبطال آسيا",
+        "issue": "صورة محلية مفقودة",
+        "image_path": "/uploads/featured/hilal-acl-6.jpg"
+      },
+      {
+        "id": "article-1750405448031-4ib72tmub",
+        "title": "\"لوّن صيفك\".. برنامج صيفي يعكس تنوع المملكة ويستهدف أكثر من 41 مليون زائر",
+        "issue": "صورة محلية مفقودة",
+        "image_path": "/uploads/featured/3b0d2cfe-76f9-42ee-8ba4-3c6fd16dae6a.avif"
+      },
+      {
+        "id": "article-1750401860067-v6yim91cm",
+        "title": "بالفيديو: \"صواريخ المشويات\".. إعلان ساخر مصري يثير عاصفة غضب إسرائيلية.. ما القصة؟",
+        "issue": "صورة محلية مفقودة",
+        "image_path": "/uploads/featured/feb11d2c-7db2-4d12-ac4e-d37e4133c475.avif"
+      },
+      {
+        "id": "article-1750364984718-ieujsl6y8",
+        "title": "كأس العالم للأندية 2025: بالميراس البرازيلي يعبر الأهلي المصري بثنائية",
+        "issue": "صورة محلية مفقودة",
+        "image_path": "/uploads/featured/930d72ce-670c-415f-9c69-5e97446ddf12.avif"
+      },
+      {
+        "id": "article-1750325308425-es6womox8",
+        "title": "\"ريكورد\" تحسم الجدل: النصر غير مهتم بمدرب ميلان السابق كونسيساو",
+        "issue": "صورة محلية مفقودة",
+        "image_path": "/uploads/featured/be6ccc3e-ecc7-47b2-8512-7b2d777e2ded.avif"
+      },
+      {
+        "id": "article-1750312326282-8g76vdcx6",
+        "title": "\"ترامب\" يوافق على خطة هجوم ضد إيران.. ويؤجّل التنفيذ ترقّبًا لموقف طهران النووي",
+        "issue": "صورة محلية مفقودة",
+        "image_path": "/uploads/featured/23b39ed7-0891-4366-97e9-8bb28ee4f47c.avif"
+      },
+      {
+        "id": "article-1750275556683-1xrqzrhxo",
+        "title": "استطلاع سبق: 79% من وكالات السفر تؤكد أن المسافرين السعوديين طلبوا تغيير أو إلغاء حجوزاتهم لصيف 2025",
+        "issue": "صورة محلية مفقودة",
+        "image_path": "/uploads/featured/1cec6e81-2f15-4d7c-aa55-2b9bfc12c6c6.avif"
+      },
+      {
+        "id": "article-1750265252460-rif52vpw9",
+        "title": "رحيل الشاعر والإعلامي موسى بن يحيى مُحرَّق.. صوتٌ أضاء المشهد الثقافي وأورق في ذاكرة الوطن",
+        "issue": "صورة محلية مفقودة",
+        "image_path": "/uploads/featured/8b4623ad-66c0-45a1-b6c5-fd64dabe8790.avif"
+      }
+    ]
+  },
+  "fixes": {
+    "fixedCount": 12,
+    "fixes": [
+      {
+        "id": "article-1750405448031-4ib72tmub",
+        "title": "\"لوّن صيفك\".. برنامج صيفي يعكس تنوع المملكة ويستهدف أكثر من 41 مليون زائر",
+        "fix": "إضافة نص بديل للصورة"
+      },
+      {
+        "id": "article-1750401860067-v6yim91cm",
+        "title": "بالفيديو: \"صواريخ المشويات\".. إعلان ساخر مصري يثير عاصفة غضب إسرائيلية.. ما القصة؟",
+        "fix": "إضافة نص بديل للصورة"
+      },
+      {
+        "id": "article-1750364984718-ieujsl6y8",
+        "title": "كأس العالم للأندية 2025: بالميراس البرازيلي يعبر الأهلي المصري بثنائية",
+        "fix": "إضافة نص بديل للصورة"
+      },
+      {
+        "id": "article-1750325308425-es6womox8",
+        "title": "\"ريكورد\" تحسم الجدل: النصر غير مهتم بمدرب ميلان السابق كونسيساو",
+        "fix": "إضافة نص بديل للصورة"
+      },
+      {
+        "id": "article-1750312326282-8g76vdcx6",
+        "title": "\"ترامب\" يوافق على خطة هجوم ضد إيران.. ويؤجّل التنفيذ ترقّبًا لموقف طهران النووي",
+        "fix": "إضافة نص بديل للصورة"
+      },
+      {
+        "id": "article-1750275556683-1xrqzrhxo",
+        "title": "استطلاع سبق: 79% من وكالات السفر تؤكد أن المسافرين السعوديين طلبوا تغيير أو إلغاء حجوزاتهم لصيف 2025",
+        "fix": "إضافة نص بديل للصورة"
+      },
+      {
+        "id": "article-1750265252460-rif52vpw9",
+        "title": "رحيل الشاعر والإعلامي موسى بن يحيى مُحرَّق.. صوتٌ أضاء المشهد الثقافي وأورق في ذاكرة الوطن",
+        "fix": "إضافة نص بديل للصورة"
+      },
+      {
+        "id": "article-1750222780833-tech1",
+        "title": "الذكاء الاصطناعي يحدث ثورة في قطاع الصحة السعودي",
+        "fix": "إضافة نص بديل للصورة"
+      },
+      {
+        "id": "article-1750222780834-economy1",
+        "title": "أرامكو تعلن عن أرباح قياسية في الربع الأول",
+        "fix": "إضافة نص بديل للصورة"
+      },
+      {
+        "id": "article-1750222780834-politics1",
+        "title": "المملكة تستضيف القمة العربية الاستثنائية الأسبوع المقبل",
+        "fix": "إضافة نص بديل للصورة"
+      },
+      {
+        "id": "article-1750222780834-local1",
+        "title": "افتتاح أكبر مجمع ترفيهي في الرياض",
+        "fix": "إضافة نص بديل للصورة"
+      },
+      {
+        "id": "article-1750222780834-culture1",
+        "title": "مهرجان الجنادرية يعود بحلة جديدة",
+        "fix": "إضافة نص بديل للصورة"
+      }
+    ]
+  },
+  "recommendations": [
+    "إصلاح 13 صورة مكسورة",
+    "إضافة نص بديل لـ 12 صورة"
+  ],
+  "quality_score": 71
+}

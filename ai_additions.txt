@@ -1,0 +1,1 @@
+    { key: "openai_api_key", value: "", type: "text", label: "مفتاح OpenAI API", category: "ai", description: "sk-...", required: true },

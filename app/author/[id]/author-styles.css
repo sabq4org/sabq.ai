@@ -1,0 +1,39 @@
+/* Author Page Styles - تصميم بسيط ومتناسق */
+
+/* إزالة معظم الأنماط المخصصة لأننا نستخدم Tailwind CSS */
+
+/* تخصيصات بسيطة للتوافق مع الوضع المظلم */
+@media (prefers-color-scheme: dark) {
+  .author-page {
+    color-scheme: dark;
+  }
+}
+
+/* تحسينات الأداء */
+img {
+  content-visibility: auto;
+}
+
+/* تحسين التمرير */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* انتقالات ناعمة */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* تحسين الطباعة */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+} 

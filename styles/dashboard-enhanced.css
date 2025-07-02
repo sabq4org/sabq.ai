@@ -1,0 +1,861 @@
+/* تحسينات الأزرار في لوحة التحكم */
+.dashboard-button {
+  @apply inline-flex items-center justify-center rounded-xl font-semibold transition-all duration-200;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2;
+  @apply disabled:pointer-events-none disabled:opacity-50 active:scale-95;
+}
+
+/* الأزرار الأساسية */
+.btn-primary {
+  @apply dashboard-button;
+  @apply bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700;
+  @apply shadow-lg hover:shadow-xl px-4 py-2;
+}
+
+.btn-secondary {
+  @apply dashboard-button;
+  @apply border border-gray-300 bg-white text-gray-800 hover:bg-gray-50;
+  @apply dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700;
+  @apply px-4 py-2;
+}
+
+.btn-ghost {
+  @apply dashboard-button;
+  @apply hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100;
+  @apply px-4 py-2;
+}
+
+.btn-danger {
+  @apply dashboard-button;
+  @apply bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700;
+  @apply px-4 py-2;
+}
+
+/* أحجام الأزرار */
+.btn-sm {
+  @apply text-xs px-3 py-1.5 h-8;
+}
+
+.btn-lg {
+  @apply text-base px-6 py-3 h-12;
+}
+
+/* التابات المحسّنة */
+.dashboard-tabs {
+  @apply flex items-center gap-2 bg-white dark:bg-gray-800 p-1 rounded-xl border border-gray-200 dark:border-gray-700;
+}
+
+.dashboard-tabs-list {
+  @apply flex items-center gap-1 rounded-2xl bg-gray-50 p-1.5;
+  @apply dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700;
+  @apply overflow-x-auto scrollbar-hide;
+}
+
+.dashboard-tab {
+  @apply px-4 py-2 rounded-lg text-sm font-medium transition-all;
+}
+
+.dashboard-tab:not(.active) {
+  @apply text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700;
+}
+
+.dashboard-tab.active {
+  @apply bg-blue-600 text-white shadow-sm;
+}
+
+/* محتوى التابات */
+.dashboard-tab-content {
+  margin-top: 1rem;
+  animation: slideIn 0.3s ease-out;
+}
+
+/* الفواصل */
+.dashboard-divider {
+  @apply my-6 h-px bg-gray-200 dark:bg-gray-700;
+}
+
+.dashboard-divider-vertical {
+  @apply mx-3 h-6 w-px bg-gray-200 dark:bg-gray-700;
+}
+
+/* البطاقات */
+.dashboard-card {
+  @apply bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-all hover:shadow-md;
+}
+
+.dashboard-stat-card {
+  @apply dashboard-card flex items-center gap-4;
+}
+
+.dashboard-stat-icon {
+  @apply w-12 h-12 rounded-xl flex items-center justify-center;
+}
+
+/* حالات التحميل */
+.btn-loading {
+  @apply relative pointer-events-none;
+}
+
+.btn-loading::before {
+  content: '';
+  @apply absolute inset-0 bg-current opacity-20 rounded-lg;
+}
+
+.btn-loading::after {
+  content: '';
+  @apply absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin;
+}
+
+/* شريط التمرير المخفي */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* تحسينات الوضع الليلي */
+@media (prefers-color-scheme: dark) {
+  .dashboard-button {
+    --tw-ring-offset-color: #030712;
+  }
+}
+
+/* تحسينات الأجهزة المحمولة */
+@media (max-width: 768px) {
+  .dashboard-tabs-list {
+    @apply gap-0.5 p-1;
+  }
+  
+  .dashboard-tab {
+    @apply px-3 py-2 text-xs;
+  }
+  
+  .dashboard-card {
+    @apply p-4;
+  }
+}
+
+/* ===================================
+   أنماط لوحة التحكم المحسنة
+   =================================== */
+
+/* التابات / Tabs */
+.dashboard-tabs {
+  @apply flex items-center gap-2 bg-white dark:bg-gray-800 p-1 rounded-xl border border-gray-200 dark:border-gray-700;
+}
+
+.dashboard-tab {
+  @apply px-4 py-2 rounded-lg text-sm font-medium transition-all;
+}
+
+.dashboard-tab:not(.active) {
+  @apply text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700;
+}
+
+.dashboard-tab.active {
+  @apply bg-blue-600 text-white shadow-sm;
+}
+
+/* البطاقات / Cards */
+.dashboard-card {
+  @apply bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-all hover:shadow-md;
+}
+
+.dashboard-stat-card {
+  @apply dashboard-card flex items-center gap-4;
+}
+
+.dashboard-stat-icon {
+  @apply w-12 h-12 rounded-xl flex items-center justify-center;
+}
+
+/* الأزرار / Buttons */
+.btn {
+  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn-primary {
+  @apply btn bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 focus:ring-blue-500 shadow-sm hover:shadow-md;
+}
+
+.btn-secondary {
+  @apply btn bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 focus:ring-gray-400;
+}
+
+.btn-outline {
+  @apply btn border-2 border-gray-300 dark:border-gray-600 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 focus:ring-gray-400;
+}
+
+.btn-danger {
+  @apply btn bg-red-500 text-white hover:bg-red-600 active:bg-red-700 focus:ring-red-500 shadow-sm hover:shadow-md;
+}
+
+.btn-success {
+  @apply btn bg-green-500 text-white hover:bg-green-600 active:bg-green-700 focus:ring-green-500 shadow-sm hover:shadow-md;
+}
+
+/* أحجام الأزرار */
+.btn-sm {
+  @apply text-sm px-3 py-1.5;
+}
+
+.btn-lg {
+  @apply text-base px-6 py-3;
+}
+
+/* النماذج / Forms */
+.form-input {
+  @apply w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:bg-white dark:focus:bg-gray-800 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 transition-all;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5;
+}
+
+.form-error {
+  @apply text-sm text-red-600 dark:text-red-400 mt-1;
+}
+
+/* الجداول / Tables */
+.dashboard-table {
+  @apply w-full bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700;
+}
+
+.dashboard-table thead {
+  @apply bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700;
+}
+
+.dashboard-table th {
+  @apply px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider;
+}
+
+.dashboard-table td {
+  @apply px-6 py-4 text-sm text-gray-900 dark:text-gray-100;
+}
+
+.dashboard-table tbody tr {
+  @apply border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors;
+}
+
+/* الرسائل / Alerts */
+.alert {
+  @apply p-4 rounded-lg flex items-start gap-3;
+}
+
+.alert-info {
+  @apply alert bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800;
+}
+
+.alert-success {
+  @apply alert bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800;
+}
+
+.alert-warning {
+  @apply alert bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800;
+}
+
+.alert-error {
+  @apply alert bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800;
+}
+
+/* أنيميشن محسّن */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* تحسينات الوضع الليلي */
+.dark {
+  color-scheme: dark;
+}
+
+.dark::-webkit-scrollbar {
+  @apply bg-gray-900;
+}
+
+.dark::-webkit-scrollbar-thumb {
+  @apply bg-gray-700 hover:bg-gray-600;
+}
+
+/* تحسينات الأداء */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* تحسينات تنسيق لوحة التحكم */
+
+/* إصلاح التنسيق الأساسي للصفحة */
+.dashboard-page {
+  min-height: 100vh;
+  background-color: #f9fafb;
+  padding: 2rem;
+}
+
+.dark .dashboard-page {
+  background-color: #111827;
+}
+
+/* تحسين البطاقات */
+.dashboard-card {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.dashboard-card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.dark .dashboard-card {
+  background-color: #1f2937;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+  border-color: #374151;
+}
+
+/* تحسين الجداول */
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.dark .dashboard-table {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+.dashboard-table thead {
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .dashboard-table thead {
+  background-color: #111827;
+  border-bottom-color: #374151;
+}
+
+.dashboard-table th {
+  padding: 0.75rem 1.5rem;
+  text-align: right;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .dashboard-table th {
+  color: #9ca3af;
+}
+
+.dashboard-table td {
+  padding: 1rem 1.5rem;
+  font-size: 0.875rem;
+  color: #111827;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .dashboard-table td {
+  color: #f3f4f6;
+  border-bottom-color: #374151;
+}
+
+.dashboard-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.dashboard-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.dark .dashboard-table tbody tr:hover {
+  background-color: rgba(55, 65, 81, 0.5);
+}
+
+/* تحسين الأزرار */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  position: relative;
+}
+
+.btn:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #3b82f6;
+  color: white;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #2563eb;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-primary:active:not(:disabled) {
+  background-color: #1d4ed8;
+}
+
+.btn-secondary {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #e5e7eb;
+}
+
+.dark .btn-secondary {
+  background-color: #374151;
+  color: #f3f4f6;
+}
+
+.dark .btn-secondary:hover:not(:disabled) {
+  background-color: #4b5563;
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 2px solid #d1d5db;
+  color: #374151;
+}
+
+.btn-outline:hover:not(:disabled) {
+  background-color: #f9fafb;
+}
+
+.dark .btn-outline {
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+.dark .btn-outline:hover:not(:disabled) {
+  background-color: #1f2937;
+}
+
+.btn-danger {
+  background-color: #ef4444;
+  color: white;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #dc2626;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-danger:active:not(:disabled) {
+  background-color: #b91c1c;
+}
+
+.btn-success {
+  background-color: #10b981;
+  color: white;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: #059669;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-success:active:not(:disabled) {
+  background-color: #047857;
+}
+
+/* أحجام الأزرار */
+.btn-sm {
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+}
+
+.btn-lg {
+  font-size: 1rem;
+  padding: 0.75rem 1.5rem;
+}
+
+/* النماذج / Forms */
+.form-input {
+  width: 100%;
+  padding: 0.625rem 1rem;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.form-input:focus {
+  outline: none;
+  background-color: white;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dark .form-input {
+  background-color: #111827;
+  border-color: #374151;
+  color: white;
+}
+
+.dark .form-input:focus {
+  background-color: #1f2937;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.375rem;
+}
+
+.dark .form-label {
+  color: #d1d5db;
+}
+
+.form-error {
+  font-size: 0.875rem;
+  color: #dc2626;
+  margin-top: 0.25rem;
+}
+
+.dark .form-error {
+  color: #f87171;
+}
+
+/* الرسائل / Alerts */
+.alert {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border: 1px solid;
+}
+
+.alert-info {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border-color: #93c5fd;
+}
+
+.dark .alert-info {
+  background-color: rgba(30, 64, 175, 0.1);
+  color: #93c5fd;
+  border-color: #1e40af;
+}
+
+.alert-success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border-color: #6ee7b7;
+}
+
+.dark .alert-success {
+  background-color: rgba(6, 95, 70, 0.1);
+  color: #6ee7b7;
+  border-color: #065f46;
+}
+
+.alert-warning {
+  background-color: #fed7aa;
+  color: #92400e;
+  border-color: #fb923c;
+}
+
+.dark .alert-warning {
+  background-color: rgba(146, 64, 14, 0.1);
+  color: #fb923c;
+  border-color: #92400e;
+}
+
+.alert-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-color: #fca5a5;
+}
+
+.dark .alert-error {
+  background-color: rgba(153, 27, 27, 0.1);
+  color: #fca5a5;
+  border-color: #991b1b;
+}
+
+/* الإحصائيات */
+.dashboard-stat {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.dashboard-stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.25rem;
+}
+
+.dark .dashboard-stat-value {
+  color: #f9fafb;
+}
+
+.dashboard-stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.dark .dashboard-stat-label {
+  color: #9ca3af;
+}
+
+.dashboard-stat-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* الشبكة */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* القوائم */
+.dashboard-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dashboard-list-item {
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.2s;
+}
+
+.dashboard-list-item:hover {
+  background-color: #f9fafb;
+}
+
+.dark .dashboard-list-item {
+  border-bottom-color: #374151;
+}
+
+.dark .dashboard-list-item:hover {
+  background-color: #374151;
+}
+
+/* الفواصل */
+.dashboard-divider {
+  margin: 1.5rem 0;
+  height: 1px;
+  background-color: #e5e7eb;
+}
+
+.dark .dashboard-divider {
+  background-color: #374151;
+}
+
+.dashboard-divider-vertical {
+  margin: 0 0.75rem;
+  height: 1.5rem;
+  width: 1px;
+  background-color: #e5e7eb;
+}
+
+.dark .dashboard-divider-vertical {
+  background-color: #374151;
+}
+
+/* شريط التمرير المخفي */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* أنيميشن محسّن */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* تحسينات الوضع الليلي */
+.dark {
+  color-scheme: dark;
+}
+
+.dark::-webkit-scrollbar {
+  background-color: #111827;
+}
+
+.dark::-webkit-scrollbar-thumb {
+  background-color: #374151;
+}
+
+.dark::-webkit-scrollbar-thumb:hover {
+  background-color: #4b5563;
+}
+
+/* إصلاح مشاكل التنسيق العامة */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* التأكد من تطبيق الخط العربي */
+body,
+.dashboard-page,
+.dashboard-card,
+.dashboard-table,
+.dashboard-button,
+.dashboard-input {
+  font-family: 'IBM Plex Sans Arabic', 'Tajawal', system-ui, -apple-system, sans-serif;
+}
+
+/* إصلاح مشاكل RTL */
+[dir="rtl"] .dashboard-table,
+[dir="rtl"] .dashboard-list,
+[dir="rtl"] .dashboard-card {
+  text-align: right;
+}
+
+/* تحسين المسافات */
+.mb-4 { margin-bottom: 1rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mb-8 { margin-bottom: 2rem; }
+.mt-4 { margin-top: 1rem; }
+.mt-6 { margin-top: 1.5rem; }
+.mt-8 { margin-top: 2rem; }
+.p-4 { padding: 1rem; }
+.p-6 { padding: 1.5rem; }
+.p-8 { padding: 2rem; }
+
+/* تحسين الألوان */
+.text-gray-900 { color: #111827; }
+.text-gray-800 { color: #1f2937; }
+.text-gray-700 { color: #374151; }
+.text-gray-600 { color: #4b5563; }
+.text-gray-500 { color: #6b7280; }
+.text-gray-400 { color: #9ca3af; }
+
+.dark .text-gray-900 { color: #f9fafb; }
+.dark .text-gray-800 { color: #f3f4f6; }
+.dark .text-gray-700 { color: #e5e7eb; }
+.dark .text-gray-600 { color: #d1d5db; }
+.dark .text-gray-500 { color: #9ca3af; }
+.dark .text-gray-400 { color: #6b7280; }
+
+/* تحسين الحدود */
+.border { border-width: 1px; }
+.border-gray-200 { border-color: #e5e7eb; }
+.dark .border-gray-200 { border-color: #4b5563; }
+
+/* تحسين الظلال */
+.shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+.shadow { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); }
+.shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+
+.dark .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3); }
+.dark .shadow { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4); }
+.dark .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); }
+
+/* تحسينات الأداء */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* تحسينات الأجهزة المحمولة */
+@media (max-width: 768px) {
+  .dashboard-tabs {
+    gap: 0.125rem;
+    padding: 0.25rem;
+  }
+  
+  .dashboard-tab {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .dashboard-card {
+    padding: 1rem;
+  }
+  
+  .dashboard-table th,
+  .dashboard-table td {
+    padding: 0.5rem 0.75rem;
+  }
+} 

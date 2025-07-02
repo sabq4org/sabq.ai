@@ -1,0 +1,44 @@
+{
+  "timestamp": "2025-06-23T12:46:38.357Z",
+  "total_articles_processed": 29,
+  "updated_articles_count": 4,
+  "updated_articles": [
+    {
+      "id": "article-1750192417679-tx1p3gwqs",
+      "title": "دراسة: حرارة الطقس تهدد مليار شخص بانقطاع النفس أثناء النوم.. وتحذير من أزمة صحية عالمية",
+      "category_id": 8,
+      "old_image": "لا توجد صورة",
+      "new_image": "/uploads/featured/sleep-health.jpg"
+    },
+    {
+      "id": "article-1750191083346-v2yxn6cyb",
+      "title": "\"المخدرات\": القبض على 6 مواطنين بالليث لترويجهم 7,084 قرصًا خاضعًا لتنظيم التداول الطبي و 4 كيلو حشي",
+      "category_id": 5,
+      "old_image": "لا توجد صورة",
+      "new_image": "/uploads/featured/riyadh-city.jpg"
+    },
+    {
+      "id": "article-1750188915525-mtp0fh3k9",
+      "title": "\"ترامب\" محذرًا إيران: الهجمات القادمة ستكون أكثر عدوانية.. واتفاقكم بات ضرورة لإنقاذ ما تبقى",
+      "category_id": 4,
+      "old_image": "لا توجد صورة",
+      "new_image": "/uploads/featured/trump-politics.jpg"
+    },
+    {
+      "id": "article-1750157207643-pqrg0qyzg",
+      "title": "أكثر من 60 شهيدًا ونحو 200 مصاب في مجزرتين بحق منتظري المساعدات بخان يونس ورفح",
+      "category_id": 4,
+      "old_image": "لا توجد صورة",
+      "new_image": "/uploads/featured/gaza-palestine.jpg"
+    }
+  ],
+  "summary": {
+    "تقنية": 0,
+    "رياضة": 0,
+    "اقتصاد": 0,
+    "سياسة": 2,
+    "محليات": 1,
+    "ثقافة ومجتمع": 0,
+    "صحة": 1
+  }
+}
