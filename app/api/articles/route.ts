@@ -118,47 +118,31 @@ export async function GET(request: NextRequest) {
 
     // جلب المقالات من قاعدة البيانات البعيدة
     console.time('🔍 جلب المقالات من قاعدة البيانات')
-    const articles = await prisma.article.findMany({
-      where,
-      orderBy,
-      skip,
-      take: limit,
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        content: true,
-        excerpt: true,
-        authorId: true,
-        categoryId: true,
-        status: true,
-        featuredImage: true,
-        breaking: true,
-        featured: true,
-        views: true,
-        readingTime: true,
-        createdAt: true,
-        updatedAt: true,
-        publishedAt: true,
-        seoKeywords: true,
-        metadata: true,
-        category: {
-          select: {
-            id: true,
-            name: true,
-            color: true
-          }
-        },
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true
-          }
+    let articles = []
+    try {
+      articles = await prisma.article.findMany({
+        where,
+        orderBy,
+        skip,
+        take: limit,
+        include: {
+          category: true,
+          author: true
         }
-      }
-    })
+      })
+    } catch (dbError) {
+      console.error('خطأ في قاعدة البيانات:', dbError)
+      // إذا فشل الاستعلام بسبب author، نحاول بدون include
+      articles = await prisma.article.findMany({
+        where,
+        orderBy,
+        skip,
+        take: limit,
+        include: {
+          category: true
+        }
+      })
+    }
     console.timeEnd('🔍 جلب المقالات من قاعدة البيانات')
 
     // جلب العدد الإجمالي
@@ -175,7 +159,12 @@ export async function GET(request: NextRequest) {
       content: article.content,
       summary: article.excerpt,
       author_id: article.authorId,
-      author: article.author || null,
+      author: (article as any).author ? {
+        id: (article as any).author.id,
+        name: (article as any).author.name,
+        email: (article as any).author.email,
+        avatar: (article as any).author.avatar
+      } : null,
       category_id: article.categoryId,
       category_name: article.category?.name || 'غير مصنف',
       status: article.status,
