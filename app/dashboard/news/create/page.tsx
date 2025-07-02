@@ -384,16 +384,19 @@ export default function CreateArticlePage() {
       const articleData: any = {
         title: formData.title.trim(),
         content: editorRef.current ? editorRef.current.getHTML() : formData.content,
-        summary: formData.excerpt.trim(),
+        excerpt: formData.excerpt.trim(),
         author_id: formData.authorId || undefined,
         category_id: formData.categoryId || undefined,
-        is_featured: formData.isFeatured,
-        is_breaking: formData.isBreaking,
         featured_image: formData.featuredImage || undefined,
-        keywords: formData.keywords,
-        seo_title: formData.seoTitle,
-        seo_description: formData.seoDescription,
         status,
+        metadata: {
+          keywords: formData.keywords,
+          seo_title: formData.seoTitle,
+          seo_description: formData.seoDescription,
+          is_featured: formData.isFeatured,
+          is_breaking: formData.isBreaking,
+          gallery: formData.gallery
+        }
       };
 
       // التعامل مع النشر المجدول
@@ -579,7 +582,7 @@ export default function CreateArticlePage() {
                         <div className="space-y-2">
                           {aiSuggestions.titles.map((title: string, index: number) => (
                             <button
-                              key={index}
+                              key={`title-${index}-${title.substring(0, 10)}`}
                               type="button"
                               onClick={() => setFormData(prev => ({ ...prev, title: title.replace(/^\d+\.\s*/, '') }))}
                               className="w-full text-right p-2 hover:bg-secondary/50 rounded transition-colors text-sm"
@@ -891,8 +894,8 @@ export default function CreateArticlePage() {
                         : (formData.gallery.length + (formData.featuredImage ? 1 : 0)) > 0 ? 'warning' 
                         : 'bad'
                     }
-                  ].map((metric, index) => (
-                    <div key={index} className="bg-gray-50 rounded-xl p-4">
+                  ].map((metric) => (
+                    <div key={metric.title} className="bg-gray-50 rounded-xl p-4">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium text-gray-900">{metric.title}</span>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -975,7 +978,7 @@ export default function CreateArticlePage() {
                   {/* عرض الكلمات المفتاحية الحالية */}
                   <div className="flex flex-wrap gap-2 mb-4">
                     {formData.keywords.map((keyword, index) => (
-                      <span key={index} className="px-3 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-purple-200 transition-colors">
+                      <span key={`keyword-${index}-${keyword}`} className="px-3 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-purple-200 transition-colors">
                         <Hash className="w-3 h-3" />
                         {keyword}
                         <button

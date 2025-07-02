@@ -5,7 +5,7 @@ import { Quote, Image as ImageIcon } from 'lucide-react';
 
 interface ContentBlock {
   id: string;
-  type: 'paragraph' | 'heading' | 'quote' | 'image' | 'video' | 'tweet' | 'list' | 'link' | 'highlight';
+  type: 'paragraph' | 'heading' | 'quote' | 'image' | 'video' | 'tweet' | 'list' | 'link' | 'highlight' | 'gallery';
   content: any;
   order: number;
 }
@@ -130,6 +130,33 @@ const ArticleContentRenderer: React.FC<ArticleContentRendererProps> = ({
               </li>
             ))}
           </ListTag>
+        );
+
+      case 'gallery':
+        return (
+          <div className="my-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(block.content.images || []).map((image: any, index: number) => (
+                <figure key={`gallery-${block.id}-${index}`} className="relative group">
+                  <img
+                    src={image.url}
+                    alt={image.alt || 'صورة من الألبوم'}
+                    className="w-full h-48 object-cover rounded-lg shadow-md group-hover:shadow-lg transition-shadow duration-300"
+                  />
+                  {image.caption && (
+                    <figcaption className="text-sm text-gray-600 text-center mt-2 italic">
+                      {image.caption}
+                    </figcaption>
+                  )}
+                </figure>
+              ))}
+            </div>
+            {block.content.caption && (
+              <p className="text-sm text-gray-600 text-center mt-4 italic">
+                {block.content.caption}
+              </p>
+            )}
+          </div>
         );
 
       default:

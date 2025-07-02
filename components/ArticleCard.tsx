@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Clock, Eye, User, Award, Zap } from 'lucide-react';
+import { Clock, Eye, User, Award, Zap, Heart, Bookmark } from 'lucide-react';
 import { formatDateOnly } from '@/lib/date-utils';
 import { getValidImageUrl, generatePlaceholderImage } from '@/lib/cloudinary';
 
@@ -28,9 +28,81 @@ interface ArticleCardProps {
   viewMode?: 'grid' | 'list';
 }
 
-
-
 export default function ArticleCard({ article, viewMode = 'grid' }: ArticleCardProps) {
+  const [isLiked, setIsLiked] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // جلب معرف المستخدم
+    const storedUserId = localStorage.getItem('user_id');
+    if (storedUserId && storedUserId !== 'anonymous') {
+      setUserId(storedUserId);
+    }
+  }, []);
+
+  // دالة معالجة الإعجاب
+  const handleLike = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!userId) {
+      // إذا لم يكن المستخدم مسجل، توجيه إلى صفحة تسجيل الدخول
+      window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/interactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          articleId: article.id,
+          type: 'like',
+          action: isLiked ? 'remove' : 'add'
+        })
+      });
+
+      if (response.ok) {
+        setIsLiked(!isLiked);
+      }
+    } catch (error) {
+      console.error('Error handling like:', error);
+    }
+  };
+
+  // دالة معالجة الحفظ
+  const handleSave = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!userId) {
+      // إذا لم يكن المستخدم مسجل، توجيه إلى صفحة تسجيل الدخول
+      window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/bookmarks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          itemId: article.id,
+          itemType: 'article'
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsSaved(data.action === 'added');
+      }
+    } catch (error) {
+      console.error('Error handling save:', error);
+    }
+  };
+
   const imageUrl = getValidImageUrl(article.featured_image, article.title, 'article');
   
   return (
@@ -81,6 +153,30 @@ export default function ArticleCard({ article, viewMode = 'grid' }: ArticleCardP
             <span className="px-3 py-1 bg-black/70 backdrop-blur-sm text-white text-xs rounded-full">
               {article.category_name || 'عام'}
             </span>
+          </div>
+
+          {/* أزرار التفاعل */}
+          <div className="absolute top-4 left-4 flex flex-col gap-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button 
+              onClick={handleLike}
+              className={`w-8 h-8 rounded-full shadow-md flex items-center justify-center transition-all ${
+                isLiked 
+                  ? 'bg-red-500 text-white' 
+                  : 'bg-white/90 dark:bg-gray-800/90 text-gray-600 dark:text-gray-400 hover:bg-red-500 hover:text-white'
+              }`}
+            >
+              <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+            </button>
+            <button 
+              onClick={handleSave}
+              className={`w-8 h-8 rounded-full shadow-md flex items-center justify-center transition-all ${
+                isSaved 
+                  ? 'bg-blue-500 text-white' 
+                  : 'bg-white/90 dark:bg-gray-800/90 text-gray-600 dark:text-gray-400 hover:bg-blue-500 hover:text-white'
+              }`}
+            >
+              <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
+            </button>
           </div>
         </div>
 

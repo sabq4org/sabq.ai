@@ -10,6 +10,7 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
+    // Log the error to an error reporting service
     console.error('Application error:', error)
   }, [error])
 
@@ -29,7 +30,7 @@ export default function Error({
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button
-            onClick={reset}
+            onClick={() => reset()}
             className="btn-primary inline-flex items-center justify-center"
           >
             إعادة المحاولة
@@ -48,6 +49,11 @@ export default function Error({
             <p className="text-sm font-mono text-gray-700 break-all">
               {error.message}
             </p>
+            {error.digest && (
+              <p className="text-xs text-gray-500 mt-2">
+                Error ID: {error.digest}
+              </p>
+            )}
           </div>
         )}
       </div>

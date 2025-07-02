@@ -1,19 +1,11 @@
-import { v2 as cloudinary } from 'cloudinary';
+// ملف Cloudinary للعميل - بدون استيراد المكتبة التي تحتاج fs
+// يستخدم فقط في المتصفح لتوليد روابط الصور
 
 // تكوين Cloudinary من متغيرات البيئة
 const cloudinaryConfig = {
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dybhezmvb',
-  api_key: process.env.CLOUDINARY_API_KEY || '559894124915114',
-  api_secret: process.env.CLOUDINARY_API_SECRET || 'vuiA8rLNm7d1U-UAOTED6FyC4hY',
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dybhezmvb',
+  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY || '559894124915114',
 };
-
-// تكوين Cloudinary
-cloudinary.config(cloudinaryConfig);
-
-// التحقق من صحة الإعدادات
-if (!cloudinaryConfig.cloud_name || !cloudinaryConfig.api_key || !cloudinaryConfig.api_secret) {
-  console.warn('⚠️  مفاتيح Cloudinary غير مكتملة في متغيرات البيئة');
-}
 
 // دالة تنظيف أسماء الملفات
 export const cleanFileName = (fileName: string): string => {
@@ -33,7 +25,7 @@ export const checkImageExists = async (url: string): Promise<boolean> => {
       return false;
     }
 
-    // التحقق من وجود الصورة في Cloudinary
+    // التحقق من وجود الصورة
     const response = await fetch(url, { 
       method: 'HEAD',
       headers: {
@@ -60,119 +52,6 @@ export const checkImageExists = async (url: string): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error(`❌ خطأ في التحقق من وجود الصورة: ${url}`, error);
-    return false;
-  }
-};
-
-// دالة رفع الصور إلى Cloudinary
-export const uploadToCloudinary = async (
-  file: File | Buffer,
-  options: {
-    folder?: string;
-    publicId?: string;
-    transformation?: any[];
-    resourceType?: 'image' | 'video' | 'raw';
-    fileName?: string;
-  } = {}
-): Promise<{
-  url: string;
-  publicId: string;
-  width?: number;
-  height?: number;
-  format?: string;
-  bytes?: number;
-  secureUrl?: string;
-}> => {
-  try {
-    // تحويل الملف إلى base64 إذا كان File
-    let dataURI: string;
-    let originalFileName = '';
-    
-    if (file instanceof File) {
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const base64String = buffer.toString('base64');
-      dataURI = `data:${file.type};base64,${base64String}`;
-      originalFileName = file.name;
-    } else {
-      // إذا كان Buffer
-      const base64String = file.toString('base64');
-      dataURI = `data:image/jpeg;base64,${base64String}`;
-    }
-
-    // تنظيف اسم الملف
-    const cleanName = cleanFileName(originalFileName || options.fileName || 'image');
-    const timestamp = Date.now();
-    const randomId = Math.random().toString(36).substring(7);
-    
-    // إنشاء public_id نظيف
-    const publicId = options.publicId || `${timestamp}-${cleanName}-${randomId}`;
-
-    // إعدادات الرفع المحسنة
-    const uploadOptions = {
-      folder: options.folder || 'sabq-cms/featured',
-      resource_type: (options.resourceType || 'auto') as 'image' | 'video' | 'raw' | 'auto',
-      public_id: publicId,
-      transformation: options.transformation || [
-        { quality: 'auto:good' },
-        { fetch_format: 'auto' },
-        { width: 'auto', height: 'auto', crop: 'limit' }
-      ],
-      overwrite: false, // منع الكتابة فوق الملفات الموجودة
-      invalidate: true, // تحديث الكاش
-      tags: ['sabq-cms', 'featured'] // إضافة تاجات للملف
-    };
-
-    console.log('📤 رفع الصورة إلى Cloudinary:', {
-      folder: uploadOptions.folder,
-      publicId: uploadOptions.public_id,
-      fileName: cleanName
-    });
-
-    // رفع الملف
-    const result = await cloudinary.uploader.upload(dataURI, uploadOptions);
-
-    if (!result || !result.secure_url) {
-      throw new Error('فشل في رفع الملف إلى Cloudinary');
-    }
-
-    console.log('✅ تم رفع الصورة بنجاح:', {
-      url: result.secure_url,
-      publicId: result.public_id,
-      size: result.bytes
-    });
-
-    return {
-      url: result.secure_url,
-      publicId: result.public_id,
-      width: result.width,
-      height: result.height,
-      format: result.format,
-      bytes: result.bytes,
-      secureUrl: result.secure_url
-    };
-  } catch (error) {
-    console.error('❌ خطأ في رفع الملف إلى Cloudinary:', error);
-    throw new Error(`فشل في رفع الملف: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`);
-  }
-};
-
-// دالة حذف الصور من Cloudinary
-export const deleteFromCloudinary = async (publicId: string): Promise<boolean> => {
-  try {
-    console.log('🗑️  حذف الصورة من Cloudinary:', publicId);
-    const result = await cloudinary.uploader.destroy(publicId);
-    const success = result.result === 'ok';
-    
-    if (success) {
-      console.log('✅ تم حذف الصورة بنجاح');
-    } else {
-      console.log('⚠️  فشل في حذف الصورة:', result.result);
-    }
-    
-    return success;
-  } catch (error) {
-    console.error('❌ خطأ في حذف الملف من Cloudinary:', error);
     return false;
   }
 };
@@ -233,40 +112,6 @@ export const extractPublicIdFromUrl = (url: string): string | null => {
   }
 };
 
-// دالة إعادة رفع الصورة
-export const reuploadImage = async (
-  originalUrl: string,
-  newFile: File | Buffer,
-  options: {
-    folder?: string;
-    transformation?: any[];
-  } = {}
-): Promise<{
-  oldUrl: string;
-  newUrl: string;
-  publicId: string;
-}> => {
-  try {
-    // حذف الصورة القديمة
-    const publicId = extractPublicIdFromUrl(originalUrl);
-    if (publicId) {
-      await deleteFromCloudinary(publicId);
-    }
-
-    // رفع الصورة الجديدة
-    const uploadResult = await uploadToCloudinary(newFile, options);
-
-    return {
-      oldUrl: originalUrl,
-      newUrl: uploadResult.url,
-      publicId: uploadResult.publicId
-    };
-  } catch (error) {
-    console.error('خطأ في إعادة رفع الصورة:', error);
-    throw error;
-  }
-};
-
 // دالة محسنة للحصول على صورة افتراضية ثابتة
 export const getDefaultImageUrl = (type: 'article' | 'avatar' | 'category' = 'article'): string => {
   const defaultImages = {
@@ -280,35 +125,15 @@ export const getDefaultImageUrl = (type: 'article' | 'avatar' | 'category' = 'ar
 
 // دالة محسنة لتوليد صور افتراضية ثابتة بناءً على العنوان
 export const generatePlaceholderImage = (title: string, type: 'article' | 'avatar' | 'category' = 'article'): string => {
-  // مجموعة من الصور الافتراضية المحلية المؤقتة
-  const placeholderImages = {
-    article: [
-      '/images/articles/article-1.svg',
-      '/images/articles/article-2.svg',
-      '/images/articles/article-3.svg',
-      '/images/articles/article-4.svg',
-      '/images/articles/article-5.svg'
-    ],
-    avatar: [
-      '/images/placeholder.svg'
-    ],
-    category: [
-      '/images/placeholder.svg'
-    ]
-  };
+  // استخدام صور Cloudinary الافتراضية
+  const colors = ['FF6B6B', '4ECDC4', '45B7D1', 'FFA07A', '98D8C8', 'F7DC6F', 'BB8FCE', '85C1E2'];
+  const color = colors[Math.floor(Math.random() * colors.length)];
   
-  const images = placeholderImages[type];
+  // إنشاء نص مختصر من العنوان
+  const text = encodeURIComponent(title.substring(0, 2).toUpperCase());
   
-  // إذا لم يكن هناك عنوان، استخدم الصورة الأولى
-  if (!title || typeof title !== 'string') {
-    return images[0];
-  }
-  
-  // استخدام hash ثابت لنفس العنوان للحصول على نفس الصورة دائماً
-  const hash = title.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const imageIndex = Math.abs(hash) % images.length;
-  
-  return images[imageIndex];
+  // إنشاء رابط صورة ديناميكية من Cloudinary
+  return `https://res.cloudinary.com/${cloudinaryConfig.cloud_name}/image/upload/w_400,h_300,c_fill,q_auto,f_auto/l_text:Arial_60_bold:${text},co_rgb:FFFFFF,g_center/v1/sabq-cms/defaults/placeholder_${color}.jpg`;
 };
 
 // دالة محسنة للحصول على رابط صورة صالح
@@ -318,9 +143,10 @@ export const getValidImageUrl = (imageUrl?: string, fallbackTitle?: string, type
     return generatePlaceholderImage(fallbackTitle || 'مقال', type);
   }
   
-  // التحقق من أن الرابط صحيح
+  // إذا كان الرابط هو publicId بدون بروتوكول (مثلاً sabq-cms/featured/xyz)
   if (!imageUrl.startsWith('http') && !imageUrl.startsWith('https')) {
-    return generatePlaceholderImage(fallbackTitle || 'مقال', type);
+    // إنشاء رابط كامل إلى Cloudinary
+    return `https://res.cloudinary.com/${cloudinaryConfig.cloud_name}/image/upload/${imageUrl}`;
   }
   
   // التحقق من أن الرابط من Cloudinary
@@ -329,14 +155,8 @@ export const getValidImageUrl = (imageUrl?: string, fallbackTitle?: string, type
     if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
       console.warn('رابط الصورة ليس من Cloudinary:', imageUrl);
     }
-    // إذا كان الرابط يبدو صحيحًا، استخدمه كما هو
-    if (imageUrl.includes('cloudinary.com')) {
-      return imageUrl;
-    }
-    return generatePlaceholderImage(fallbackTitle || 'مقال', type);
+    return imageUrl;
   }
   
   return imageUrl;
-};
-
-export default cloudinary; 
+}; 

@@ -174,7 +174,7 @@ export async function GET(request: NextRequest) {
       content: article.content,
       summary: article.excerpt,
       author_id: article.authorId,
-      author: article.author,
+      author: article.author || null,
       category_id: article.categoryId,
       category_name: article.category?.name || 'غير مصنف',
       status: article.status,
@@ -236,255 +236,69 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    
-    // سجل تصحيح مفصل
-    console.log('البيانات المستلمة:', {
-      title: body.title,
-      category_id: body.category_id,
-      author_id: body.author_id,
-      content_length: body.content?.length || 0,
-      content_blocks_count: body.content_blocks?.length || 0,
-      status: body.status
-    })
-    
+    const {
+      title,
+      content,
+      excerpt,
+      category_id,
+      status = 'draft',
+      featured_image,
+      metadata = {}
+    } = body
+
     // التحقق من البيانات المطلوبة
-    if (!body.title) {
-      return NextResponse.json({
-        success: false,
-        error: 'العنوان مطلوب'
-      }, { status: 400 })
+    if (!title || !content) {
+      return NextResponse.json(
+        { success: false, error: 'العنوان والمحتوى مطلوبان' },
+        { status: 400 }
+      )
     }
-    
-    // التحقق من وجود محتوى (إما content أو content_blocks)
-    if (!body.content && (!body.content_blocks || body.content_blocks.length === 0)) {
-      return NextResponse.json({
-        success: false,
-        error: 'المحتوى مطلوب'
-      }, { status: 400 })
-    }
-    
-    // التحقق من المحتوى التجريبي
-    const validation = rejectTestContent(body)
-    if (!validation.valid) {
-      return NextResponse.json({
-        success: false,
-        error: validation.error
-      }, { status: 400 })
-    }
-
-    // التحقق من مسارات الصور
-    if (body.featured_image) {
-      const imageUrl = body.featured_image;
-      // منع المسارات المحلية - يجب أن تكون الصور من Cloudinary أو خدمة سحابية
-      if (imageUrl.startsWith('/uploads/') || imageUrl.startsWith('/public/') || 
-          (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://'))) {
-        return NextResponse.json({ 
-          success: false, 
-          error: 'مسار الصورة غير صحيح',
-          message: 'يجب رفع الصور إلى Cloudinary. المسارات المحلية غير مسموحة.' 
-        }, { status: 400 });
-      }
-    }
-
-    // إعداد البيانات للحفظ
-    const articleData: any = {
-      title: body.title.trim(),
-      slug: generateSlug(body.title),
-      content: body.content || 'محتوى المقال',
-      excerpt: body.summary?.trim() || body.excerpt?.trim() || body.description?.trim() || '',
-      status: body.status || 'draft',
-      featured: body.is_featured || false,
-      breaking: body.is_breaking || false,
-      views: 0,
-      featuredImage: body.featured_image,
-      allowComments: body.allow_comments !== false,
-      readingTime: body.reading_time || calculateReadingTime(body.content || ''),
-      metadata: {
-        seo_title: body.seo_title || body.title,
-        seo_description: body.seo_description || body.description || body.summary,
-        seo_keywords: body.seo_keywords || (body.keywords || []).join(', '),
-        tags: body.tags || body.keywords || [],
-        content_blocks: body.content_blocks || [],
-        scope: body.scope || 'local',
-        subtitle: body.subtitle || null,
-        featured_image_alt: body.featured_image_alt || null
-      }
-    }
-
-    // ربط المؤلف (أو تعيين مؤلف افتراضي)
-    let finalAuthorId: string | null = null;
-
-    if (body.author_id) {
-      const authorExists = await prisma.user.findUnique({ where: { id: String(body.author_id) } });
-      if (authorExists) {
-        finalAuthorId = authorExists.id;
-      } else {
-        // إضافة لوج واضح في السيرفر
-        console.error('❌ محاولة نشر بمراسل غير موجود:', body.author_id);
-        return NextResponse.json({
-          success: false,
-          error: 'المراسل المحدد غير موجود في قاعدة البيانات. يرجى اختيار مراسل صحيح.'
-        }, { status: 400 });
-      }
-    } else {
-      // إذا لم يتم إرسال معرف مراسل
-      return NextResponse.json({
-        success: false,
-        error: 'يجب اختيار مراسل/كاتب للمقال.'
-      }, { status: 400 });
-    }
-
-    articleData.authorId = finalAuthorId;
-
-    // ربط التصنيف
-    if (body.category_id && body.category_id !== '' && body.category_id !== '0') {
-      // التحقق من وجود التصنيف
-      const categoryExists = await prisma.category.findUnique({
-        where: { id: String(body.category_id) }
-      })
-      
-      if (!categoryExists) {
-        console.error('التصنيف غير موجود:', body.category_id)
-        return NextResponse.json({
-          success: false,
-          error: 'التصنيف المحدد غير موجود'
-        }, { status: 400 })
-      }
-      
-      articleData.categoryId = String(body.category_id)
-    }
-
-    // معالجة الجدولة الزمنية
-    if (body.publish_at) {
-      const publishDate = new Date(body.publish_at)
-      const now = new Date()
-      
-      if (publishDate > now) {
-        articleData.status = 'scheduled'
-        articleData.scheduledFor = publishDate
-      } else {
-        articleData.status = 'published'
-        articleData.publishedAt = publishDate
-      }
-    } else if (body.status === 'published') {
-      articleData.publishedAt = new Date()
-    }
-
-    // التحقق من عدم تكرار الـ slug
-    let finalSlug = articleData.slug
-    let counter = 1
-    while (await prisma.article.findUnique({ where: { slug: finalSlug } })) {
-      finalSlug = `${articleData.slug}-${counter}`
-      counter++
-    }
-    articleData.slug = finalSlug
-
-    console.log('البيانات النهائية للحفظ:', {
-      title: articleData.title,
-      slug: articleData.slug,
-      authorId: articleData.authorId,
-      categoryId: articleData.categoryId,
-      status: articleData.status,
-      hasContent: !!articleData.content,
-      contentBlocksCount: articleData.metadata?.content_blocks?.length || 0
-    })
 
     // إنشاء المقال
-    const newArticle = await prisma.article.create({
-      data: articleData
-    })
-    
-    // جلب بيانات المؤلف والتصنيف
-    const [author, category] = await Promise.all([
-      newArticle.authorId ? prisma.user.findUnique({
-        where: { id: newArticle.authorId },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatar: true
-        }
-      }) : null,
-      newArticle.categoryId ? prisma.category.findUnique({
-        where: { id: newArticle.categoryId }
-      }) : null
-    ])
-
-    // إنشاء تحليل عميق للمقال (اختياري)
-    if (newArticle.content && newArticle.content.length > 100) {
-      try {
-        await prisma.deepAnalysis.create({
-          data: {
-            articleId: newArticle.id,
-            readabilityScore: 75.5, // يمكن حسابها بشكل أكثر تطوراً
-            sentiment: 'neutral',
-            engagementScore: 0.7,
-            analyzedAt: new Date()
-          }
-        })
-      } catch (analysisError) {
-        console.error('خطأ في إنشاء التحليل العميق:', analysisError)
-        // لا نوقف العملية إذا فشل التحليل
+    const article = await prisma.article.create({
+      data: {
+        title,
+        content,
+        excerpt: excerpt || content.substring(0, 200) + '...',
+        categoryId: category_id || null,
+        status,
+        featuredImage: featured_image,
+        metadata: {
+          ...metadata,
+          createdAt: new Date().toISOString(),
+          isSmartDraft: metadata.isSmartDraft || false,
+          aiEditor: metadata.aiEditor || false
+        },
+        authorId: 'default-author-id', // يمكن تغييرها لاحقاً
+        slug: generateSlug(title),
+        views: 0,
+        readingTime: Math.ceil(content.split(' ').length / 200) // تقدير وقت القراءة
       }
-    }
+    })
+
+    console.log('✅ تم إنشاء المقال:', {
+      id: article.id,
+      title: article.title,
+      status: article.status,
+      isSmartDraft: metadata.isSmartDraft
+    })
 
     return NextResponse.json({
       success: true,
-      data: {
-        ...newArticle,
-        author,
-        category
-      },
-      message: 'تم إنشاء المقال بنجاح'
-    }, { status: 201 })
+      article,
+      message: 'تم حفظ المقال بنجاح'
+    })
   } catch (error) {
-    console.error('خطأ في إنشاء المقال:', error)
+    console.error('❌ خطأ في إنشاء المقال:', error)
     
-    // معالجة أخطاء Prisma
-    if (error && typeof error === 'object' && 'code' in error) {
-      const prismaError = error as any
-      
-      // خطأ في المفتاح الفريد
-      if (prismaError.code === 'P2002') {
-        return NextResponse.json({
-          success: false,
-          error: 'العنوان أو الـ slug مستخدم بالفعل'
-        }, { status: 400 })
-      }
-      
-      // خطأ في المفتاح الخارجي
-      if (prismaError.code === 'P2003') {
-        const field = prismaError.meta?.field_name || ''
-        let errorMessage = 'بيانات غير صحيحة'
-        
-        if (field.includes('author')) {
-          errorMessage = 'المؤلف المحدد غير موجود'
-        } else if (field.includes('category')) {
-          errorMessage = 'التصنيف المحدد غير موجود'
-        }
-        
-        return NextResponse.json({
-          success: false,
-          error: errorMessage,
-          details: process.env.NODE_ENV === 'development' ? prismaError.meta : undefined
-        }, { status: 400 })
-      }
-      
-      // خطأ في القيمة المطلوبة
-      if (prismaError.code === 'P2025') {
-        return NextResponse.json({
-          success: false,
-          error: 'بيانات مطلوبة مفقودة'
-        }, { status: 400 })
-      }
-    }
-    
-    return NextResponse.json({
-      success: false,
-      error: 'فشل في إنشاء المقال',
-      message: error instanceof Error ? error.message : 'خطأ غير معروف',
-      details: process.env.NODE_ENV === 'development' ? error : undefined
-    }, { status: 500 })
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: 'خطأ في حفظ المقال',
+        details: error instanceof Error ? error.message : 'خطأ غير معروف'
+      },
+      { status: 500 }
+    )
   }
 }
 
@@ -492,10 +306,11 @@ export async function POST(request: NextRequest) {
 function generateSlug(title: string): string {
   return title
     .toLowerCase()
-    .replace(/[^\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
+    .replace(/[^\u0600-\u06FF\w\s-]/g, '') // إزالة الأحرف غير المسموحة
+    .replace(/\s+/g, '-') // استبدال المسافات بشرطة
+    .replace(/-+/g, '-') // إزالة الشرطات المتكررة
     .trim()
+    .substring(0, 100) // تحديد الطول
 }
 
 function calculateReadingTime(content: string): number {

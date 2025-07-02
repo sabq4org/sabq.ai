@@ -299,22 +299,21 @@ model AnalyticsData {
   @@map("analytics_data")
 }
 
+model SiteSettings {
+  id        String   @id @default(uuid())
+  section   String   @unique @db.VarChar(50)
+  data      Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([section])
+  @@map("site_settings")
+}
+
 enum InteractionType {
   like
   save
   share
   comment
   view
-}
-
-// نموذج إعدادات الموقع
-model SiteSettings {
-  id        String   @id @default(uuid())
-  section   String   @unique @db.VarChar(50) // identity, seo, social, ai, security, backup
-  data      Json
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  
-  @@map("site_settings")
-  @@index([section])
 }

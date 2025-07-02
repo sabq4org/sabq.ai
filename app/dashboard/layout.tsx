@@ -481,6 +481,61 @@ export default function DashboardLayout({
                     </div>
                   </Link>
 
+                  <Link href="/dashboard/ai-editor" 
+                    onClick={() => setSidebarOpen(false)}
+                    className={`group flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-2 lg:py-3 rounded-xl transition-all duration-300 hover:shadow-md hover:translate-x-1 ${
+                    darkMode 
+                      ? 'text-gray-300 hover:bg-gradient-to-r hover:from-pink-900/30 hover:to-rose-900/30 hover:text-pink-300' 
+                      : 'text-gray-700 hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 hover:text-pink-700'
+                  }`}>
+                    <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                      darkMode 
+                        ? 'bg-pink-900/40 group-hover:bg-pink-500 group-hover:text-white' 
+                        : 'bg-pink-100 group-hover:bg-pink-500 group-hover:text-white'
+                    }`}>
+                      <Brain className="w-4 h-4 lg:w-5 lg:h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-sm lg:text-base font-medium">المحرر الذكي</span>
+                      <p className={`text-xs hidden lg:block transition-colors duration-300 ${
+                        darkMode 
+                          ? 'text-gray-400 group-hover:text-pink-300' 
+                          : 'text-gray-500 group-hover:text-pink-600'
+                      }`}>إنشاء محتوى بالذكاء الاصطناعي</p>
+                    </div>
+                    <div className={`px-2 py-1 rounded-full text-xs font-bold transition-all ${
+                      darkMode 
+                        ? 'bg-pink-900/40 text-pink-300 group-hover:bg-pink-500 group-hover:text-white' 
+                        : 'bg-pink-100 text-pink-700 group-hover:bg-pink-500 group-hover:text-white'
+                    }`}>
+                      جديد
+                    </div>
+                  </Link>
+
+                  <Link href="/dashboard/settings/ai-settings" 
+                    onClick={() => setSidebarOpen(false)}
+                    className={`group flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-2 lg:py-3 rounded-xl transition-all duration-300 hover:shadow-md hover:translate-x-1 ${
+                    darkMode 
+                      ? 'text-gray-300 hover:bg-gradient-to-r hover:from-blue-900/30 hover:to-indigo-900/30 hover:text-blue-300' 
+                      : 'text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700'
+                  }`}>
+                    <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                      darkMode 
+                        ? 'bg-blue-900/40 group-hover:bg-blue-500 group-hover:text-white' 
+                        : 'bg-blue-100 group-hover:bg-blue-500 group-hover:text-white'
+                    }`}>
+                      <Settings className="w-4 h-4 lg:w-5 lg:h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-sm lg:text-base font-medium">إعدادات AI</span>
+                      <p className={`text-xs hidden lg:block transition-colors duration-300 ${
+                        darkMode 
+                          ? 'text-gray-400 group-hover:text-blue-300' 
+                          : 'text-gray-500 group-hover:text-blue-600'
+                      }`}>تكوين OpenAI والمميزات</p>
+                    </div>
+                  </Link>
+
                   <Link href="/dashboard/categories" 
                     onClick={() => setSidebarOpen(false)}
                     className={`group flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-2 lg:py-3 rounded-xl transition-all duration-300 hover:shadow-md hover:translate-x-1 ${

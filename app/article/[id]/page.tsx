@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Share2, Eye, Clock, Calendar,
   User, MessageCircle, TrendingUp, Hash, ChevronRight, Home,
-  Twitter, Copy, Check, X, Menu
+  Twitter, Copy, Check, X, Menu, Heart, Bookmark
 } from 'lucide-react';
 
 import { useDarkModeContext } from '@/contexts/DarkModeContext';
@@ -481,8 +481,6 @@ export default function ArticlePage({ params }: PageProps) {
     }
   };
 
-
-
   const handleAiQuestion = async (question: string) => {
     if (!question.trim() || !article) return;
     
@@ -539,6 +537,87 @@ export default function ArticlePage({ params }: PageProps) {
     }
     
     setShowShareMenu(false);
+  };
+
+  // دالة معالجة الإعجاب
+  const handleLike = async () => {
+    if (!article || !userId) {
+      // إذا لم يكن المستخدم مسجل، توجيه إلى صفحة تسجيل الدخول
+      router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/interactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          articleId: article.id,
+          type: 'like',
+          action: interaction.liked ? 'remove' : 'add'
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setInteraction(prev => ({
+          ...prev,
+          liked: !prev.liked,
+          likesCount: prev.liked ? prev.likesCount - 1 : prev.likesCount + 1
+        }));
+        
+        // تسجيل التفاعل
+        trackInteraction({
+          userId,
+          articleId: article.id,
+          interactionType: interaction.liked ? 'unlike' : 'like',
+          source: 'article_page'
+        });
+      }
+    } catch (error) {
+      console.error('Error handling like:', error);
+    }
+  };
+
+  // دالة معالجة الحفظ
+  const handleSave = async () => {
+    if (!article || !userId) {
+      // إذا لم يكن المستخدم مسجل، توجيه إلى صفحة تسجيل الدخول
+      router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/bookmarks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          itemId: article.id,
+          itemType: 'article'
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setInteraction(prev => ({
+          ...prev,
+          saved: data.action === 'added',
+          savesCount: data.action === 'added' ? prev.savesCount + 1 : prev.savesCount - 1
+        }));
+        
+        // تسجيل التفاعل
+        trackInteraction({
+          userId,
+          articleId: article.id,
+          interactionType: data.action === 'added' ? 'save' : 'unsave',
+          source: 'article_page'
+        });
+      }
+    } catch (error) {
+      console.error('Error handling save:', error);
+    }
   };
 
   const getCategoryColor = (category?: any) => {
@@ -640,6 +719,43 @@ export default function ArticlePage({ params }: PageProps) {
                         </figcaption>
                       )}
                     </figure>
+                  );
+                
+                case 'gallery':
+                case 'imageGallery':
+                  return (
+                    <div key={block.id || index} className="my-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {block.images?.map((image: any, imgIndex: number) => (
+                          <figure key={imgIndex} className="relative group overflow-hidden rounded-lg shadow-lg">
+                            <img 
+                              src={image.url || image} 
+                              alt={image.alt || `صورة ${imgIndex + 1}`} 
+                              className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-110"
+                            />
+                            {image.caption && (
+                              <figcaption className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white p-3 text-sm">
+                                {image.caption}
+                              </figcaption>
+                            )}
+                          </figure>
+                        ))}
+                      </div>
+                      {block.caption && (
+                        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
+                          {block.caption}
+                        </p>
+                      )}
+                    </div>
+                  );
+                
+                case 'html':
+                  return (
+                    <div 
+                      key={block.id || index}
+                      dangerouslySetInnerHTML={{ __html: block.content || '' }}
+                      className="prose prose-lg max-w-none dark:prose-invert"
+                    />
                   );
                 
                 default:
@@ -897,6 +1013,41 @@ export default function ArticlePage({ params }: PageProps) {
         
         {/* شريط التفاعل السريع */}
         <div className="quick-interaction-bar">
+          {/* زر الإعجاب */}
+          <button 
+            onClick={handleLike}
+            className={`quick-interaction-button ripple-effect ${
+              interaction.liked ? 'text-red-500 bg-red-50 dark:bg-red-900/20' : ''
+            }`}
+            title={interaction.liked ? 'إلغاء الإعجاب' : 'أعجبني'}
+          >
+            <Heart className={`w-5 h-5 ${interaction.liked ? 'fill-current' : ''}`} />
+            <span>{interaction.liked ? 'أعجبني' : 'أعجبني'}</span>
+            {interaction.likesCount > 0 && (
+              <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+                {interaction.likesCount}
+              </span>
+            )}
+          </button>
+
+          {/* زر الحفظ */}
+          <button 
+            onClick={handleSave}
+            className={`quick-interaction-button ripple-effect ${
+              interaction.saved ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
+            }`}
+            title={interaction.saved ? 'إلغاء الحفظ' : 'حفظ المقال'}
+          >
+            <Bookmark className={`w-5 h-5 ${interaction.saved ? 'fill-current' : ''}`} />
+            <span>{interaction.saved ? 'محفوظ' : 'حفظ'}</span>
+            {interaction.savesCount > 0 && (
+              <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+                {interaction.savesCount}
+              </span>
+            )}
+          </button>
+
+          {/* زر المشاركة */}
           <button 
             title="شارك هذا المقال"
             onClick={() => setShowShareMenu(!showShareMenu)}
@@ -904,6 +1055,11 @@ export default function ArticlePage({ params }: PageProps) {
           >
             <Share2 className="w-5 h-5" />
             <span>مشاركة</span>
+            {interaction.sharesCount > 0 && (
+              <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+                {interaction.sharesCount}
+              </span>
+            )}
             
             {/* قائمة المشاركة */}
             {showShareMenu && (
@@ -946,12 +1102,54 @@ export default function ArticlePage({ params }: PageProps) {
 
             {/* Share Bar */}
             <div className="flex items-center gap-4 my-8 py-4 border-t border-b">
+              {/* زر الإعجاب */}
+              <button 
+                onClick={handleLike}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                  interaction.liked 
+                    ? 'text-red-500 bg-red-50 dark:bg-red-900/20' 
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+              >
+                <Heart className={`w-5 h-5 ${interaction.liked ? 'fill-current' : ''}`} />
+                <span>{interaction.liked ? 'أعجبني' : 'أعجبني'}</span>
+                {interaction.likesCount > 0 && (
+                  <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+                    {interaction.likesCount}
+                  </span>
+                )}
+              </button>
+
+              {/* زر الحفظ */}
+              <button 
+                onClick={handleSave}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                  interaction.saved 
+                    ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+              >
+                <Bookmark className={`w-5 h-5 ${interaction.saved ? 'fill-current' : ''}`} />
+                <span>{interaction.saved ? 'محفوظ' : 'حفظ'}</span>
+                {interaction.savesCount > 0 && (
+                  <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+                    {interaction.savesCount}
+                  </span>
+                )}
+              </button>
+
+              {/* زر المشاركة */}
               <button 
                 onClick={() => setShowShareMenu(!showShareMenu)}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all relative"
               >
                 <Share2 className="w-5 h-5" />
                 <span>مشاركة</span>
+                {interaction.sharesCount > 0 && (
+                  <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+                    {interaction.sharesCount}
+                  </span>
+                )}
               </button>
 
               {/* Share Menu */}

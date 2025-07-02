@@ -8,7 +8,7 @@ export default function GlobalError({
   reset: () => void
 }) {
   return (
-    <html>
+    <html lang="ar" dir="rtl">
       <body>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
           <div className="max-w-md w-full text-center">
@@ -24,11 +24,24 @@ export default function GlobalError({
             </p>
             
             <button
-              onClick={reset}
+              onClick={() => reset()}
               className="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors"
             >
               إعادة المحاولة
             </button>
+            
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-8 p-4 bg-gray-100 rounded-lg text-left">
+                <p className="text-sm font-mono text-gray-700 break-all">
+                  {error.message}
+                </p>
+                {error.digest && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    Error ID: {error.digest}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </body>

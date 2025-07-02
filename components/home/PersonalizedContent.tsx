@@ -15,7 +15,8 @@ import {
   BarChart3,
   Zap,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Bookmark
 } from 'lucide-react';
 import { useDarkModeContext } from '@/contexts/DarkModeContext';
 import { getValidImageUrl, generatePlaceholderImage } from '@/lib/cloudinary';
@@ -68,6 +69,7 @@ export default function PersonalizedContent() {
   const [userId, setUserId] = useState<string | null>(null);
   const [userPreferences, setUserPreferences] = useState<UserPreference[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [interactions, setInteractions] = useState<Record<string, { liked: boolean; saved: boolean }>>({});
 
   useEffect(() => {
     // جلب معرف المستخدم من localStorage
@@ -265,6 +267,82 @@ export default function PersonalizedContent() {
     return num.toString();
   };
 
+  // دالة معالجة الإعجاب
+  const handleLike = async (articleId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!userId) {
+      // إذا لم يكن المستخدم مسجل، توجيه إلى صفحة تسجيل الدخول
+      window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+      return;
+    }
+
+    try {
+      const currentState = interactions[articleId]?.liked || false;
+      const response = await fetch('/api/interactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          articleId,
+          type: 'like',
+          action: currentState ? 'remove' : 'add'
+        })
+      });
+
+      if (response.ok) {
+        setInteractions(prev => ({
+          ...prev,
+          [articleId]: {
+            ...prev[articleId],
+            liked: !currentState
+          }
+        }));
+      }
+    } catch (error) {
+      console.error('Error handling like:', error);
+    }
+  };
+
+  // دالة معالجة الحفظ
+  const handleSave = async (articleId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!userId) {
+      // إذا لم يكن المستخدم مسجل، توجيه إلى صفحة تسجيل الدخول
+      window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+      return;
+    }
+
+    try {
+      const currentState = interactions[articleId]?.saved || false;
+      const response = await fetch('/api/bookmarks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          itemId: articleId,
+          itemType: 'article'
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setInteractions(prev => ({
+          ...prev,
+          [articleId]: {
+            ...prev[articleId],
+            saved: data.action === 'added'
+          }
+        }));
+      }
+    } catch (error) {
+      console.error('Error handling save:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className={`p-6 rounded-lg border ${
@@ -459,92 +537,117 @@ export default function PersonalizedContent() {
 
               <div className="p-4 space-y-4">
                 {categoryArticles.slice(0, 3).map((article) => (
-                  <Link 
-                    key={article.id} 
-                    href={`/article/${article.id}`}
-                    className="block group"
-                  >
-                    <div className={`p-4 rounded-lg border transition-all duration-200 ${
-                      darkMode 
-                        ? 'border-gray-600 hover:border-blue-500 hover:bg-gray-700/50' 
-                        : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
-                    }`}>
-                      <div className="flex items-start space-x-4 space-x-reverse">
-                        {/* صورة المقال */}
-                        <div className="flex-shrink-0">
-                          {article.featured_image ? (
-                            <Image 
-                              src={getValidImageUrl(article.featured_image, article.title, 'article')} 
-                              alt={article.title}
-                              width={64}
-                              height={64}
-                              className="w-16 h-16 rounded-lg object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = generatePlaceholderImage(article.title, 'article');
-                              }}
-                            />
-                          ) : (
-                            <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${
-                              darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                  <div key={article.id} className="relative group">
+                    <Link 
+                      href={`/article/${article.id}`}
+                      className="block"
+                    >
+                      <div className={`p-4 rounded-lg border transition-all duration-200 ${
+                        darkMode 
+                          ? 'border-gray-600 hover:border-blue-500 hover:bg-gray-700/50' 
+                          : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                      }`}>
+                        <div className="flex items-start space-x-4 space-x-reverse">
+                          {/* صورة المقال */}
+                          <div className="flex-shrink-0">
+                            {article.featured_image ? (
+                              <Image 
+                                src={getValidImageUrl(article.featured_image, article.title, 'article')} 
+                                alt={article.title}
+                                width={64}
+                                height={64}
+                                className="w-16 h-16 rounded-lg object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = generatePlaceholderImage(article.title, 'article');
+                                }}
+                              />
+                            ) : (
+                              <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${
+                                darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                              }`}>
+                                <span className="text-2xl">📰</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* محتوى المقال */}
+                          <div className="flex-1 min-w-0">
+                            <h4 className={`font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors ${
+                              darkMode ? 'text-white' : 'text-gray-900'
                             }`}>
-                              <span className="text-2xl">📰</span>
-                            </div>
-                          )}
-                        </div>
+                              {article.title}
+                            </h4>
+                            
+                            <p className={`text-sm mb-3 line-clamp-2 ${
+                              darkMode ? 'text-gray-300' : 'text-gray-600'
+                            }`}>
+                              {article.excerpt || article.summary}
+                            </p>
 
-                        {/* محتوى المقال */}
-                        <div className="flex-1 min-w-0">
-                          <h4 className={`font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors ${
-                            darkMode ? 'text-white' : 'text-gray-900'
-                          }`}>
-                            {article.title}
-                          </h4>
-                          
-                          <p className={`text-sm mb-3 line-clamp-2 ${
-                            darkMode ? 'text-gray-300' : 'text-gray-600'
-                          }`}>
-                            {article.excerpt || article.summary}
-                          </p>
+                            {/* معلومات إضافية */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-4 space-x-reverse text-xs">
+                                <span className={`flex items-center space-x-1 space-x-reverse ${
+                                  darkMode ? 'text-gray-400' : 'text-gray-500'
+                                }`}>
+                                  <User className="w-3 h-3" />
+                                  <span>{article.author_name || article.author}</span>
+                                </span>
+                                
+                                <span className={`flex items-center space-x-1 space-x-reverse ${
+                                  darkMode ? 'text-gray-400' : 'text-gray-500'
+                                }`}>
+                                  <Clock className="w-3 h-3" />
+                                  <span>{formatDate(article.published_at)}</span>
+                                </span>
+                              </div>
 
-                          {/* معلومات إضافية */}
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4 space-x-reverse text-xs">
-                              <span className={`flex items-center space-x-1 space-x-reverse ${
-                                darkMode ? 'text-gray-400' : 'text-gray-500'
-                              }`}>
-                                <User className="w-3 h-3" />
-                                <span>{article.author_name || article.author}</span>
-                              </span>
-                              
-                              <span className={`flex items-center space-x-1 space-x-reverse ${
-                                darkMode ? 'text-gray-400' : 'text-gray-500'
-                              }`}>
-                                <Clock className="w-3 h-3" />
-                                <span>{formatDate(article.published_at)}</span>
-                              </span>
-                            </div>
-
-                            <div className="flex items-center space-x-3 space-x-reverse text-xs">
-                              <span className={`flex items-center space-x-1 space-x-reverse ${
-                                darkMode ? 'text-gray-400' : 'text-gray-500'
-                              }`}>
-                                <Eye className="w-3 h-3" />
-                                <span>{formatNumber(article.views_count || article.views)}</span>
-                              </span>
-                              
-                              <span className={`flex items-center space-x-1 space-x-reverse ${
-                                darkMode ? 'text-gray-400' : 'text-gray-500'
-                              }`}>
-                                <Heart className="w-3 h-3" />
-                                <span>{formatNumber(article.likes_count || article.likes)}</span>
-                              </span>
+                              <div className="flex items-center space-x-3 space-x-reverse text-xs">
+                                <span className={`flex items-center space-x-1 space-x-reverse ${
+                                  darkMode ? 'text-gray-400' : 'text-gray-500'
+                                }`}>
+                                  <Eye className="w-3 h-3" />
+                                  <span>{formatNumber(article.views_count || article.views)}</span>
+                                </span>
+                                
+                                <span className={`flex items-center space-x-1 space-x-reverse ${
+                                  darkMode ? 'text-gray-400' : 'text-gray-500'
+                                }`}>
+                                  <Heart className="w-3 h-3" />
+                                  <span>{formatNumber(article.likes_count || article.likes)}</span>
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
+                    </Link>
+
+                    {/* أزرار التفاعل */}
+                    <div className="absolute top-2 left-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={(e) => handleLike(article.id, e)}
+                        className={`w-6 h-6 rounded-full shadow-md flex items-center justify-center transition-all ${
+                          interactions[article.id]?.liked 
+                            ? 'bg-red-500 text-white' 
+                            : 'bg-white/90 dark:bg-gray-800/90 text-gray-600 dark:text-gray-400 hover:bg-red-500 hover:text-white'
+                        }`}
+                      >
+                        <Heart className={`w-3 h-3 ${interactions[article.id]?.liked ? 'fill-current' : ''}`} />
+                      </button>
+                      <button 
+                        onClick={(e) => handleSave(article.id, e)}
+                        className={`w-6 h-6 rounded-full shadow-md flex items-center justify-center transition-all ${
+                          interactions[article.id]?.saved 
+                            ? 'bg-blue-500 text-white' 
+                            : 'bg-white/90 dark:bg-gray-800/90 text-gray-600 dark:text-gray-400 hover:bg-blue-500 hover:text-white'
+                        }`}
+                      >
+                        <Bookmark className={`w-3 h-3 ${interactions[article.id]?.saved ? 'fill-current' : ''}`} />
+                      </button>
                     </div>
-                  </Link>
+                  </div>
                 ))}
 
                 {/* رابط عرض المزيد */}

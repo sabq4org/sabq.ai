@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { checkImageExists, getDefaultImageUrl, extractPublicIdFromUrl, deleteFromCloudinary } from '@/lib/cloudinary';
+import { checkImageExists, getDefaultImageUrl, extractPublicIdFromUrl } from '@/lib/cloudinary';
+import { deleteFromCloudinary } from '@/lib/cloudinary-server';
 
 export async function GET(request: NextRequest) {
   try {

@@ -1,0 +1,26 @@
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  swcMinify: true,
+  experimental: {
+    // This is experimental, but can help with resolving modules.
+    serverComponentsExternalPackages: ['tailwind-merge'],
+    appDirVendorSplitting: false,
+  },
+  webpack: (config, { isServer }) => {
+    // A custom webpack configuration to handle potential module resolution issues.
+    if (!isServer) {
+      // Ensures that node-related packages are not bundled on the client-side.
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+
+    return config;
+  },
+};
+
+export default nextConfig; 

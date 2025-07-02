@@ -237,8 +237,49 @@ export async function GET(
       seo_description: dbArticle.seoDescription,
       seo_title: dbArticle.seoTitle,
       allow_comments: dbArticle.allowComments,
-      scheduled_for: dbArticle.scheduledFor
+      scheduled_for: dbArticle.scheduledFor,
+      metadata: dbArticle.metadata
     };
+
+    // معالجة ألبوم الصور من metadata
+    if (dbArticle.metadata && typeof dbArticle.metadata === 'object') {
+      const metadata = dbArticle.metadata as any;
+      
+      // إذا كان هناك ألبوم صور في metadata
+      if (metadata.gallery && Array.isArray(metadata.gallery) && metadata.gallery.length > 0) {
+        // محاولة تحليل المحتوى كـ JSON blocks
+        let contentBlocks = [];
+        try {
+          contentBlocks = JSON.parse(dbArticle.content || '[]');
+          if (!Array.isArray(contentBlocks)) {
+            contentBlocks = [];
+          }
+        } catch (e) {
+          // إذا لم يكن المحتوى JSON، نحوله إلى بلوك HTML
+          if (dbArticle.content) {
+            contentBlocks = [{
+              type: 'html',
+              content: dbArticle.content
+            }];
+          }
+        }
+        
+        // إضافة بلوك الألبوم في نهاية المحتوى
+        contentBlocks.push({
+          type: 'gallery',
+          id: 'gallery-' + Date.now(),
+          images: metadata.gallery.map((img: any) => ({
+            url: img.url || img,
+            alt: img.alt || '',
+            caption: img.caption || ''
+          })),
+          caption: 'ألبوم الصور'
+        });
+        
+        // تحديث المحتوى ليشمل بلوك الألبوم
+        formatted.content = JSON.stringify(contentBlocks);
+      }
+    }
 
     // حفظ في Cache
     articleCache.set(id, {

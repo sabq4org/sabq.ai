@@ -85,7 +85,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getCookie, setCookie } from '@/lib/cookies';
-import { generatePlaceholderImage } from '@/lib/cloudinary';
+import { generatePlaceholderImage, getValidImageUrl } from '@/lib/cloudinary';
 
 import CategoryBadge from './components/CategoryBadge';
 import Header from '../components/Header';
@@ -655,7 +655,7 @@ function NewspaperHomePage(): React.ReactElement {
       >
           <div className="relative h-48 overflow-hidden">
             <img 
-              src={news.featured_image || news.image || generatePlaceholderImage(news.title, 'article')} 
+              src={getValidImageUrl(news.featured_image || news.image, news.title, 'article')} 
               alt={news.title}
               className="w-full h-full object-cover"
               loading="lazy"
