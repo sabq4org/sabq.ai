@@ -42,9 +42,6 @@
     "silent": true
   },
   "regions": ["iad1"],
-  "experimental": {
-    "serverComponentsExternalPackages": ["@prisma/client"]
-  },
   "version": 2,
   "builds": [
     {
