@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { SmartBlockRenderer } from '@/components/smart-blocks/SmartBlockRenderer';
+import SmartBlockRenderer from '@/components/smart-blocks/SmartBlockRenderer';
 import { SmartBlock } from '@/types/smart-block';
 // import { useDarkModeContext } from '@/contexts/DarkModeContext'; // تم تعطيل الوضع الليلي
 

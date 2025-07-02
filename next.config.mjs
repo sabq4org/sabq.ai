@@ -1,12 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
-  experimental: {
-    // This is experimental, but can help with resolving modules.
-    serverComponentsExternalPackages: ['tailwind-merge'],
-    appDirVendorSplitting: false,
-  },
+  serverExternalPackages: ['tailwind-merge'],
   webpack: (config, { isServer }) => {
     // A custom webpack configuration to handle potential module resolution issues.
     if (!isServer) {
