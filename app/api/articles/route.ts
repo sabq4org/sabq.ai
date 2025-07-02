@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { promises as fs } from 'fs'
 import path from 'path'
+import { prisma } from '@/lib/prisma'
 import { filterTestContent, rejectTestContent } from '@/lib/data-protection'
 
 // دالة مساعدة لإضافة CORS headers
@@ -115,96 +116,79 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '6')
     const skip = (page - 1) * limit
 
-    // جلب المقالات من الملف المحلي
-    console.time('🔍 جلب المقالات من الملف المحلي')
-    const articlesFilePath = path.join(process.cwd(), 'data', 'articles.json')
-    const articlesData = JSON.parse(await fs.readFile(articlesFilePath, 'utf-8'))
-    let articles = articlesData.articles || []
-    
-    // تطبيق الفلاتر
-    if (status) {
-      articles = articles.filter((article: any) => article.status === status)
-    }
-    
-    if (categoryId) {
-      articles = articles.filter((article: any) => article.category_id === categoryId)
-    }
-    
-    if (authorId) {
-      articles = articles.filter((article: any) => article.author_id === authorId)
-    }
-    
-    if (search) {
-      articles = articles.filter((article: any) => 
-        article.title?.includes(search) || 
-        article.content?.includes(search) || 
-        article.summary?.includes(search)
-      )
-    }
-    
-    if (featured === 'true') {
-      articles = articles.filter((article: any) => article.is_featured)
-    }
-    
-    if (breaking === 'true') {
-      articles = articles.filter((article: any) => article.is_breaking)
-    }
-    
-    // الترتيب
-    articles.sort((a: any, b: any) => {
-      let aValue, bValue
-      switch (sortField) {
-        case 'title':
-          aValue = a.title || ''
-          bValue = b.title || ''
-          break
-        case 'views':
-          aValue = a.views_count || 0
-          bValue = b.views_count || 0
-          break
-        case 'published_at':
-          aValue = a.published_at || a.created_at
-          bValue = b.published_at || b.created_at
-          break
-        default:
-          aValue = a.created_at
-          bValue = b.created_at
-      }
-      
-      if (order === 'asc') {
-        return aValue > bValue ? 1 : -1
-      } else {
-        return aValue < bValue ? 1 : -1
+    // جلب المقالات من قاعدة البيانات البعيدة
+    console.time('🔍 جلب المقالات من قاعدة البيانات')
+    const articles = await prisma.article.findMany({
+      where,
+      orderBy,
+      skip,
+      take: limit,
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        content: true,
+        excerpt: true,
+        authorId: true,
+        categoryId: true,
+        status: true,
+        featuredImage: true,
+        breaking: true,
+        featured: true,
+        views: true,
+        readingTime: true,
+        createdAt: true,
+        updatedAt: true,
+        publishedAt: true,
+        seoKeywords: true,
+        metadata: true,
+        category: {
+          select: {
+            id: true,
+            name: true,
+            color: true
+          }
+        },
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true
+          }
+        }
       }
     })
-    
-    const total = articles.length
-    articles = articles.slice(skip, skip + limit)
-    console.timeEnd('🔍 جلب المقالات من الملف المحلي')
+    console.timeEnd('🔍 جلب المقالات من قاعدة البيانات')
+
+    // جلب العدد الإجمالي
+    console.time('📊 جلب العدد الإجمالي للمقالات')
+    const total = await prisma.article.count({ where })
+    console.timeEnd('📊 جلب العدد الإجمالي للمقالات')
 
     // تحويل البيانات للتوافق مع الواجهة
     console.time('🔄 تحويل وتنسيق البيانات')
-    const formattedArticles = articles.map((article: any) => ({
+    const formattedArticles = articles.map(article => ({
       id: article.id,
       title: article.title,
       slug: article.slug,
       content: article.content,
-      summary: article.summary || article.excerpt,
-      author_id: article.author_id,
+      summary: article.excerpt,
+      author_id: article.authorId,
       author: article.author || null,
-      category_id: article.category_id,
-      category_name: article.category_name || 'غير مصنف',
+      category_id: article.categoryId,
+      category_name: article.category?.name || 'غير مصنف',
       status: article.status,
-      featured_image: article.featured_image,
-      is_breaking: article.is_breaking,
-      is_featured: article.is_featured,
-      views_count: article.views_count || 0,
-      reading_time: article.reading_time || calculateReadingTime(article.content),
-      created_at: article.created_at,
-      updated_at: article.updated_at,
-      published_at: article.published_at,
-      seo_keywords: article.seo_keywords || [],
-      tags: article.tags || [],
+      featured_image: article.featuredImage,
+      is_breaking: article.breaking,
+      is_featured: article.featured,
+      views_count: article.views,
+      reading_time: article.readingTime || calculateReadingTime(article.content),
+      created_at: article.createdAt.toISOString(),
+      updated_at: article.updatedAt.toISOString(),
+      published_at: article.publishedAt?.toISOString(),
+      seo_keywords: article.seoKeywords || [],
+      tags: article.metadata && typeof article.metadata === 'object' && 'tags' in article.metadata ? (article.metadata as any).tags : [],
       interactions_count: 0,
       comments_count: 0
     }))
@@ -272,41 +256,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // إنشاء مقال جديد في الملف المحلي
-    const articlesFilePath = path.join(process.cwd(), 'data', 'articles.json')
-    const articlesData = JSON.parse(await fs.readFile(articlesFilePath, 'utf-8'))
-    
-    const newArticle = {
-      id: Date.now().toString(),
-      title,
-      content,
-      summary: excerpt || content.substring(0, 200) + '...',
-      category_id: category_id || null,
-      status,
-      featured_image,
-      author_id: 'default-author-id',
-      slug: generateSlug(title),
-      views_count: 0,
-      reading_time: Math.ceil(content.split(' ').length / 200),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      published_at: status === 'published' ? new Date().toISOString() : null,
-      is_breaking: false,
-      is_featured: false,
-      seo_keywords: [],
-      tags: [],
-      metadata: {
-        ...metadata,
-        createdAt: new Date().toISOString(),
-        isSmartDraft: metadata.isSmartDraft || false,
-        aiEditor: metadata.aiEditor || false
+    // إنشاء المقال في قاعدة البيانات البعيدة
+    const article = await prisma.article.create({
+      data: {
+        title,
+        content,
+        excerpt: excerpt || content.substring(0, 200) + '...',
+        categoryId: category_id || null,
+        status,
+        featuredImage: featured_image,
+        metadata: {
+          ...metadata,
+          createdAt: new Date().toISOString(),
+          isSmartDraft: metadata.isSmartDraft || false,
+          aiEditor: metadata.aiEditor || false
+        },
+        authorId: 'default-author-id', // يمكن تغييرها لاحقاً
+        slug: generateSlug(title),
+        views: 0,
+        readingTime: Math.ceil(content.split(' ').length / 200) // تقدير وقت القراءة
       }
-    }
-    
-    articlesData.articles.push(newArticle)
-    await fs.writeFile(articlesFilePath, JSON.stringify(articlesData, null, 2))
-    
-    const article = newArticle
+    })
 
     console.log('✅ تم إنشاء المقال:', {
       id: article.id,
@@ -363,22 +333,15 @@ export async function DELETE(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // تحديث حالة المقالات إلى "محذوف" في الملف المحلي
-    const articlesFilePath = path.join(process.cwd(), 'data', 'articles.json')
-    const articlesData = JSON.parse(await fs.readFile(articlesFilePath, 'utf-8'))
-    
-    let affectedCount = 0
-    articlesData.articles = articlesData.articles.map((article: any) => {
-      if (ids.includes(article.id)) {
-        article.status = 'deleted'
-        affectedCount++
+    // تحديث حالة المقالات إلى "محذوف" في قاعدة البيانات البعيدة
+    const result = await prisma.article.updateMany({
+      where: {
+        id: { in: ids }
+      },
+      data: {
+        status: 'deleted'
       }
-      return article
     })
-    
-    await fs.writeFile(articlesFilePath, JSON.stringify(articlesData, null, 2))
-    
-    const result = { count: affectedCount }
 
     return NextResponse.json({
       success: true,
