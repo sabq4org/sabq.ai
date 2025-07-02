@@ -69,7 +69,7 @@
   },
   {
     "name": "صيف عسير",
-    "position": "topBanner",
+    "position": "beforePersonalization",
     "type": "smart",
     "status": "active",
     "displayType": "hero-slider",
@@ -95,6 +95,6 @@
     "id": "1751477468678",
     "order": 4,
     "createdAt": "2025-07-02T17:31:08.678Z",
-    "updatedAt": "2025-07-02T18:16:46.021Z"
+    "updatedAt": "2025-07-02T19:08:14.386Z"
   }
 ]

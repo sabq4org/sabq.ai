@@ -7,10 +7,10 @@ const BLOCKS_FILE = path.join(process.cwd(), 'data', 'smart_blocks.json');
 interface SmartBlock {
   id: string;
   name: string;
-  position: 'topBanner' | 'afterHighlights' | 'afterCards' | 'beforePersonalization' | 'beforeFooter';
+  position: 'topBanner' | 'afterHighlights' | 'afterCards' | 'beforePersonalization' | 'beforeFooter' | 'below_header' | 'below_personalized' | 'below_deep_analysis' | 'above_footer';
   type: 'smart' | 'custom' | 'html';
   status: 'active' | 'inactive' | 'scheduled';
-  displayType: 'grid' | 'cards' | 'horizontal' | 'gallery' | 'list';
+  displayType: 'grid' | 'cards' | 'horizontal' | 'gallery' | 'list' | 'hero-slider';
   keywords?: string[];
   category?: string;
   articlesCount: number;

@@ -3,7 +3,7 @@ export interface SmartBlock {
   name: string;
   type: 'smart' | 'custom' | 'html' | 'hero' | 'carousel' | 'grid' | 'list' | 'ticker' | 'trending';
   displayType?: string;
-  position: 'topBanner' | 'afterHighlights' | 'afterCards' | 'beforePersonalization' | 'beforeFooter';
+  position: 'topBanner' | 'afterHighlights' | 'afterCards' | 'beforePersonalization' | 'beforeFooter' | 'below_header' | 'below_personalized' | 'below_deep_analysis' | 'above_footer';
   status: 'active' | 'inactive';
   order: number;
   articlesCount?: number;

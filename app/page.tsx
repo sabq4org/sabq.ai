@@ -1734,17 +1734,27 @@ function NewspaperHomePage(): React.ReactElement {
       {/* Header */}
       <Header />
 
-      {/* بلوك الجرعات الذكي - أول بلوك بعد الهيدر */}
+      {/* Smart Blocks - Below Header - أول بلوك أسفل الهيدر مباشرة */}
+      <div className="max-w-7xl mx-auto px-6 py-4">
+        <SmartSlot position="below_header" />
+      </div>
+
+      {/* Smart Blocks - Top Banner (للتوافق مع النظام القديم) */}
+      <div className="max-w-7xl mx-auto px-6 py-4">
+        <SmartSlot position="topBanner" />
+      </div>
+
+      {/* بلوك الجرعات الذكي - ثاني بلوك */}
       <SmartDigestBlock />
       
-      {/* Deep Analysis Widget - ثاني بلوك مباشرة بعد الجرعات */}
+      {/* Deep Analysis Widget - ثالث بلوك */}
       {!deepInsightsLoading && deepInsights.length > 0 && (
         <DeepAnalysisWidget insights={deepInsights} />
       )}
 
-      {/* Smart Blocks - Top Banner */}
+      {/* Smart Blocks - Below Deep Analysis */}
       <div className="max-w-7xl mx-auto px-6 py-4">
-        <SmartSlot position="topBanner" />
+        <SmartSlot position="below_deep_analysis" />
       </div>
 
       {/* Smart Blocks - After Highlights - مخفي للنسخة المطورة */}
@@ -2451,8 +2461,20 @@ function NewspaperHomePage(): React.ReactElement {
         </section>
       </main>
 
-      {/* Smart Blocks - Before Footer - مخفي للنسخة المطورة */}
-      {/* <SmartSlot position="beforeFooter" /> */}
+      {/* Smart Blocks - Below Personalized Content */}
+      <div className="max-w-7xl mx-auto px-6 py-4">
+        <SmartSlot position="below_personalized" />
+      </div>
+
+      {/* Smart Blocks - Above Footer */}
+      <div className="max-w-7xl mx-auto px-6 py-4">
+        <SmartSlot position="above_footer" />
+      </div>
+
+      {/* Smart Blocks - Before Footer (للتوافق مع النظام القديم) */}
+      <div className="max-w-7xl mx-auto px-6 py-4">
+        <SmartSlot position="beforeFooter" />
+      </div>
 
       {/* ويدجت الذكاء الشخصي العائمة - تم إخفاؤه */}
       {/* {!isCheckingAuth && userTracker && isLoggedIn && showUserWidget && (

@@ -784,12 +784,12 @@ export default function ProfilePage() {
 
           {activeTab === 'insights' && (
             userInsights ? (
-              <ReadingInsights 
-                readingProfile={userInsights.readingProfile}
-                categoryDistribution={userInsights.categoryDistribution}
-                timePatterns={userInsights.timePatterns}
-                stats={userInsights.stats}
-              />
+            <ReadingInsights 
+              readingProfile={userInsights.readingProfile}
+              categoryDistribution={userInsights.categoryDistribution}
+              timePatterns={userInsights.timePatterns}
+              stats={userInsights.stats}
+            />
             ) : (
               <div className="space-y-6">
                 {/* محتوى افتراضي لتحليلات القراءة */}

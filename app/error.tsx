@@ -31,14 +31,14 @@ export default function Error({
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button
             onClick={() => reset()}
-            className="btn-primary inline-flex items-center justify-center"
+            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-flex items-center justify-center"
           >
             إعادة المحاولة
           </button>
           
           <button
             onClick={() => window.location.href = '/dashboard'}
-            className="btn-secondary inline-flex items-center justify-center"
+            className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-flex items-center justify-center"
           >
             العودة للوحة التحكم
           </button>

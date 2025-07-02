@@ -6,7 +6,7 @@ import { SmartBlock } from '@/types/smart-block';
 // import { useDarkModeContext } from '@/contexts/DarkModeContext'; // تم تعطيل الوضع الليلي
 
 interface SmartSlotProps {
-  position: 'topBanner' | 'afterHighlights' | 'afterCards' | 'beforePersonalization' | 'beforeFooter';
+  position: 'topBanner' | 'afterHighlights' | 'afterCards' | 'beforePersonalization' | 'beforeFooter' | 'below_header' | 'below_personalized' | 'below_deep_analysis' | 'above_footer';
   className?: string;
 }
 
@@ -138,13 +138,24 @@ export function SmartSlot({ position, className = '' }: SmartSlotProps) {
       // فلترة المقالات بناءً على الكلمات المفتاحية
       const filteredArticles = articlesData.filter((article: any) => {
         // التحقق من وجود الكلمات المفتاحية في:
-        // 1. seo_keywords
+        // 1. seo_keywords (كنص أو مصفوفة)
         // 2. العنوان
         // 3. المحتوى
-        const articleKeywords = article.seo_keywords || [];
+        // 4. الملخص
+        let articleKeywords: string[] = [];
+        
+        // معالجة seo_keywords سواء كانت نص أو مصفوفة
+        if (article.seo_keywords) {
+          if (Array.isArray(article.seo_keywords)) {
+            articleKeywords = article.seo_keywords;
+          } else if (typeof article.seo_keywords === 'string') {
+            articleKeywords = article.seo_keywords.split(',').map((k: string) => k.trim());
+          }
+        }
+        
         const title = article.title || '';
         const content = article.content || '';
-        const summary = article.summary || '';
+        const summary = article.summary || article.excerpt || '';
         
         return block.keywords?.some((keyword: string) => {
           const lowerKeyword = keyword.toLowerCase();
@@ -159,6 +170,13 @@ export function SmartSlot({ position, className = '' }: SmartSlotProps) {
       
       // أخذ العدد المطلوب فقط
       const limitedArticles = filteredArticles.slice(0, block.articlesCount || 6);
+      
+      console.log(`[SmartSlot] المقالات المفلترة للبلوك ${block.name}:`, {
+        totalArticles: articlesData.length,
+        filteredCount: filteredArticles.length,
+        limitedCount: limitedArticles.length,
+        keywords: block.keywords
+      });
       
       setBlockArticles(prev => ({
         ...prev,

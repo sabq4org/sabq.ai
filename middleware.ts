@@ -83,7 +83,7 @@ export function middleware(request: NextRequest) {
     const response = NextResponse.next();
     
     // تحديد Content-Type الصحيح بناءً على نوع الملف
-    if (pathname.endsWith('.js') || pathname.includes('/chunks/')) {
+    if (pathname.endsWith('.js') || pathname.includes('/chunks/') || pathname.includes('vendor-chunks')) {
       response.headers.set('Content-Type', 'application/javascript; charset=UTF-8');
     } else if (pathname.endsWith('.css')) {
       response.headers.set('Content-Type', 'text/css; charset=UTF-8');
@@ -91,6 +91,12 @@ export function middleware(request: NextRequest) {
     
     // إضافة Cache headers للملفات الثابتة
     response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+    
+    // حل مشاكل vendor chunks
+    if (pathname.includes('vendor-chunks')) {
+      response.headers.set('X-Content-Type-Options', 'nosniff');
+      response.headers.set('Access-Control-Allow-Origin', '*');
+    }
     
     return response;
   }

@@ -1,4 +1,10 @@
-{
+const fs = require('fs');
+const path = require('path');
+
+console.log('🔧 إنشاء ملف articles.json جديد...');
+
+// إنشاء بيانات تجريبية صحيحة
+const articlesData = {
   "articles": [
     {
       "id": "article-1",
@@ -12,10 +18,7 @@
       "featured_image": "/images/placeholder.jpg",
       "seo_title": "مقال تجريبي 1",
       "seo_description": "وصف المقال التجريبي",
-      "seo_keywords": [
-        "تجريبي",
-        "مقال"
-      ],
+      "seo_keywords": ["تجريبي", "مقال"],
       "is_breaking": false,
       "is_featured": true,
       "is_pinned": false,
@@ -54,5 +57,19 @@
     }
   ],
   "total": 1,
-  "generated_at": "2025-07-02T19:04:21.199Z"
-}
+  "generated_at": new Date().toISOString()
+};
+
+// حفظ الملف
+const filePath = path.join(__dirname, '..', 'data', 'articles.json');
+fs.writeFileSync(filePath, JSON.stringify(articlesData, null, 2), 'utf8');
+
+console.log('✅ تم إنشاء ملف articles.json جديد صحيح');
+
+// التحقق من صحة JSON
+try {
+  JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  console.log('✅ JSON صحيح');
+} catch (error) {
+  console.error('❌ خطأ في JSON:', error.message);
+} 
