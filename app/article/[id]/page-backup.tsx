@@ -1099,53 +1099,42 @@ export default function ArticlePage({ params }: PageProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Article Content */}
           <section className="lg:col-span-2">
-            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8 lg:p-12">
-              <div className="prose prose-xl max-w-none prose-headings:text-gray-900 dark:prose-headings:text-white prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-strong:text-gray-900 dark:prose-strong:text-white prose-code:text-gray-900 dark:prose-code:text-white prose-pre:bg-transparent prose-blockquote:bg-transparent prose-headings:font-bold prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-6 prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-4 prose-p:text-lg prose-p:leading-relaxed prose-p:mb-6">
-                {renderArticleContent(article.content)}
-              </div>
+            <div className="prose prose-lg max-w-none prose-headings:text-gray-900 dark:prose-headings:text-white prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-strong:text-gray-900 dark:prose-strong:text-white prose-code:text-gray-900 dark:prose-code:text-white prose-pre:bg-transparent prose-blockquote:bg-transparent">
+              {renderArticleContent(article.content)}
             </div>
           </section>
 
           {/* Sidebar */}
           <aside className="lg:col-span-1 space-y-6">
             {/* Article Stats */}
-            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">إحصائيات المقال</h3>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-2xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                      <Eye className="w-4 h-4 text-white" />
-                    </div>
-                    <span className="text-gray-700 dark:text-gray-300 font-medium">المشاهدات</span>
+            <div className="sidebar-card">
+              <div className="trend-badge text-sm text-green-600 mb-2">↑ نمو كبير اليوم</div>
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+                إحصائيات المقال
+              </h3>
+              <div className="article-info-grid">
+                <div className="article-info-item">
+                  <Eye className="w-5 h-5" />
+                  <div>
+                    <div className="article-info-label">المشاهدات</div>
+                    <div className="article-info-value">{article.views_count || 0}</div>
                   </div>
-                  <span className="text-xl font-bold text-blue-600 dark:text-blue-400">{article.views_count || 0}</span>
                 </div>
-                
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                      <Clock className="w-4 h-4 text-white" />
-                    </div>
-                    <span className="text-gray-700 dark:text-gray-300 font-medium">وقت القراءة</span>
+                <div className="article-info-item">
+                  <Clock className="w-5 h-5" />
+                  <div>
+                    <div className="article-info-label">وقت القراءة</div>
+                    <div className="article-info-value">{calculateReadingTime(article.content)} دقائق</div>
                   </div>
-                  <span className="text-xl font-bold text-green-600 dark:text-green-400">{calculateReadingTime(article.content)} دقائق</span>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
-                      <MessageCircle className="w-4 h-4 text-white" />
-                    </div>
-                    <span className="text-gray-700 dark:text-gray-300 font-medium">التعليقات</span>
+                <div className="article-info-item">
+                  <MessageCircle className="w-5 h-5" />
+                  <div>
+                    <div className="article-info-label">التعليقات</div>
+                    <div className="article-info-value">{article.stats?.comments || 0}</div>
                   </div>
-                  <span className="text-xl font-bold text-purple-600 dark:text-purple-400">{article.stats?.comments || 0}</span>
                 </div>
               </div>
             </div>
@@ -1186,8 +1175,8 @@ export default function ArticlePage({ params }: PageProps) {
               </div>
             )}
 
-            {/* مساعد AI */}
-            <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-purple-900/20 dark:via-blue-900/20 dark:to-indigo-900/20 backdrop-blur-sm rounded-3xl shadow-xl border border-purple-200/50 dark:border-purple-700/50 p-6">
+            {/* مساعد AI - جديد */}
+            <div className="sidebar-card bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-800">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  serverExternalPackages: ['tailwind-merge'],
+  serverExternalPackages: ['tailwind-merge', '@prisma/client'],
   
   // إعدادات الصور
   images: {
@@ -77,7 +77,6 @@ const nextConfig = {
   // إعدادات تجريبية لحل مشاكل React 19
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
-    serverComponentsExternalPackages: ['@prisma/client'],
   },
   
   // إعدادات TypeScript
@@ -92,8 +91,7 @@ const nextConfig = {
   
   // إعدادات التطوير
   devIndicators: {
-    buildActivity: true,
-    buildActivityPosition: 'bottom-right',
+    position: 'bottom-right',
   },
 };
 

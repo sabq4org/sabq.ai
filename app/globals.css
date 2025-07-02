@@ -2739,3 +2739,41 @@ a[class*="flex items-center gap-3"][class*="bg-blue"] {
   }
 }
 
+/* إزالة خلفيات محتوى المقال */
+.prose pre,
+.prose code,
+.prose blockquote,
+.prose table,
+.prose th,
+.prose td,
+.prose tr {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* إزالة خلفيات عامة من المحتوى */
+.prose * {
+  background-color: transparent !important;
+}
+
+/* الحفاظ على خلفية الصور فقط */
+.prose img,
+.prose video {
+  background-color: initial !important;
+}
+
+/* إزالة خلفيات من عناصر المحتوى المخصصة */
+.article-content *,
+.content-area *,
+.post-content * {
+  background-color: transparent !important;
+}
+
+/* إزالة خلفيات من التنسيق المتقدم */
+.highlight,
+.code-block,
+.syntax-highlight {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
