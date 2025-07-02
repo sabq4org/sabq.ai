@@ -508,10 +508,11 @@ export default function SettingsPage() {
 
               <button 
                 onClick={() => saveSettings()}
-                className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 flex items-center gap-2 font-medium transition-all duration-300 shadow-md hover:shadow-lg"
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center gap-2 font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                title="حفظ إعدادات هوية الموقع"
               >
                 <Save className="w-5 h-5" />
-                حفظ إعدادات الهوية
+                💾 حفظ إعدادات الهوية
               </button>
             </div>
           )}
@@ -697,10 +698,11 @@ export default function SettingsPage() {
 
               <button 
                 onClick={() => saveSettings()}
-                className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 flex items-center gap-2 font-medium transition-all duration-300 shadow-md hover:shadow-lg"
+                className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl flex items-center gap-2 font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                title="حفظ إعدادات تحسين محركات البحث"
               >
                 <Save className="w-5 h-5" />
-                حفظ إعدادات SEO
+                🔍 حفظ إعدادات SEO
               </button>
             </div>
           )}
@@ -835,10 +837,11 @@ export default function SettingsPage() {
 
               <button 
                 onClick={() => saveSettings()}
-                className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 flex items-center gap-2 font-medium transition-all duration-300 shadow-md hover:shadow-lg"
+                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl flex items-center gap-2 font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                title="حفظ إعدادات التواصل الاجتماعي"
               >
                 <Save className="w-5 h-5" />
-                حفظ إعدادات المشاركة
+                📱 حفظ إعدادات المشاركة
               </button>
             </div>
           )}
@@ -998,10 +1001,11 @@ export default function SettingsPage() {
 
               <button 
                 onClick={() => saveSettings()}
-                className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 flex items-center gap-2 font-medium transition-all duration-300 shadow-md hover:shadow-lg"
+                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl flex items-center gap-2 font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                title="حفظ إعدادات الذكاء الاصطناعي"
               >
                 <Save className="w-5 h-5" />
-                حفظ إعدادات الذكاء الاصطناعي
+                🤖 حفظ إعدادات الذكاء الاصطناعي
               </button>
             </div>
           )}
@@ -1086,10 +1090,11 @@ export default function SettingsPage() {
 
               <button 
                 onClick={() => saveSettings()}
-                className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 flex items-center gap-2 font-medium transition-all duration-300 shadow-md hover:shadow-lg"
+                className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl flex items-center gap-2 font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                title="حفظ إعدادات الأمان والحماية"
               >
                 <Save className="w-5 h-5" />
-                حفظ إعدادات الأمان
+                🔒 حفظ إعدادات الأمان
               </button>
             </div>
           )}
@@ -1182,10 +1187,11 @@ export default function SettingsPage() {
 
               <button 
                 onClick={() => saveSettings()}
-                className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 flex items-center gap-2 font-medium transition-all duration-300 shadow-md hover:shadow-lg"
+                className="px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl flex items-center gap-2 font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                title="حفظ إعدادات النسخ الاحتياطي"
               >
                 <Save className="w-5 h-5" />
-                حفظ إعدادات النسخ الاحتياطي
+                💾 حفظ إعدادات النسخ الاحتياطي
               </button>
             </div>
           )}

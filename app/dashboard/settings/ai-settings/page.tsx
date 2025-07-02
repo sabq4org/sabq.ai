@@ -180,12 +180,18 @@ export default function AISettingsPage() {
           <Button 
             onClick={saveSettings} 
             disabled={isLoading} 
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-300"
+            title="حفظ جميع إعدادات الذكاء الاصطناعي"
           >
-            <div className="p-1 rounded-full bg-green-50 text-green-700">
-              <Save className="w-5 h-5" />
-            </div>
-            {isLoading ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
+            <Save className="w-5 h-5" />
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                جاري الحفظ...
+              </>
+            ) : (
+              '💾 حفظ الإعدادات'
+            )}
           </Button>
         </div>
 
@@ -245,13 +251,18 @@ export default function AISettingsPage() {
               <Button 
                 onClick={testOpenAI} 
                 disabled={isTesting} 
-                variant="outline" 
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium px-4 py-2 shadow-md hover:shadow-lg transition-all duration-300"
+                title="اختبار الاتصال مع OpenAI API"
               >
-                <div className="p-1 rounded-full bg-purple-50 text-purple-700">
-                  <TestTube className="w-4 h-4" />
-                </div>
-                {isTesting ? 'جاري الاختبار...' : 'اختبار الاتصال'}
+                <TestTube className="w-4 h-4" />
+                {isTesting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                    جاري الاختبار...
+                  </>
+                ) : (
+                  '🧪 اختبار الاتصال'
+                )}
               </Button>
             </CardContent>
           </Card>
@@ -271,64 +282,82 @@ export default function AISettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               {/* المحرر الذكي */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
                 <div className="space-y-0.5 flex items-center gap-3">
-                  <div className="p-1 rounded-full bg-orange-50 text-orange-700">
+                  <div className="p-2 rounded-full bg-orange-100 dark:bg-orange-800 text-orange-700 dark:text-orange-300">
                     <Edit3 className="w-5 h-5" />
                   </div>
                   <div>
-                    <Label className="text-base">المحرر الذكي</Label>
-                    <p className="text-sm text-gray-500">
+                    <Label className="text-base font-semibold text-orange-900 dark:text-orange-100">المحرر الذكي</Label>
+                    <p className="text-sm text-orange-700 dark:text-orange-300">
                       تفعيل المحرر الذكي المدعوم بالذكاء الاصطناعي
                     </p>
                   </div>
                 </div>
-                <Switch
-                  checked={settings.features.aiEditor}
-                  onCheckedChange={(checked) => updateSetting('features', 'aiEditor', checked)}
-                />
+                <div className="flex items-center gap-3">
+                  <span className={`text-sm font-medium ${settings.features.aiEditor ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {settings.features.aiEditor ? '✅ مفعل' : '⛔ غير مفعل'}
+                  </span>
+                  <Switch
+                    checked={settings.features.aiEditor}
+                    onCheckedChange={(checked) => updateSetting('features', 'aiEditor', checked)}
+                    className="data-[state=checked]:bg-orange-600"
+                  />
+                </div>
               </div>
 
               <Separator />
 
               {/* التحليلات */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                 <div className="space-y-0.5 flex items-center gap-3">
-                  <div className="p-1 rounded-full bg-blue-50 text-blue-700">
+                  <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-300">
                     <BarChart3 className="w-5 h-5" />
                   </div>
                   <div>
-                    <Label className="text-base">التحليلات</Label>
-                    <p className="text-sm text-gray-500">
+                    <Label className="text-base font-semibold text-blue-900 dark:text-blue-100">التحليلات</Label>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
                       تفعيل نظام التحليلات والإحصائيات
                     </p>
                   </div>
                 </div>
-                <Switch
-                  checked={settings.features.analytics}
-                  onCheckedChange={(checked) => updateSetting('features', 'analytics', checked)}
-                />
+                <div className="flex items-center gap-3">
+                  <span className={`text-sm font-medium ${settings.features.analytics ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {settings.features.analytics ? '✅ مفعل' : '⛔ غير مفعل'}
+                  </span>
+                  <Switch
+                    checked={settings.features.analytics}
+                    onCheckedChange={(checked) => updateSetting('features', 'analytics', checked)}
+                    className="data-[state=checked]:bg-blue-600"
+                  />
+                </div>
               </div>
 
               <Separator />
 
               {/* الإشعارات */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
                 <div className="space-y-0.5 flex items-center gap-3">
-                  <div className="p-1 rounded-full bg-purple-50 text-purple-700">
+                  <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-800 text-purple-700 dark:text-purple-300">
                     <Bell className="w-5 h-5" />
                   </div>
                   <div>
-                    <Label className="text-base">الإشعارات</Label>
-                    <p className="text-sm text-gray-500">
+                    <Label className="text-base font-semibold text-purple-900 dark:text-purple-100">الإشعارات</Label>
+                    <p className="text-sm text-purple-700 dark:text-purple-300">
                       تفعيل نظام الإشعارات والتنبيهات
                     </p>
                   </div>
                 </div>
-                <Switch
-                  checked={settings.features.notifications}
-                  onCheckedChange={(checked) => updateSetting('features', 'notifications', checked)}
-                />
+                <div className="flex items-center gap-3">
+                  <span className={`text-sm font-medium ${settings.features.notifications ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {settings.features.notifications ? '✅ مفعل' : '⛔ غير مفعل'}
+                  </span>
+                  <Switch
+                    checked={settings.features.notifications}
+                    onCheckedChange={(checked) => updateSetting('features', 'notifications', checked)}
+                    className="data-[state=checked]:bg-purple-600"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>

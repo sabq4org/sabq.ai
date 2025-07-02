@@ -456,20 +456,20 @@ export default function DeepAnalysisSettingsPage() {
                       className={`flex-1 ${darkMode ? 'bg-gray-700 border-gray-600' : ''}`}
                     />
                     <Button
-                      variant="outline"
                       onClick={testConnection}
                       disabled={testingConnection}
-                      className="min-w-[120px]"
+                      className="min-w-[140px] bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 shadow-md hover:shadow-lg transition-all duration-300"
+                      title="اختبار الاتصال مع OpenAI API"
                     >
                       {testingConnection ? (
                         <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 ml-2"></div>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white ml-2"></div>
                           جاري الاختبار...
                         </>
                       ) : (
                         <>
                           <Zap className="w-4 h-4 ml-2" />
-                          اختبار الاتصال
+                          🧪 اختبار الاتصال
                         </>
                       )}
                     </Button>
@@ -625,7 +625,8 @@ export default function DeepAnalysisSettingsPage() {
         <Button 
           onClick={handleSave} 
           disabled={saving}
-          className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
+          className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold px-6 py-3 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+          title="حفظ إعدادات التحليل العميق"
         >
           {saving ? (
             <>
@@ -635,7 +636,7 @@ export default function DeepAnalysisSettingsPage() {
           ) : (
             <>
               <Save className="w-4 h-4 ml-2" />
-              حفظ الإعدادات
+              🔬 حفظ إعدادات التحليل العميق
             </>
           )}
         </Button>

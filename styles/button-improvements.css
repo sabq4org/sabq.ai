@@ -1,0 +1,374 @@
+/* تحسينات أزرار الإعدادات - تباين أفضل وألوان واضحة */
+
+/* زر الحفظ الرئيسي */
+.save-button-primary {
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  color: white;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.save-button-primary:hover {
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  transform: translateY(-2px);
+}
+
+.save-button-primary:active {
+  transform: translateY(0);
+}
+
+/* زر الحفظ الأخضر */
+.save-button-success {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: white;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.save-button-success:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  transform: translateY(-2px);
+}
+
+/* زر الحفظ الأرجواني */
+.save-button-purple {
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+  color: white;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.save-button-purple:hover {
+  background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+  transform: translateY(-2px);
+}
+
+/* زر الحفظ الأحمر (الأمان) */
+.save-button-danger {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  color: white;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.save-button-danger:hover {
+  background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+  transform: translateY(-2px);
+}
+
+/* زر الحفظ البرتقالي (النسخ الاحتياطي) */
+.save-button-warning {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: white;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.save-button-warning:hover {
+  background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+  transform: translateY(-2px);
+}
+
+/* زر الحفظ الأزرق الداكن (الذكاء الاصطناعي) */
+.save-button-indigo {
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  color: white;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.save-button-indigo:hover {
+  background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+  transform: translateY(-2px);
+}
+
+/* زر الاختبار */
+.test-button {
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+  color: white;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  min-width: 140px;
+}
+
+.test-button:hover {
+  background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+/* تحسين أزرار التفعيل */
+.feature-toggle-container {
+  padding: 16px;
+  border-radius: 12px;
+  border: 2px solid;
+  transition: all 0.3s ease;
+}
+
+.feature-toggle-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* المحرر الذكي */
+.feature-toggle-orange {
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border-color: #F59E0B;
+}
+
+.feature-toggle-orange:hover {
+  background: linear-gradient(135deg, #FDE68A 0%, #FCD34D 100%);
+}
+
+/* التحليلات */
+.feature-toggle-blue {
+  background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+  border-color: #3B82F6;
+}
+
+.feature-toggle-blue:hover {
+  background: linear-gradient(135deg, #BFDBFE 0%, #93C5FD 100%);
+}
+
+/* الإشعارات */
+.feature-toggle-purple {
+  background: linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%);
+  border-color: #8B5CF6;
+}
+
+.feature-toggle-purple:hover {
+  background: linear-gradient(135deg, #E9D5FF 0%, #DDD6FE 100%);
+}
+
+/* تحسين التباين للنصوص */
+.feature-label {
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.feature-description {
+  color: #6B7280;
+  font-size: 0.875rem;
+}
+
+/* الوضع الداكن */
+.dark .feature-label {
+  color: #F9FAFB;
+}
+
+.dark .feature-description {
+  color: #D1D5DB;
+}
+
+/* تحسين حالة التفعيل */
+.feature-status {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.feature-status.active {
+  color: #059669;
+}
+
+.feature-status.inactive {
+  color: #DC2626;
+}
+
+.dark .feature-status.active {
+  color: #34D399;
+}
+
+.dark .feature-status.inactive {
+  color: #F87171;
+}
+
+/* تحسين الأيقونات */
+.feature-icon {
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+/* تحسين التباين للأيقونات */
+.feature-icon-orange {
+  background: rgba(245, 158, 11, 0.2);
+  color: #D97706;
+}
+
+.feature-icon-blue {
+  background: rgba(59, 130, 246, 0.2);
+  color: #2563EB;
+}
+
+.feature-icon-purple {
+  background: rgba(139, 92, 246, 0.2);
+  color: #7C3AED;
+}
+
+/* تحسين التباين للوضع الداكن */
+.dark .feature-icon-orange {
+  background: rgba(245, 158, 11, 0.3);
+  color: #F59E0B;
+}
+
+.dark .feature-icon-blue {
+  background: rgba(59, 130, 246, 0.3);
+  color: #60A5FA;
+}
+
+.dark .feature-icon-purple {
+  background: rgba(139, 92, 246, 0.3);
+  color: #A78BFA;
+}
+
+/* تحسين التباين للخلفيات */
+.dark .feature-toggle-orange {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.1) 100%);
+  border-color: #F59E0B;
+}
+
+.dark .feature-toggle-blue {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+  border-color: #3B82F6;
+}
+
+.dark .feature-toggle-purple {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border-color: #8B5CF6;
+}
+
+/* تحسين التباين للتبديلات */
+.switch-improved {
+  background-color: #E5E7EB;
+  border: 2px solid #D1D5DB;
+}
+
+.switch-improved[data-state="checked"] {
+  background-color: #3B82F6;
+  border-color: #2563EB;
+}
+
+.dark .switch-improved {
+  background-color: #374151;
+  border-color: #4B5563;
+}
+
+.dark .switch-improved[data-state="checked"] {
+  background-color: #3B82F6;
+  border-color: #60A5FA;
+}
+
+/* تحسين التباين للـ tooltips */
+.tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.tooltip:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1F2937;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1F2937;
+  z-index: 1000;
+}
+
+/* تحسين التباين للرسائل */
+.message-success {
+  background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+  border: 2px solid #10B981;
+  color: #065F46;
+}
+
+.message-error {
+  background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+  border: 2px solid #EF4444;
+  color: #991B1B;
+}
+
+.message-warning {
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border: 2px solid #F59E0B;
+  color: #92400E;
+}
+
+.dark .message-success {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%);
+  border-color: #10B981;
+  color: #34D399;
+}
+
+.dark .message-error {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+  border-color: #EF4444;
+  color: #F87171;
+}
+
+.dark .message-warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.1) 100%);
+  border-color: #F59E0B;
+  color: #FBBF24;
+} 
