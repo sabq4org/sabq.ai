@@ -150,12 +150,13 @@ export async function POST(request: NextRequest) {
             }
           });
 
-          // تسجيل انطباع
-          await prisma.impression.create({
+          // تسجيل نشاط
+          await prisma.activityLog.create({
             data: {
               userId,
-              articleId,
-              sessionId,
+              action: 'article_liked',
+              entityType: 'article',
+              entityId: articleId,
               metadata: {
                 type: 'like',
                 category: article.category?.name || 'general'
@@ -210,12 +211,13 @@ export async function POST(request: NextRequest) {
             }
           });
 
-          // تسجيل انطباع
-          await prisma.impression.create({
+          // تسجيل نشاط
+          await prisma.activityLog.create({
             data: {
               userId,
-              articleId,
-              sessionId,
+              action: 'article_saved',
+              entityType: 'article',
+              entityId: articleId,
               metadata: {
                 type: 'save',
                 category: article.category?.name || 'general'

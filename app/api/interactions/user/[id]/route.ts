@@ -33,10 +33,10 @@ export async function GET(
     // حساب الإحصائيات
     const stats = {
       articlesRead: interactions.filter(i => 
-        i.type === 'read' || i.type === 'view'
+        i.type === 'view'
       ).length,
       interactions: interactions.filter(i => 
-        ['like', 'comment', 'save', 'bookmark'].includes(i.type)
+        ['like', 'comment', 'save'].includes(i.type)
       ).length,
       shares: interactions.filter(i => 
         i.type === 'share'

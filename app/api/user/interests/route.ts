@@ -13,19 +13,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // جلب اهتمامات المستخدم
-    const interests = await prisma.userInterest.findMany({
-      where: { userId },
-      orderBy: { score: 'desc' },
-      select: {
-        id: true,
-        interest: true,
-        score: true,
-        source: true,
-        createdAt: true,
-        updatedAt: true
+    // جلب اهتمامات المستخدم من UserPreference
+    const userPreference = await prisma.userPreference.findUnique({
+      where: {
+        userId_key: {
+          userId,
+          key: 'interests'
+        }
       }
     });
+
+    const interests = userPreference ? (userPreference.value as any[]) || [] : [];
 
     // جلب الفئات المتاحة للاهتمامات
     const categories = await prisma.category.findMany({
@@ -64,32 +62,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // حذف الاهتمامات القديمة
-    await prisma.userInterest.deleteMany({
-      where: { userId }
-    });
-
-    // إضافة الاهتمامات الجديدة
-    const userInterests = await prisma.userInterest.createMany({
-      data: interests.map(interest => ({
-        userId,
-        interest: interest.name || interest,
-        score: interest.score || 1.0,
-        source: 'explicit'
-      }))
-    });
-
-    // تسجيل النشاط
-    await prisma.activityLog.create({
-      data: {
-        userId,
-        action: 'interests_updated',
-        metadata: { interests: interests.map(i => i.name || i) }
-      }
-    });
-
     // تحديث تفضيلات المستخدم
-    await prisma.userPreference.upsert({
+    const userPreference = await prisma.userPreference.upsert({
       where: {
         userId_key: {
           userId,
@@ -107,10 +81,19 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    // تسجيل النشاط
+    await prisma.activityLog.create({
+      data: {
+        userId,
+        action: 'interests_updated',
+        metadata: { interests: interests.map(i => i.name || i) }
+      }
+    });
+
     return NextResponse.json({ 
       success: true,
       message: 'Interests updated successfully',
-      count: userInterests.count
+      count: interests.length
     });
   } catch (error) {
     console.error('Error updating interests:', error);
@@ -133,47 +116,62 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    // جلب الاهتمامات الحالية
+    const userPreference = await prisma.userPreference.findUnique({
+      where: {
+        userId_key: {
+          userId,
+          key: 'interests'
+        }
+      }
+    });
+
+    let currentInterests = userPreference ? (userPreference.value as any[]) || [] : [];
+
     if (action === 'remove') {
       // حذف اهتمام
-      await prisma.userInterest.delete({
-        where: {
-          userId_interest: {
-            userId,
-            interest
-          }
-        }
-      });
-
-      return NextResponse.json({ 
-        success: true,
-        message: 'Interest removed successfully'
-      });
+      currentInterests = currentInterests.filter((i: any) => i.name !== interest && i !== interest);
     } else {
       // تحديث أو إضافة اهتمام
-      const userInterest = await prisma.userInterest.upsert({
-        where: {
-          userId_interest: {
-            userId,
-            interest
-          }
-        },
-        update: {
-          score: score || { increment: 0.1 },
-          updatedAt: new Date()
-        },
-        create: {
-          userId,
-          interest,
-          score: score || 1.0,
-          source: 'explicit'
+      const existingIndex = currentInterests.findIndex((i: any) => i.name === interest || i === interest);
+      
+      if (existingIndex >= 0) {
+        // تحديث الاهتمام الموجود
+        if (typeof currentInterests[existingIndex] === 'string') {
+          currentInterests[existingIndex] = { name: interest, score: score || 1.0 };
+        } else {
+          currentInterests[existingIndex].score = score || (currentInterests[existingIndex].score || 1.0) + 0.1;
         }
-      });
-
-      return NextResponse.json({ 
-        success: true,
-        interest: userInterest
-      });
+      } else {
+        // إضافة اهتمام جديد
+        currentInterests.push({ name: interest, score: score || 1.0 });
+      }
     }
+
+    // حفظ التحديثات
+    await prisma.userPreference.upsert({
+      where: {
+        userId_key: {
+          userId,
+          key: 'interests'
+        }
+      },
+      update: {
+        value: currentInterests,
+        updatedAt: new Date()
+      },
+      create: {
+        userId,
+        key: 'interests',
+        value: currentInterests
+      }
+    });
+
+    return NextResponse.json({ 
+      success: true,
+      message: action === 'remove' ? 'Interest removed successfully' : 'Interest updated successfully',
+      interests: currentInterests
+    });
   } catch (error) {
     console.error('Error updating interest:', error);
     return NextResponse.json(

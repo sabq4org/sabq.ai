@@ -34,17 +34,25 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // إذا لم نجد تفضيلات محفوظة، نحاول من UserInterest
+    // إذا لم نجد تفضيلات محفوظة، نحاول من UserPreference
     if (categoryIds.length === 0) {
-      const userInterests = await prisma.userInterest.findMany({
-        where: { userId },
-        select: { interest: true }
+      const userPreferences = await prisma.userPreference.findMany({
+        where: { 
+          userId,
+          key: { startsWith: 'category_' }
+        },
+        select: { value: true }
       });
 
-      if (userInterests.length > 0) {
+      if (userPreferences.length > 0) {
+        const categorySlugs = userPreferences.map(pref => {
+          const value = pref.value as any;
+          return value?.categorySlug || '';
+        }).filter(slug => slug);
+
         const categories = await prisma.category.findMany({
           where: {
-            slug: { in: userInterests.map(ui => ui.interest) }
+            slug: { in: categorySlugs }
           },
           select: { id: true }
         });

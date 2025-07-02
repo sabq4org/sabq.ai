@@ -28,18 +28,24 @@ export async function POST(request: NextRequest) {
                      'unknown';
     const userAgent = request.headers.get('user-agent') || 'unknown';
 
-    // تسجيل السلوك
-    const behavior = await prisma.userBehavior.create({
+    // تسجيل السلوك في activityLog
+    const behavior = await prisma.activityLog.create({
       data: {
         userId: userId || null,
-        sessionId: sessionId || null,
-        action,
-        page: page || null,
-        element: element || null,
-        value: value || null,
-        metadata: metadata || null,
-        ipAddress: ipAddress.split(',')[0].trim(), // في حالة وجود عدة IPs
-        userAgent: userAgent.substring(0, 500) // تحديد الطول
+        action: `behavior_${action}`,
+        entityType: 'behavior',
+        entityId: sessionId || 'anonymous',
+        metadata: {
+          sessionId: sessionId || null,
+          page: page || null,
+          element: element || null,
+          value: value || null,
+          ipAddress: ipAddress.split(',')[0].trim(),
+          userAgent: userAgent.substring(0, 500),
+          ...metadata
+        },
+        ipAddress: ipAddress.split(',')[0].trim(),
+        userAgent: userAgent.substring(0, 500)
       }
     });
 
@@ -66,22 +72,40 @@ export async function POST(request: NextRequest) {
 
 async function updateUserInterest(userId: string, interest: string) {
   try {
-    await prisma.userInterest.upsert({
+    // تحديث اهتمامات المستخدم في UserPreference
+    const userPreference = await prisma.userPreference.findUnique({
       where: {
-        userId_interest: {
+        userId_key: {
           userId,
-          interest
+          key: 'interests'
+        }
+      }
+    });
+    
+    let currentInterests = userPreference ? (userPreference.value as any[]) || [] : [];
+    const existingIndex = currentInterests.findIndex((i: any) => i.name === interest);
+    
+    if (existingIndex >= 0) {
+      currentInterests[existingIndex].score = (currentInterests[existingIndex].score || 1.0) + 0.1;
+    } else {
+      currentInterests.push({ name: interest, score: 1.0 });
+    }
+    
+    await prisma.userPreference.upsert({
+      where: {
+        userId_key: {
+          userId,
+          key: 'interests'
         }
       },
       update: {
-        score: { increment: 0.1 },
+        value: currentInterests,
         updatedAt: new Date()
       },
       create: {
         userId,
-        interest,
-        score: 1.0,
-        source: 'implicit'
+        key: 'interests',
+        value: currentInterests
       }
     });
   } catch (error) {
@@ -97,27 +121,31 @@ export async function GET(request: NextRequest) {
     const action = searchParams.get('action');
     const limit = parseInt(searchParams.get('limit') || '20');
 
-    const where: any = {};
+    const where: any = { entityType: 'behavior' };
     if (userId) where.userId = userId;
-    if (sessionId) where.sessionId = sessionId;
-    if (action) where.action = action;
+    if (action) where.action = `behavior_${action}`;
 
-    const behaviors = await prisma.userBehavior.findMany({
+    const behaviors = await prisma.activityLog.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       take: limit,
       select: {
         id: true,
         action: true,
-        page: true,
-        element: true,
-        value: true,
         createdAt: true,
         metadata: true
       }
     });
 
-    return NextResponse.json({ behaviors });
+    // تصفية السلوكيات حسب sessionId إذا تم تحديده
+    const filteredBehaviors = sessionId 
+      ? behaviors.filter(b => {
+          const metadata = b.metadata as any;
+          return metadata?.sessionId === sessionId;
+        })
+      : behaviors;
+
+    return NextResponse.json({ behaviors: filteredBehaviors });
   } catch (error) {
     console.error('Error fetching behaviors:', error);
     return NextResponse.json(

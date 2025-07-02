@@ -53,10 +53,8 @@ export async function GET(request: NextRequest) {
           select: {
             loyaltyPoints: true,
             preferences: true,
-            interests: true,
-            sessions: true,
-            impressions: true,
-            recommendations: true
+            articles: true,
+            interactions: true
           }
         }
       },
@@ -77,7 +75,7 @@ export async function GET(request: NextRequest) {
         loyaltyPoints: totalPoints._sum.points || 0,
         loyaltyLevel: calculateLoyaltyLevel(totalPoints._sum.points || 0),
         articlesCount: 0,
-        activityCount: user._count.sessions || 0,
+        activityCount: user._count.interactions || 0,
         status: mapRoleToStatus(user.role),
         created_at: user.createdAt.toISOString(),
         updated_at: user.updatedAt.toISOString()

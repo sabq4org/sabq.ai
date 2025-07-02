@@ -5,7 +5,14 @@ import { handleOptions, corsResponse } from '@/lib/cors';
 
 // معالجة طلبات OPTIONS للـ CORS
 export async function OPTIONS() {
-  return handleOptions();
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }
 
 // بدء انطباع قراءة
@@ -42,47 +49,74 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { sessionId, impressions } = body;
+    const { 
+      articleId, 
+      sessionId, 
+      userAgent, 
+      ipAddress,
+      referrer,
+      metadata 
+    } = body;
 
-    if (!sessionId || !impressions || !Array.isArray(impressions)) {
+    if (!articleId) {
       return NextResponse.json(
-        { error: 'بيانات غير كاملة' },
+        { error: 'Article ID is required' },
         { status: 400 }
       );
     }
 
-    // إنشاء الانطباعات دفعة واحدة
-    const createdImpressions = await prisma.impression.createMany({
-      data: impressions.map((impression: any) => ({
-        userId,
-        articleId: impression.articleId,
-        sessionId,
-        metadata: impression.metadata || {}
-      })),
-      skipDuplicates: true
-    });
-
-    // إضافة نقاط ولاء للمشاهدة (نقطة واحدة لكل جلسة مشاهدة)
-    if (createdImpressions.count > 0) {
-      await prisma.loyaltyPoint.create({
+    // تسجيل التفاعل كـ view (فقط إذا كان هناك مستخدم)
+    let interaction = null;
+    if (userId) {
+      interaction = await prisma.interaction.create({
         data: {
           userId,
-          points: 1,
-          action: 'content_view',
-          referenceId: sessionId,
-          referenceType: 'session',
+          articleId,
+          type: 'view'
+        }
+      });
+    }
+
+    // تسجيل النشاط إذا كان هناك مستخدم
+    if (userId) {
+      await prisma.activityLog.create({
+        data: {
+          userId,
+          action: 'article_viewed',
+          entityType: 'article',
+          entityId: articleId,
           metadata: {
-            impressionsCount: createdImpressions.count,
-            timestamp: new Date().toISOString()
+            sessionId,
+            userAgent,
+            ipAddress,
+            referrer,
+            ...metadata
           }
         }
       });
     }
 
+    // إضافة نقاط ولاء إذا كان هناك مستخدم
+    if (userId) {
+      try {
+        await prisma.loyaltyPoint.create({
+          data: {
+            userId,
+            points: 1,
+            action: 'article_view',
+            referenceId: articleId,
+            referenceType: 'article'
+          }
+        });
+      } catch (error) {
+        // تجاهل إذا كانت النقاط موجودة
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      count: createdImpressions.count,
-      message: `تم تسجيل ${createdImpressions.count} انطباع بنجاح`
+      interactionId: interaction?.id || null,
+      message: 'Impression recorded successfully'
     });
 
   } catch (error) {
@@ -97,35 +131,32 @@ export async function POST(request: NextRequest) {
 // انتهاء انطباع القراءة
 export async function PUT(request: NextRequest) {
   try {
-    const { impressionId, readDuration } = await request.json();
+    const { interactionId, readDuration } = await request.json();
     
-    if (!impressionId || readDuration === undefined) {
+    if (!interactionId || readDuration === undefined) {
       return NextResponse.json(
-        { error: 'Impression ID and read duration are required' },
+        { error: 'Interaction ID and read duration are required' },
         { status: 400 }
       );
     }
     
-    // تحديث مدة القراءة ووقت الانتهاء
-    const impression = await prisma.impression.update({
-      where: { id: impressionId },
+    // تحديث التفاعل مع معلومات القراءة
+    const interaction = await prisma.interaction.update({
+      where: { id: interactionId },
       data: {
-        endedAt: new Date(),
-        metadata: {
-          readDuration
-        }
+        // يمكن إضافة metadata للتفاعل إذا لزم الأمر
       }
     });
     
     // إضافة نقاط ولاء إضافية إذا كانت القراءة مكتملة (أكثر من 30 ثانية)
-    if (readDuration > 30 && impression.userId) {
+    if (readDuration > 30 && interaction.userId) {
       try {
         await prisma.loyaltyPoint.create({
           data: {
-            userId: impression.userId,
+            userId: interaction.userId,
             points: 2,
             action: 'read_complete',
-            referenceId: impression.articleId,
+            referenceId: interaction.articleId,
             referenceType: 'article'
           }
         });
@@ -136,35 +167,33 @@ export async function PUT(request: NextRequest) {
     
     return NextResponse.json({
       success: true,
-      impression
+      interaction
     });
     
   } catch (error) {
-    console.error('Error updating impression:', error);
+    console.error('Error updating interaction:', error);
     return NextResponse.json(
-      { error: 'Failed to update impression' },
+      { error: 'Failed to update interaction' },
       { status: 500 }
     );
   }
 }
 
-// جلب انطباعات المستخدم أو المقال
+// جلب تفاعلات المستخدم أو المقال
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const articleId = searchParams.get('articleId');
-    const sessionId = searchParams.get('sessionId');
     
-    const where: any = {};
+    const where: any = { type: 'view' };
     
     if (userId) where.userId = userId;
     if (articleId) where.articleId = articleId;
-    if (sessionId) where.sessionId = sessionId;
     
-    const impressions = await prisma.impression.findMany({
+    const interactions = await prisma.interaction.findMany({
       where,
-      orderBy: { startedAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: 50,
       include: {
         article: {
@@ -181,23 +210,21 @@ export async function GET(request: NextRequest) {
     
     // حساب الإحصائيات
     const stats = {
-      totalImpressions: impressions.length,
-      completedReads: impressions.filter(i => i.readingComplete).length,
-      averageScrollDepth: impressions.reduce((sum, i) => sum + (i.scrollDepth || 0), 0) / impressions.length || 0,
-      averageActiveTime: impressions.reduce((sum, i) => sum + (i.activeTime || 0), 0) / impressions.length || 0,
-      totalReadingTime: impressions.reduce((sum, i) => sum + (i.durationSeconds || 0), 0)
+      totalViews: interactions.length,
+      uniqueUsers: new Set(interactions.filter(i => i.userId).map(i => i.userId)).size,
+      totalArticles: new Set(interactions.map(i => i.articleId)).size
     };
     
     return NextResponse.json({
       success: true,
-      impressions,
+      interactions,
       stats
     });
     
   } catch (error) {
-    console.error('Error fetching impressions:', error);
+    console.error('Error fetching interactions:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch impressions' },
+      { error: 'Failed to fetch interactions' },
       { status: 500 }
     );
   }
@@ -211,41 +238,6 @@ async function updateReadingHistory(
   activeTime: number
 ) {
   try {
-    const existingHistory = await prisma.readingHistory.findUnique({
-      where: {
-        userId_articleId: {
-          userId,
-          articleId
-        }
-      }
-    });
-    
-    if (existingHistory) {
-      await prisma.readingHistory.update({
-        where: {
-          userId_articleId: {
-            userId,
-            articleId
-          }
-        },
-        data: {
-          readingProgress: Math.max(existingHistory.readingProgress, scrollDepth),
-          totalReadTime: existingHistory.totalReadTime + activeTime,
-          readCount: existingHistory.readCount + 1
-        }
-      });
-    } else {
-      await prisma.readingHistory.create({
-        data: {
-          userId,
-          articleId,
-          readingProgress: scrollDepth,
-          totalReadTime: activeTime,
-          readCount: 1
-        }
-      });
-    }
-    
     // تحديث اهتمامات المستخدم بناءً على القراءة
     if (scrollDepth > 50) {
       const article = await prisma.article.findUnique({
@@ -260,23 +252,40 @@ async function updateReadingHistory(
         });
         
         if (category?.slug) {
-          await prisma.userInterest.upsert({
+          // تحديث اهتمامات المستخدم في UserPreference
+          const userPreference = await prisma.userPreference.findUnique({
             where: {
-              userId_interest: {
+              userId_key: {
                 userId,
-                interest: category.slug
+                key: 'interests'
+              }
+            }
+          });
+          
+          let currentInterests = userPreference ? (userPreference.value as any[]) || [] : [];
+          const existingIndex = currentInterests.findIndex((i: any) => i.name === category.slug);
+          
+          if (existingIndex >= 0) {
+            currentInterests[existingIndex].score = (currentInterests[existingIndex].score || 1.0) + 0.1;
+          } else {
+            currentInterests.push({ name: category.slug, score: 1.0 });
+          }
+          
+          await prisma.userPreference.upsert({
+            where: {
+              userId_key: {
+                userId,
+                key: 'interests'
               }
             },
             update: {
-              score: {
-                increment: 0.1
-              }
+              value: currentInterests,
+              updatedAt: new Date()
             },
             create: {
               userId,
-              interest: category.slug,
-              score: 1.0,
-              source: 'implicit'
+              key: 'interests',
+              value: currentInterests
             }
           });
         }

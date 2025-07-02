@@ -212,48 +212,49 @@ export default function ProfilePage() {
       const allCategories = categoriesResult.status === 'fulfilled' && categoriesResult.value ? 
         (categoriesResult.value.categories || categoriesResult.value || []) : [];
 
-      if (user.id && user.id.startsWith('guest-')) {
-        // للمستخدمين الضيوف
-        if (user.interests && user.interests.length > 0 && allCategories.length > 0) {
-          const userCategories = allCategories
-            .filter((cat: any) => user.interests.includes(cat.id))
-            .map((cat: any) => ({
-              category_id: cat.id,
-              category_name: cat.name || cat.name_ar,
-              category_icon: cat.icon || '📌',
-              category_color: cat.color || '#6B7280'
-            }));
-          setPreferences(userCategories);
-        }
-      } else {
-        // للمستخدمين المسجلين
-        if (interestsResult.status === 'fulfilled' && interestsResult.value?.interests?.length > 0) {
-          const userCategories = allCategories
-            .filter((cat: any) => 
-              interestsResult.value.interests.some((interest: any) => 
-                interest.interest === cat.slug || interest.interest === cat.name
-              )
-            )
-            .map((cat: any) => ({
-              category_id: cat.id,
-              category_name: cat.name || cat.name_ar,
-              category_icon: cat.icon || '📌',
-              category_color: cat.color || '#6B7280'
-            }));
-          setPreferences(userCategories);
-        } else if (user.interests && user.interests.length > 0 && allCategories.length > 0) {
-          // استخدام localStorage كخيار احتياطي
-          const userCategories = allCategories
-            .filter((cat: any) => user.interests.includes(cat.id) || user.interests.includes(cat.slug))
-            .map((cat: any) => ({
-              category_id: cat.id,
-              category_name: cat.name || cat.name_ar,
-              category_icon: cat.icon || '📌',
-              category_color: cat.color || '#6B7280'
-            }));
-          setPreferences(userCategories);
-        }
-      }
+      // تعطيل معالجة التفضيلات مؤقتاً حتى يتم إصلاح schema
+      // if (user.id && user.id.startsWith('guest-')) {
+      //   // للمستخدمين الضيوف
+      //   if (user.preferences && user.preferences.length > 0 && allCategories.length > 0) {
+      //     const userCategories = allCategories
+      //       .filter((cat: any) => user.preferences.includes(cat.id))
+      //       .map((cat: any) => ({
+      //         category_id: cat.id,
+      //         category_name: cat.name || cat.name_ar,
+      //         category_icon: cat.icon || '📌',
+      //         category_color: cat.color || '#6B7280'
+      //       }));
+      //     setPreferences(userCategories);
+      //   }
+      // } else {
+      //   // للمستخدمين المسجلين
+      //   if (interestsResult.status === 'fulfilled' && interestsResult.value?.interests?.length > 0) {
+      //     const userCategories = allCategories
+      //       .filter((cat: any) => 
+      //         interestsResult.value.interests.some((interest: any) => 
+      //           interest.interest === cat.slug || interest.interest === cat.name
+      //         )
+      //       )
+      //       .map((cat: any) => ({
+      //         category_id: cat.id,
+      //         category_name: cat.name || cat.name_ar,
+      //         category_icon: cat.icon || '📌',
+      //         category_color: cat.color || '#6B7280'
+      //       }));
+      //     setPreferences(userCategories);
+      //   } else if (user.preferences && user.preferences.length > 0 && allCategories.length > 0) {
+      //     // استخدام localStorage كخيار احتياطي
+      //     const userCategories = allCategories
+      //       .filter((cat: any) => user.preferences.includes(cat.id) || user.preferences.includes(cat.slug))
+      //       .map((cat: any) => ({
+      //         category_id: cat.id,
+      //         category_name: cat.name || cat.name_ar,
+      //         category_icon: cat.icon || '📌',
+      //         category_color: cat.color || '#6B7280'
+      //       }));
+      //     setPreferences(userCategories);
+      //   }
+      // }
 
       // معالجة التفاعلات
       if (interactionsResult.status === 'fulfilled' && interactionsResult.value?.stats) {

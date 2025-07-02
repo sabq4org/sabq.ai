@@ -68,8 +68,8 @@ export function useArticleTracking(articleId: string) {
   const tracking = useBehaviorTracking({ articleId });
 
   return {
-    onLike: (isLiked: boolean) => tracking.trackInteraction(isLiked ? 'like' : 'unlike'),
-    onSave: (isSaved: boolean) => tracking.trackInteraction(isSaved ? 'save' : 'unsave'),
+    onLike: (isLiked: boolean) => tracking.trackInteraction(isLiked ? 'like' : 'like'),
+    onSave: (isSaved: boolean) => tracking.trackInteraction(isSaved ? 'save' : 'save'),
     onShare: (platform?: string) => tracking.trackInteraction('share', { platform }),
     onComment: () => tracking.trackInteraction('comment'),
     trackRecommendationClick: tracking.trackRecommendationClick

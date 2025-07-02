@@ -40,19 +40,29 @@ export async function POST(request: NextRequest) {
 
     // حفظ الاهتمامات
     if (profileData.interests && profileData.interests.length > 0) {
-      // حذف الاهتمامات القديمة
-      await prisma.userInterest.deleteMany({
-        where: { userId }
-      });
-
-      // إضافة الاهتمامات الجديدة
-      await prisma.userInterest.createMany({
-        data: profileData.interests.map((interest: string) => ({
+      // حفظ الاهتمامات في UserPreference
+      await prisma.userPreference.upsert({
+        where: {
+          userId_key: {
+            userId,
+            key: 'interests'
+          }
+        },
+        update: {
+          value: profileData.interests.map((interest: string) => ({
+            name: interest,
+            score: 1.0
+          })),
+          updatedAt: new Date()
+        },
+        create: {
           userId,
-          interest,
-          score: 1.0,
-          source: 'onboarding'
-        }))
+          key: 'interests',
+          value: profileData.interests.map((interest: string) => ({
+            name: interest,
+            score: 1.0
+          }))
+        }
       });
     }
 
@@ -164,19 +174,10 @@ export async function GET(request: NextRequest) {
 
     const userId = decoded.id;
 
-    // جلب بيانات المستخدم مع الاهتمامات والتفضيلات
+    // جلب بيانات المستخدم مع التفضيلات
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
-        interests: {
-          select: {
-            interest: true,
-            score: true
-          },
-          orderBy: {
-            score: 'desc'
-          }
-        },
         preferences: {
           select: {
             key: true,
@@ -194,17 +195,20 @@ export async function GET(request: NextRequest) {
     }
 
     // تنظيم البيانات
-    const preferences = user.preferences.reduce((acc: any, pref) => {
+    const preferences = user.preferences.reduce((acc: any, pref: any) => {
       acc[pref.key] = pref.value;
       return acc;
     }, {});
+
+    // جلب الاهتمامات من التفضيلات
+    const interests = preferences.interests ? (preferences.interests as any[]).map((i: any) => i.name || i) : [];
 
     return NextResponse.json({
       success: true,
       data: {
         avatar: user.avatar,
         name: user.name,
-        interests: user.interests.map(i => i.interest),
+        interests: interests,
         ...preferences
       }
     });

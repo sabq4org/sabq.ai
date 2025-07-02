@@ -57,7 +57,7 @@ export async function GET(
           data: {
             ...category,
             name_ar: category.name,
-            name_en: category.nameEn,
+            name_en: category.name_en,
             color_hex: category.color,
             articles_count: category._count.articles,
             is_active: category.isActive,
@@ -135,7 +135,7 @@ export async function PUT(
       where: { id: existingCategory.id },
       data: {
         name: body.name || body.name_ar || existingCategory.name,
-        nameEn: body.name_en !== undefined ? body.name_en : existingCategory.nameEn,
+        name_en: body.name_en !== undefined ? body.name_en : existingCategory.name_en,
         slug: body.slug || existingCategory.slug,
         description: body.description !== undefined ? body.description : existingCategory.description,
         color: body.color || body.color_hex || existingCategory.color,

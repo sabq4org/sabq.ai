@@ -28,9 +28,8 @@ export async function POST(request: NextRequest) {
           id: userId,
           name: name || 'مستخدم جديد',
           email: email || `guest_${Date.now()}@local.com`,
-          password: await bcrypt.hash(`guest_${Date.now()}`, 10),
+          passwordHash: await bcrypt.hash(`guest_${Date.now()}`, 10),
           role: 'reader',
-          status: 'active',
           isVerified: true
         }
       });

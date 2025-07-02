@@ -36,28 +36,40 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // إذا لم نجد في UserPreference، نحاول من UserInterest
-    const userInterests = await prisma.userInterest.findMany({
-      where: { userId },
-      select: { interest: true }
+    // إذا لم نجد في UserPreference، نحاول من اهتمامات المستخدم
+    const userInterestPreference = await prisma.userPreference.findUnique({
+      where: {
+        userId_key: {
+          userId,
+          key: 'interests'
+        }
+      }
     });
 
-    if (userInterests.length > 0) {
-      // جلب التصنيفات بناءً على الـ slug
-      const categories = await prisma.category.findMany({
-        where: {
-          slug: { in: userInterests.map(ui => ui.interest) }
-        },
-        select: { id: true }
-      });
-
-      const categoryIds = categories.map(c => c.id);
+    if (userInterestPreference && userInterestPreference.value) {
+      const interests = Array.isArray(userInterestPreference.value) 
+        ? userInterestPreference.value 
+        : [];
       
-      return NextResponse.json({ 
-        success: true,
-        categoryIds,
-        source: 'interests'
-      });
+      const interestNames = interests.map((i: any) => i.name || i);
+      
+      if (interestNames.length > 0) {
+        // جلب التصنيفات بناءً على الـ slug
+        const categories = await prisma.category.findMany({
+          where: {
+            slug: { in: interestNames }
+          },
+          select: { id: true }
+        });
+
+        const categoryIds = categories.map(c => c.id);
+        
+        return NextResponse.json({ 
+          success: true,
+          categoryIds,
+          source: 'interests'
+        });
+      }
     }
 
     // لا توجد تفضيلات محفوظة

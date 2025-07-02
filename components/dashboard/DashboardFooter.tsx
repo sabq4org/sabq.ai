@@ -398,21 +398,21 @@ export default function DashboardFooter({ userId, onInteraction }: DashboardFoot
                   <div className="grid grid-cols-3 gap-2">
                     <div className="text-center p-2 bg-green-50 rounded">
                       <div className="text-lg font-bold text-green-600">
-                        {analytics.readingPatterns.readingSpeed?.fast || 0}
+                        {Math.round(analytics.readingPatterns.averageDuration / 60) || 0}
                       </div>
-                      <div className="text-xs text-gray-600">سريع</div>
+                      <div className="text-xs text-gray-600">دقيقة</div>
                     </div>
                     <div className="text-center p-2 bg-blue-50 rounded">
                       <div className="text-lg font-bold text-blue-600">
-                        {analytics.readingPatterns.readingSpeed?.normal || 0}
+                        {Object.keys(analytics.readingPatterns.byDayOfWeek || {}).length || 0}
                       </div>
-                      <div className="text-xs text-gray-600">متوسط</div>
+                      <div className="text-xs text-gray-600">يوم نشط</div>
                     </div>
                     <div className="text-center p-2 bg-purple-50 rounded">
                       <div className="text-lg font-bold text-purple-600">
-                        {analytics.readingPatterns.readingSpeed?.slow || 0}
+                        {Math.max(...Object.values(analytics.readingPatterns.byDayOfWeek || {})) || 0}
                       </div>
-                      <div className="text-xs text-gray-600">متأني</div>
+                      <div className="text-xs text-gray-600">مقالة/يوم</div>
                     </div>
                   </div>
                 </div>

@@ -13,5 +13,75 @@
     "user_id": "test-user-123",
     "category_id": "3",
     "created_at": "2025-06-30T12:48:12.934Z"
+  },
+  {
+    "user_id": "test-user-456",
+    "category_id": "94604730-5d3b-43f2-ab8d-fab7b1114f6b",
+    "source": "manual",
+    "created_at": "2025-07-02T07:34:18.167Z",
+    "updated_at": "2025-07-02T07:34:18.167Z"
+  },
+  {
+    "user_id": "test-user-456",
+    "category_id": "1bde8162-d255-4e70-a623-4c87ac03ce01",
+    "source": "manual",
+    "created_at": "2025-07-02T07:34:18.167Z",
+    "updated_at": "2025-07-02T07:34:18.167Z"
+  },
+  {
+    "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+    "category_id": "94604730-5d3b-43f2-ab8d-fab7b1114f6b",
+    "source": "manual",
+    "created_at": "2025-07-02T09:22:21.225Z",
+    "updated_at": "2025-07-02T09:22:21.225Z"
+  },
+  {
+    "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+    "category_id": "656fb26d-ba59-4b1d-bb89-899abf61e6a3",
+    "source": "manual",
+    "created_at": "2025-07-02T09:22:21.225Z",
+    "updated_at": "2025-07-02T09:22:21.225Z"
+  },
+  {
+    "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+    "category_id": "1bde8162-d255-4e70-a623-4c87ac03ce01",
+    "source": "manual",
+    "created_at": "2025-07-02T09:22:21.225Z",
+    "updated_at": "2025-07-02T09:22:21.225Z"
+  },
+  {
+    "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+    "category_id": "cf47cbd2-4f55-44d3-8b14-36d415424f9d",
+    "source": "manual",
+    "created_at": "2025-07-02T09:22:21.225Z",
+    "updated_at": "2025-07-02T09:22:21.225Z"
+  },
+  {
+    "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+    "category_id": "85165437-e2d6-4208-a7f3-2e3f82fb34c9",
+    "source": "manual",
+    "created_at": "2025-07-02T09:22:21.225Z",
+    "updated_at": "2025-07-02T09:22:21.225Z"
+  },
+  {
+    "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+    "category_id": "05ef071c-db4f-432f-82b4-8117914edc89",
+    "source": "manual",
+    "created_at": "2025-07-02T09:22:21.225Z",
+    "updated_at": "2025-07-02T09:22:21.225Z"
+  },
+  {
+    "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+    "category_id": "a806adbd-ead7-4242-8117-b316d120e7a6",
+    "source": "manual",
+    "created_at": "2025-07-02T09:22:21.225Z",
+    "updated_at": "2025-07-02T09:22:21.225Z"
+  },
+  {
+    "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+    "category_id": "1454b562-63e6-40f5-8f74-bb9c156d5a3a",
+    "source": "manual",
+    "created_at": "2025-07-02T09:22:21.225Z",
+    "updated_at": "2025-07-02T09:22:21.225Z"
   }
 ]

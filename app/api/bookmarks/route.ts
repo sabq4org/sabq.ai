@@ -41,20 +41,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // التحقق من وجود الإشارة المرجعية
-    const existing = await prisma.bookmark.findUnique({
+    // التحقق من وجود الإشارة المرجعية في جدول interactions
+    const existing = await prisma.interaction.findFirst({
       where: {
-        userId_itemId_itemType: {
-          userId,
-          itemId,
-          itemType
-        }
+        userId,
+        articleId: itemId,
+        type: 'save'
       }
     });
 
     if (existing) {
       // حذف الإشارة المرجعية إذا كانت موجودة (toggle)
-      await prisma.bookmark.delete({
+      await prisma.interaction.delete({
         where: { id: existing.id }
       });
 
@@ -64,13 +62,12 @@ export async function POST(request: NextRequest) {
         bookmarkId: existing.id 
       });
     } else {
-      // إنشاء إشارة مرجعية جديدة
-      const bookmark = await prisma.bookmark.create({
+      // إنشاء إشارة مرجعية جديدة في جدول interactions
+      const bookmark = await prisma.interaction.create({
         data: {
           userId,
-          itemId,
-          itemType,
-          metadata: metadata || null
+          articleId: itemId,
+          type: 'save'
         }
       });
 
@@ -109,7 +106,6 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = await getUserIdFromToken(request) || searchParams.get('userId');
-    const itemType = searchParams.get('itemType');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
 
@@ -120,66 +116,62 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const where: any = { userId };
-    if (itemType) where.itemType = itemType;
-
-    // جلب الإشارات المرجعية مع معلومات المحتوى
-    const bookmarks = await prisma.bookmark.findMany({
-      where,
+    // جلب الإشارات المرجعية من جدول interactions
+    const bookmarks = await prisma.interaction.findMany({
+      where: {
+        userId,
+        type: 'save'
+      },
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * limit,
       take: limit,
       select: {
         id: true,
-        itemId: true,
-        itemType: true,
+        articleId: true,
         createdAt: true,
-        metadata: true
-      }
-    });
-
-    // جلب تفاصيل المقالات المحفوظة
-    const articleIds = bookmarks
-      .filter((b: any) => b.itemType === 'article')
-      .map((b: any) => b.itemId);
-
-    const articles = articleIds.length > 0 ? await prisma.article.findMany({
-      where: { id: { in: articleIds } },
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        excerpt: true,
-        featuredImage: true,
-        publishedAt: true,
-        author: {
+        article: {
           select: {
             id: true,
-            name: true,
-            avatar: true
-          }
-        },
-        category: {
-          select: {
-            id: true,
-            name: true,
-            slug: true
+            title: true,
+            slug: true,
+            excerpt: true,
+            featuredImage: true,
+            publishedAt: true,
+            author: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true
+              }
+            },
+            category: {
+              select: {
+                id: true,
+                name: true,
+                slug: true
+              }
+            }
           }
         }
       }
-    }) : [];
-
-    // دمج البيانات
-    const bookmarksWithContent = bookmarks.map((bookmark: any) => {
-      if (bookmark.itemType === 'article') {
-        const article = articles.find((a: any) => a.id === bookmark.itemId);
-        return { ...bookmark, content: article };
-      }
-      return bookmark;
     });
 
+    // تحويل البيانات إلى التنسيق المطلوب
+    const bookmarksWithContent = bookmarks.map((bookmark: any) => ({
+      id: bookmark.id,
+      itemId: bookmark.articleId,
+      itemType: 'article',
+      createdAt: bookmark.createdAt,
+      content: bookmark.article
+    }));
+
     // حساب العدد الإجمالي
-    const total = await prisma.bookmark.count({ where });
+    const total = await prisma.interaction.count({ 
+      where: {
+        userId,
+        type: 'save'
+      }
+    });
 
     return NextResponse.json({ 
       bookmarks: bookmarksWithContent,
@@ -205,20 +197,21 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const bookmarkId = searchParams.get('id');
-    const userId = await getUserIdFromToken(request) || searchParams.get('userId');
+    const userId = await getUserIdFromToken(request);
 
     if (!bookmarkId || !userId) {
       return NextResponse.json(
-        { error: 'Missing required parameters' },
+        { error: 'Bookmark ID and user authentication required' },
         { status: 400 }
       );
     }
 
-    // التحقق من ملكية الإشارة المرجعية
-    const bookmark = await prisma.bookmark.findFirst({
+    // التحقق من وجود الإشارة المرجعية
+    const bookmark = await prisma.interaction.findFirst({
       where: {
         id: bookmarkId,
-        userId
+        userId,
+        type: 'save'
       }
     });
 
@@ -230,7 +223,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // حذف الإشارة المرجعية
-    await prisma.bookmark.delete({
+    await prisma.interaction.delete({
       where: { id: bookmarkId }
     });
 
@@ -239,15 +232,15 @@ export async function DELETE(request: NextRequest) {
       data: {
         userId,
         action: 'bookmark_removed',
-        entityType: bookmark.itemType,
-        entityId: bookmark.itemId,
+        entityType: 'article',
+        entityId: bookmark.articleId,
         metadata: { bookmarkId }
       }
     });
 
     return NextResponse.json({ 
-      success: true, 
-      message: 'Bookmark removed successfully' 
+      success: true,
+      message: 'Bookmark removed successfully'
     });
   } catch (error) {
     console.error('Error deleting bookmark:', error);

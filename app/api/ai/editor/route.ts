@@ -75,9 +75,13 @@ function buildPrompt(type: AITaskType, content: string, context?: any): string {
 }
 
 export async function POST(request: NextRequest) {
+  let type: string, content: string, context: any;
+  
   try {
     const body = await request.json();
-    const { type, content, context } = body;
+    type = body.type;
+    content = body.content;
+    context = body.context;
     
     if (!content || !type) {
       return NextResponse.json(
@@ -124,14 +128,14 @@ export async function POST(request: NextRequest) {
         .filter(line => line.trim())
         .map(line => line.replace(/^[-*•]\s*/, '').trim());
       
-      formattedResult = keywords?.join(', ');
+      formattedResult = keywords?.join(', ') || '';
     } else if (type === 'title') {
       // تنسيق العناوين كقائمة
       const titles = result?.split('\n')
         .filter(line => line.trim())
         .map((line, index) => `${index + 1}. ${line.replace(/^[-*•\d.]\s*/, '').trim()}`);
       
-      formattedResult = titles?.join('\n');
+      formattedResult = titles?.join('\n') || '';
     }
     
     return NextResponse.json({
@@ -145,10 +149,7 @@ export async function POST(request: NextRequest) {
     
     // في حالة الخطأ، إرجاع نص تجريبي
     return NextResponse.json({
-      result: getMockResponse(
-        request.body?.type || 'generate_paragraph',
-        request.body?.content || ''
-      ),
+      result: getMockResponse('generate_paragraph', ''),
       mock: true,
       error: error instanceof Error ? error.message : 'حدث خطأ في معالجة الطلب'
     });
@@ -183,7 +184,7 @@ function getMockResponse(type: string, content: string): string {
 في الختام، يمثل التكامل بين الذكاء الاصطناعي والعقل البشري مستقبل الصحافة. هذا التعاون يفتح آفاقاً جديدة للإبداع والابتكار في عالم الإعلام.`
   };
   
-  return mockResponses[type] || mockResponses.generate_paragraph;
+  return mockResponses[type as keyof typeof mockResponses] || mockResponses.generate_paragraph;
 }
 
 // للحصول على معلومات حول API

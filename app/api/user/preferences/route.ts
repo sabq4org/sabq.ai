@@ -21,7 +21,7 @@ async function ensurePreferencesFile() {
     await fs.access(preferencesFilePath);
   } catch {
     await fs.mkdir(path.dirname(preferencesFilePath), { recursive: true });
-    await fs.writeFile(preferencesFilePath, JSON.stringify({ preferences: [] }));
+    await fs.writeFile(preferencesFilePath, JSON.stringify([]));
   }
 }
 
@@ -52,13 +52,16 @@ export async function GET(request: NextRequest) {
     const fileContent = await fs.readFile(preferencesFilePath, 'utf-8');
     const data = JSON.parse(fileContent);
 
-    // التأكد من وجود مصفوفة preferences
-    if (!data.preferences) {
-      data.preferences = [];
+    // التأكد من وجود مصفوفة
+    if (!Array.isArray(data)) {
+      return NextResponse.json({
+        success: true,
+        data: []
+      });
     }
 
     // الحصول على تفضيلات المستخدم
-    const userPreferences = data.preferences.filter(
+    const userPreferences = data.filter(
       (pref: UserPreference) => pref.user_id === userId
     );
 
@@ -88,9 +91,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // تحويل categoryIds إلى strings
+    const categoryIdsAsStrings = categoryIds.map(id => id.toString());
+    
     // جلب التصنيفات لاستخدام أسمائها كاهتمامات
     const categories = await prisma.category.findMany({
-      where: { id: { in: categoryIds } },
+      where: { id: { in: categoryIdsAsStrings } },
       select: { id: true, name: true, slug: true }
     });
 
@@ -101,18 +107,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // حذف الاهتمامات القديمة للمستخدم
-    await prisma.userInterest.deleteMany({
+    // حذف التفضيلات القديمة للمستخدم
+    await prisma.userPreference.deleteMany({
       where: { userId }
     });
 
-    // إضافة الاهتمامات الجديدة
-    const newInterests = await prisma.userInterest.createMany({
+    // إضافة التفضيلات الجديدة
+    const newPreferences = await prisma.userPreference.createMany({
       data: categories.map(category => ({
         userId,
-        interest: category.slug, // استخدام slug كمعرف الاهتمام
-        score: 1.0,
-        source: source
+        key: `category_${category.slug}`,
+        value: {
+          categoryId: category.id,
+          categoryName: category.name,
+          categorySlug: category.slug,
+          score: 1.0,
+          source: source
+        }
       }))
     });
 
@@ -149,11 +160,41 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    // حفظ في ملف JSON أيضاً
+    try {
+      await ensurePreferencesFile();
+      const fileContent = await fs.readFile(preferencesFilePath, 'utf-8');
+      let data = JSON.parse(fileContent);
+      
+      if (!Array.isArray(data)) {
+        data = [];
+      }
+
+      // حذف التفضيلات القديمة للمستخدم
+      data = data.filter((pref: any) => pref.user_id !== userId);
+
+      // إضافة التفضيلات الجديدة
+      categoryIds.forEach((categoryId: any) => {
+        data.push({
+          user_id: userId,
+          category_id: categoryId.toString(),
+          source: source,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      });
+
+      await fs.writeFile(preferencesFilePath, JSON.stringify(data, null, 2));
+    } catch (fileError) {
+      console.error('خطأ في حفظ التفضيلات في الملف:', fileError);
+      // لا نوقف العملية إذا فشل حفظ الملف
+    }
+
     return NextResponse.json({
       success: true,
       message: 'تم حفظ التفضيلات بنجاح',
       data: {
-        count: newInterests.count,
+        count: newPreferences.count,
         interests: categories.map(c => c.slug)
       }
     });

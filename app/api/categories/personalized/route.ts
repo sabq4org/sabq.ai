@@ -29,12 +29,17 @@ export async function GET(request: NextRequest) {
       orderBy: { updatedAt: 'desc' }
     });
 
-    // جلب اهتمامات المستخدم
-    const userInterests = await prisma.userInterest.findMany({
-      where: { userId },
-      orderBy: { score: 'desc' },
-      take: 10
+    // جلب اهتمامات المستخدم من UserPreference
+    const userInterestPreference = await prisma.userPreference.findUnique({
+      where: {
+        userId_key: {
+          userId,
+          key: 'interests'
+        }
+      }
     });
+    
+    const userInterests = userInterestPreference ? (userInterestPreference.value as any[]) || [] : [];
 
     // جلب تفاعلات المستخدم مع المقالات
     const userInteractions = await prisma.interaction.findMany({
@@ -74,9 +79,10 @@ export async function GET(request: NextRequest) {
     // إضافة نقاط من الاهتمامات
     userInterests.forEach(interest => {
       // البحث عن التصنيفات التي تتطابق مع الاهتمام
-      if (interest.interest) {
+      const interestName = interest.name || interest;
+      if (interestName) {
         // يمكن تحسين هذا المنطق ليكون أكثر دقة
-        categoryScores[interest.interest] = (categoryScores[interest.interest] || 0) + interest.score * 5;
+        categoryScores[interestName] = (categoryScores[interestName] || 0) + (interest.score || 1.0) * 5;
       }
     });
 
@@ -171,7 +177,7 @@ export async function GET(request: NextRequest) {
         id: category.id,
         name: category.name,
         name_ar: category.name,
-        name_en: category.nameEn,
+        name_en: category.name_en,
         slug: category.slug,
         description: category.description,
         color: category.color || '#6B7280',

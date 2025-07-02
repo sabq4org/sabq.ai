@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
         const data = {
           name,
           slug: slug || name.toLowerCase().replace(/\s+/g, '-'),
-          nameEn: rest.name_en || rest.nameEn,
+          name_en: rest.name_en || rest.name_en,
           description: rest.description,
           color: rest.color || rest.color_hex,
           icon: rest.icon,

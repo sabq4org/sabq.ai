@@ -16,42 +16,45 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // جلب اهتمامات المستخدم
-    const userInterests = await prisma.userInterest.findMany({
-      where: { userId },
-      orderBy: { score: 'desc' },
-      take: 5
+    // جلب اهتمامات المستخدم من UserPreference
+    const userPreference = await prisma.userPreference.findUnique({
+      where: {
+        userId_key: {
+          userId,
+          key: 'interests'
+        }
+      }
     });
     
-    // جلب سجل القراءة
-    const readingHistory = await prisma.readingHistory.findMany({
+    const userInterests = userPreference ? (userPreference.value as any[]) || [] : [];
+    
+    // جلب سجل التفاعلات
+    const userInteractions = await prisma.interaction.findMany({
       where: { userId },
-      select: { articleId: true },
-      orderBy: { lastReadAt: 'desc' },
+      select: { articleId: true, type: true },
+      orderBy: { createdAt: 'desc' },
       take: 100
     });
     
-    const readArticleIds = readingHistory.map(h => h.articleId);
+    const readArticleIds = userInteractions
+      .filter(i => i.type === 'view')
+      .map(i => i.articleId);
     
-    // جلب أنماط السلوك
-    const behaviorPatterns = await prisma.userBehaviorPattern.findMany({
-      where: { userId }
-    });
-    
-    // تحليل الأنماط
-    const patterns = analyzeBehaviorPatterns(behaviorPatterns);
+    // تحليل الأنماط من التفاعلات
+    const patterns = analyzeBehaviorPatterns(userInteractions);
     
     // بناء استعلام التوصيات
     let recommendedArticles = [];
     
     // 1. مقالات من الفئات المفضلة
     if (userInterests.length > 0) {
+      const interestNames = userInterests.map(i => i.name || i);
       const categoryArticles = await prisma.article.findMany({
         where: {
           status: 'published',
           id: { notIn: readArticleIds },
-          categoryId: {
-            in: await getCategoryIdsFromInterests(userInterests.map(i => i.interest))
+          category: {
+            slug: { in: interestNames }
           }
         },
         orderBy: [
@@ -80,7 +83,7 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // 2. مقالات مشابهة لما قرأه المستخدم مؤخراً
+    // 2. مقالات مشابهة لما تفاعل معه المستخدم مؤخراً
     if (readArticleIds.length > 0) {
       const recentArticle = await prisma.article.findFirst({
         where: { id: readArticleIds[0] },
@@ -155,21 +158,6 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.score - a.score)
       .slice(0, limit);
     
-    // حفظ التوصيات في قاعدة البيانات
-    for (const rec of sortedRecommendations) {
-      await prisma.recommendation.create({
-        data: {
-          userId,
-          articleId: rec.article.id,
-          reason: rec.reason,
-          score: rec.score,
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // تنتهي بعد 24 ساعة
-        }
-      }).catch(() => {
-        // تجاهل إذا كانت التوصية موجودة
-      });
-    }
-    
     return NextResponse.json({
       success: true,
       recommendations: includeReasons 
@@ -191,127 +179,121 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { recommendationId, userId, articleId } = body;
+    const { userId, articleId } = body;
     
-    if (recommendationId) {
-      // تحديث توصية موجودة
-      await prisma.recommendation.update({
-        where: { id: recommendationId },
-        data: {
-          isClicked: true,
-          clickedAt: new Date()
-        }
-      });
-    } else if (userId && articleId) {
-      // البحث عن توصية حديثة وتحديثها
-      const recentRecommendation = await prisma.recommendation.findFirst({
-        where: {
-          userId,
-          articleId,
-          createdAt: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
-      
-      if (recentRecommendation) {
-        await prisma.recommendation.update({
-          where: { id: recentRecommendation.id },
-          data: {
-            isClicked: true,
-            clickedAt: new Date()
-          }
-        });
-      }
+    if (!userId || !articleId) {
+      return NextResponse.json(
+        { error: 'User ID and Article ID are required' },
+        { status: 400 }
+      );
     }
+    
+    // تسجيل التفاعل
+    await prisma.interaction.create({
+      data: {
+        userId,
+        articleId,
+        type: 'view'
+      }
+    }).catch(() => {
+      // تجاهل إذا كان التفاعل موجود
+    });
     
     return NextResponse.json({
       success: true,
-      message: 'Recommendation click recorded'
+      message: 'Interaction recorded successfully'
     });
     
   } catch (error) {
-    console.error('Error recording recommendation click:', error);
+    console.error('Error recording interaction:', error);
     return NextResponse.json(
-      { error: 'Failed to record click' },
+      { error: 'Failed to record interaction' },
       { status: 500 }
     );
   }
 }
 
-// دوال مساعدة
-
-function analyzeBehaviorPatterns(patterns: any[]) {
-  const analysis: any = {
-    preferredReadingTime: null,
-    averageReadingDuration: null,
-    categoryPreferences: {},
-    interactionStyle: null
+// تحليل أنماط السلوك من التفاعلات
+function analyzeBehaviorPatterns(interactions: any[]) {
+  const patterns = {
+    preferredCategories: {} as Record<string, number>,
+    interactionTypes: {} as Record<string, number>,
+    readingTime: 'evening', // افتراضي
+    engagementLevel: 'medium' // افتراضي
   };
   
-  patterns.forEach(pattern => {
-    if (pattern.patternType === 'reading_time') {
-      analysis.preferredReadingTime = pattern.patternData;
-    } else if (pattern.patternType === 'category_preference') {
-      analysis.categoryPreferences = pattern.patternData;
-    } else if (pattern.patternType === 'interaction_style') {
-      analysis.interactionStyle = pattern.patternData;
+  // تحليل الفئات المفضلة
+  interactions.forEach(interaction => {
+    if (interaction.article?.category?.slug) {
+      const category = interaction.article.category.slug;
+      patterns.preferredCategories[category] = (patterns.preferredCategories[category] || 0) + 1;
+    }
+    
+    if (interaction.type) {
+      patterns.interactionTypes[interaction.type] = (patterns.interactionTypes[interaction.type] || 0) + 1;
     }
   });
   
-  return analysis;
+  // تحديد مستوى المشاركة
+  const totalInteractions = interactions.length;
+  if (totalInteractions > 50) {
+    patterns.engagementLevel = 'high';
+  } else if (totalInteractions > 10) {
+    patterns.engagementLevel = 'medium';
+  } else {
+    patterns.engagementLevel = 'low';
+  }
+  
+  return patterns;
 }
 
+// حساب درجة التوصية
 function calculateRecommendationScore(
   article: any,
   userInterests: any[],
   patterns: any
 ) {
-  let score = 50; // نقطة البداية
+  let score = 1.0;
   
-  // زيادة النقاط بناءً على الاهتمامات
+  // تطابق مع الاهتمامات
   const articleCategory = article.category?.slug;
-  const interestMatch = userInterests.find(i => i.interest === articleCategory);
-  if (interestMatch) {
-    score += interestMatch.score * 20;
+  if (articleCategory && userInterests.length > 0) {
+    const interestMatch = userInterests.find(i => i.name === articleCategory || i === articleCategory);
+    if (interestMatch) {
+      score += (interestMatch.score || 1.0) * 2;
+    }
   }
   
-  // زيادة النقاط بناءً على شعبية المقال
-  if (article.views > 1000) score += 10;
-  if (article.views > 5000) score += 10;
-  
-  // زيادة النقاط للمقالات الحديثة
-  const ageInDays = (Date.now() - new Date(article.createdAt).getTime()) / (1000 * 60 * 60 * 24);
-  if (ageInDays < 1) score += 20;
-  else if (ageInDays < 7) score += 10;
-  
-  // تطبيق تفضيلات الفئة من الأنماط
-  if (patterns.categoryPreferences && patterns.categoryPreferences[articleCategory]) {
-    score *= patterns.categoryPreferences[articleCategory];
+  // تطابق مع الفئات المفضلة
+  if (articleCategory && patterns.preferredCategories[articleCategory]) {
+    score += patterns.preferredCategories[articleCategory] * 0.5;
   }
   
-  return Math.min(100, Math.max(0, score));
-}
-
-async function getCategoryIdsFromInterests(interests: string[]) {
-  const categories = await prisma.category.findMany({
-    where: {
-      slug: { in: interests }
-    },
-    select: { id: true }
-  });
+  // شعبية المقال
+  if (article.views) {
+    score += Math.min(article.views / 1000, 2); // حد أقصى 2 نقطة للشعبية
+  }
   
-  return categories.map(c => c.id);
+  // حداثة المقال
+  const daysSincePublished = (Date.now() - new Date(article.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+  if (daysSincePublished < 7) {
+    score += 1; // مقالات حديثة
+  } else if (daysSincePublished < 30) {
+    score += 0.5; // مقالات حديثة نسبياً
+  }
+  
+  return score;
 }
 
+// إزالة التوصيات المكررة
 function removeDuplicates(recommendations: any[]) {
   const seen = new Set();
   return recommendations.filter(rec => {
-    if (seen.has(rec.article.id)) {
+    const key = rec.article.id;
+    if (seen.has(key)) {
       return false;
     }
-    seen.add(rec.article.id);
+    seen.add(key);
     return true;
   });
 } 

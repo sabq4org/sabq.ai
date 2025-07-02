@@ -3,10 +3,11 @@ import prisma from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    const userId = params.id;
+    const userId = id;
     console.log('🔍 جلب تفضيلات المستخدم:', userId);
 
     // جلب تفضيلات المستخدم من قاعدة البيانات

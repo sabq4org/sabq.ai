@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   User, 
   Heart, 
@@ -17,6 +18,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useDarkModeContext } from '@/contexts/DarkModeContext';
+import { getValidImageUrl, generatePlaceholderImage } from '@/lib/cloudinary';
 
 interface Article {
   id: string;
@@ -471,21 +473,24 @@ export default function PersonalizedContent() {
                         {/* صورة المقال */}
                         <div className="flex-shrink-0">
                           {article.featured_image ? (
-                            <img 
-                              src={article.featured_image} 
+                            <Image 
+                              src={getValidImageUrl(article.featured_image, article.title, 'article')} 
                               alt={article.title}
+                              width={64}
+                              height={64}
                               className="w-16 h-16 rounded-lg object-cover"
                               onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                const target = e.target as HTMLImageElement;
+                                target.src = generatePlaceholderImage(article.title, 'article');
                               }}
                             />
-                          ) : null}
-                          <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${
-                            darkMode ? 'bg-gray-700' : 'bg-gray-200'
-                          } ${article.featured_image ? 'hidden' : ''}`}>
-                            <span className="text-2xl">📰</span>
-                          </div>
+                          ) : (
+                            <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${
+                              darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                            }`}>
+                              <span className="text-2xl">📰</span>
+                            </div>
+                          )}
                         </div>
 
                         {/* محتوى المقال */}

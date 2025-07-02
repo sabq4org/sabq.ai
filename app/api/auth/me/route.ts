@@ -12,8 +12,16 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-pro
 
 export async function GET(request: NextRequest) {
   try {
-    // محاولة الحصول على التوكن من الكوكيز
-    const token = request.cookies.get('auth-token')?.value;
+    // محاولة الحصول على التوكن من الكوكيز أو من Authorization header
+    let token = request.cookies.get('auth-token')?.value;
+    
+    // إذا لم يوجد في الكوكيز، جرب من Authorization header
+    if (!token) {
+      const authHeader = request.headers.get('authorization');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      }
+    }
     
     if (!token) {
       return corsResponse(
@@ -51,15 +59,14 @@ export async function GET(request: NextRequest) {
             points: true
           }
         },
-        interests: {
+        preferences: {
           select: {
             id: true,
-            interest: true,
-            score: true,
-            source: true
+            key: true,
+            value: true
           },
-          orderBy: {
-            score: 'desc'
+          where: {
+            key: { startsWith: 'category_' }
           }
         }
       }
@@ -83,7 +90,10 @@ export async function GET(request: NextRequest) {
       status: 'active', // قيمة افتراضية
       role: user.role || 'user',
       isVerified: user.isVerified || false,
-      interests: user.interests.map(i => i.interest) // تحويل الاهتمامات إلى array من الأسماء
+      interests: user.preferences.map(pref => {
+        const value = pref.value as any;
+        return value?.categorySlug || '';
+      }).filter(interest => interest) // تحويل التفضيلات إلى array من الأسماء
     };
 
     return corsResponse({
@@ -100,7 +110,5 @@ export async function GET(request: NextRequest) {
       },
       500
     );
-  } finally {
-    await prisma.$disconnect();
   }
 } 

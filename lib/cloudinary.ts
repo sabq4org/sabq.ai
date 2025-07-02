@@ -213,7 +213,8 @@ export const getOptimizedImageUrl = (
 
 // دالة التحقق من صحة URL Cloudinary
 export const isValidCloudinaryUrl = (url: string): boolean => {
-  return Boolean(url && url.includes('res.cloudinary.com') && url.includes(cloudinaryConfig.cloud_name));
+  // التحقق البسيط من أن الرابط من Cloudinary
+  return Boolean(url && url.includes('res.cloudinary.com'));
 };
 
 // دالة استخراج public_id من URL Cloudinary
@@ -279,24 +280,20 @@ export const getDefaultImageUrl = (type: 'article' | 'avatar' | 'category' = 'ar
 
 // دالة محسنة لتوليد صور افتراضية ثابتة بناءً على العنوان
 export const generatePlaceholderImage = (title: string, type: 'article' | 'avatar' | 'category' = 'article'): string => {
-  // مجموعة من الصور الافتراضية الثابتة من Cloudinary
+  // مجموعة من الصور الافتراضية المحلية المؤقتة
   const placeholderImages = {
     article: [
-      'https://res.cloudinary.com/dybhezmvb/image/upload/v1/sabq-cms/placeholders/article-1.jpg',
-      'https://res.cloudinary.com/dybhezmvb/image/upload/v1/sabq-cms/placeholders/article-2.jpg',
-      'https://res.cloudinary.com/dybhezmvb/image/upload/v1/sabq-cms/placeholders/article-3.jpg',
-      'https://res.cloudinary.com/dybhezmvb/image/upload/v1/sabq-cms/placeholders/article-4.jpg',
-      'https://res.cloudinary.com/dybhezmvb/image/upload/v1/sabq-cms/placeholders/article-5.jpg'
+      '/images/articles/article-1.svg',
+      '/images/articles/article-2.svg',
+      '/images/articles/article-3.svg',
+      '/images/articles/article-4.svg',
+      '/images/articles/article-5.svg'
     ],
     avatar: [
-      'https://res.cloudinary.com/dybhezmvb/image/upload/v1/sabq-cms/placeholders/avatar-1.jpg',
-      'https://res.cloudinary.com/dybhezmvb/image/upload/v1/sabq-cms/placeholders/avatar-2.jpg',
-      'https://res.cloudinary.com/dybhezmvb/image/upload/v1/sabq-cms/placeholders/avatar-3.jpg'
+      '/images/placeholder.svg'
     ],
     category: [
-      'https://res.cloudinary.com/dybhezmvb/image/upload/v1/sabq-cms/placeholders/category-1.jpg',
-      'https://res.cloudinary.com/dybhezmvb/image/upload/v1/sabq-cms/placeholders/category-2.jpg',
-      'https://res.cloudinary.com/dybhezmvb/image/upload/v1/sabq-cms/placeholders/category-3.jpg'
+      '/images/placeholder.svg'
     ]
   };
   
@@ -328,7 +325,14 @@ export const getValidImageUrl = (imageUrl?: string, fallbackTitle?: string, type
   
   // التحقق من أن الرابط من Cloudinary
   if (!isValidCloudinaryUrl(imageUrl)) {
-    console.warn('رابط الصورة ليس من Cloudinary:', imageUrl);
+    // في بيئة التطوير فقط، نعرض تحذير
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+      console.warn('رابط الصورة ليس من Cloudinary:', imageUrl);
+    }
+    // إذا كان الرابط يبدو صحيحًا، استخدمه كما هو
+    if (imageUrl.includes('cloudinary.com')) {
+      return imageUrl;
+    }
     return generatePlaceholderImage(fallbackTitle || 'مقال', type);
   }
   

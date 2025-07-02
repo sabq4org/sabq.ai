@@ -44,20 +44,20 @@ export async function GET(request: NextRequest) {
     let saved = false;
     let shared = false;
 
-    // البحث عن آخر تفاعل من نوع like/unlike
+    // البحث عن آخر تفاعل من نوع like
     const lastLikeInteraction = interactions.find(i => 
-      i.type === 'like' || i.type === 'unlike'
+      i.type === 'like'
     );
     if (lastLikeInteraction) {
-      liked = lastLikeInteraction.type === 'like';
+      liked = true;
     }
 
-    // البحث عن آخر تفاعل من نوع save/unsave
+    // البحث عن آخر تفاعل من نوع save
     const lastSaveInteraction = interactions.find(i => 
-      i.type === 'save' || i.type === 'unsave'
+      i.type === 'save'
     );
     if (lastSaveInteraction) {
-      saved = lastSaveInteraction.type === 'save';
+      saved = true;
     }
 
     // المشاركة لا يمكن إلغاؤها، لذا نبحث فقط عن وجودها
