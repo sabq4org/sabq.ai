@@ -1010,6 +1010,31 @@ export default function ArticlePage({ params }: PageProps) {
             <span>{article.views_count || 0} مشاهدة</span>
           </div>
         </div>
+
+        {/* الكلمات المفتاحية */}
+        {article.seo_keywords && Array.isArray(article.seo_keywords) && article.seo_keywords.length > 0 && (
+          <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2 mb-3">
+              <Hash className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">الكلمات المفتاحية</h3>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {article.seo_keywords.map((keyword, index) => (
+                <span
+                  key={index}
+                  className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded-full border border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors cursor-pointer"
+                  title={`البحث عن: ${keyword}`}
+                  onClick={() => {
+                    // يمكن إضافة وظيفة البحث هنا
+                    console.log(`البحث عن: ${keyword}`);
+                  }}
+                >
+                  {keyword}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
         
         {/* شريط التفاعل السريع */}
         <div className="quick-interaction-bar">

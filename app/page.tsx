@@ -2180,8 +2180,8 @@ function NewspaperHomePage(): React.ReactElement {
         {/* Smart Blocks - After Cards - مخفي للنسخة المطورة */}
         {/* <SmartSlot position="afterCards" /> */}
 
-        {/* Smart Blocks - Before Personalization - مخفي للنسخة المطورة */}
-        {/* <SmartSlot position="beforePersonalization" /> */}
+        {/* Smart Blocks - Before Personalization */}
+        <SmartSlot position="beforePersonalization" />
 
         {/* Enhanced Smart Blocks Section - مخفي للنسخة المطورة */}
         {/* <section className="mb-16">
