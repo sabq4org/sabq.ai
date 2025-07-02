@@ -66,5 +66,35 @@
     "order": 3,
     "createdAt": "2025-06-28T06:04:56.916Z",
     "updatedAt": "2025-07-01T11:39:50.909Z"
+  },
+  {
+    "name": "صيف عسير",
+    "position": "beforePersonalization",
+    "type": "smart",
+    "status": "active",
+    "displayType": "hero-slider",
+    "keywords": [
+      "صيف عسير",
+      "عسير",
+      "موسم عسير",
+      "السياحة في عسير"
+    ],
+    "category": "",
+    "articlesCount": 6,
+    "theme": {
+      "primaryColor": "#00a3d7",
+      "backgroundColor": "#e5effa",
+      "textColor": "#1a1a1a"
+    },
+    "customHtml": "",
+    "schedule": {
+      "startDate": "",
+      "endDate": "",
+      "isAlwaysActive": true
+    },
+    "id": "1751477468678",
+    "order": 4,
+    "createdAt": "2025-07-02T17:31:08.678Z",
+    "updatedAt": "2025-07-02T17:31:08.678Z"
   }
 ]

@@ -5,6 +5,7 @@ import { SmartBlock } from '@/types/smart-block';
 import { CardGridBlock } from './CardGridBlock';
 import { CarouselBlock } from './CarouselBlock';
 import { AlHilalWorldCupBlock } from './AlHilalWorldCupBlock';
+import { HeroSliderBlock } from './HeroSliderBlock';
 import { Activity, TrendingUp, Lightbulb, Target, Compass, Volume2, Star } from 'lucide-react';
 
 interface SmartBlockRendererProps {
@@ -13,7 +14,7 @@ interface SmartBlockRendererProps {
   darkMode?: boolean;
 }
 
-export function SmartBlockRenderer({ block, articles = [], darkMode = false }: SmartBlockRendererProps) {
+export default function SmartBlockRenderer({ block, articles = [], darkMode = false }: SmartBlockRendererProps) {
   // تحديد الأيقونة والألوان بناءً على نوع البلوك
   const getBlockStyle = (type: string) => {
     switch (type) {
@@ -89,6 +90,11 @@ export function SmartBlockRenderer({ block, articles = [], darkMode = false }: S
   // معالجة خاصة لبلوك يوم القهوة العالمي
   if (block.name === 'يوم القهوة العالمي') {
     return <CardGridBlock block={block as any} articles={articles} />;
+  }
+
+  // معالجة خاصة لبلوك صيف عسير
+  if (block.name === 'صيف عسير' || block.displayType === 'hero-slider') {
+    return <HeroSliderBlock block={block as any} articles={articles} />;
   }
 
   // التصميم الافتراضي الموحد
