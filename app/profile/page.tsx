@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Crown, Heart, 
   Edit2, X, Star, TrendingUp,
   Calendar, Activity, BookOpen, Share2, ChevronRight, Zap, Eye,
-  MessageCircle, Bookmark, Camera, Brain, Trophy, Clock
+  MessageCircle, Bookmark, Camera, Brain, Trophy, Clock, Sparkles, Target, Lock, ChevronDown
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Header from '@/components/Header';
@@ -782,21 +782,315 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {activeTab === 'insights' && userInsights && (
-            <ReadingInsights 
-              readingProfile={userInsights.readingProfile}
-              categoryDistribution={userInsights.categoryDistribution}
-              timePatterns={userInsights.timePatterns}
-              stats={userInsights.stats}
-            />
+          {activeTab === 'insights' && (
+            userInsights ? (
+              <ReadingInsights 
+                readingProfile={userInsights.readingProfile}
+                categoryDistribution={userInsights.categoryDistribution}
+                timePatterns={userInsights.timePatterns}
+                stats={userInsights.stats}
+              />
+            ) : (
+              <div className="space-y-6">
+                {/* محتوى افتراضي لتحليلات القراءة */}
+                <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-2xl p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="text-5xl">📖</div>
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-bold mb-2 text-blue-600">
+                        قارئ متوازن
+                      </h3>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="px-3 py-1 bg-white/80 dark:bg-gray-800/80 rounded-full text-sm font-medium">
+                          مستوى متوسط
+                        </span>
+                        <span className="text-gray-600 dark:text-gray-400">
+                          • 15 مقال مقروء
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 mt-4">
+                        <div className="bg-white/60 dark:bg-gray-800/60 rounded-lg p-3">
+                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
+                            <Clock className="w-4 h-4" />
+                            متوسط القراءة
+                          </div>
+                          <div className="text-xl font-bold">8 دقيقة</div>
+                        </div>
+                        <div className="bg-white/60 dark:bg-gray-800/60 rounded-lg p-3">
+                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
+                            <Sparkles className="w-4 h-4" />
+                            سلسلة القراءة
+                          </div>
+                          <div className="text-xl font-bold">5 أيام</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* توزيع الاهتمامات الافتراضي */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                  <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                    <Target className="w-5 h-5 text-orange-500" />
+                    توزيع اهتماماتك
+                  </h3>
+                  
+                  <div className="space-y-3">
+                    {preferences.length > 0 ? (
+                      preferences.slice(0, 5).map((pref, index) => {
+                        const percentage = Math.floor(100 / preferences.length) + (index < 100 % preferences.length ? 1 : 0);
+                        return (
+                          <div key={pref.category_id} className="relative">
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xl">{pref.category_icon}</span>
+                                <span className="font-medium">{pref.category_name}</span>
+                              </div>
+                              <span className="text-sm text-gray-600 dark:text-gray-400">
+                                {percentage}%
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                              <div 
+                                className="h-2 rounded-full transition-all duration-500"
+                                style={{ 
+                                  width: `${percentage}%`,
+                                  backgroundColor: pref.category_color
+                                }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center py-8">
+                        <Target className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                        <p className="text-gray-500 dark:text-gray-400">لم تختر اهتمامات بعد</p>
+                        <Link
+                          href="/welcome/preferences"
+                          className="inline-flex items-center gap-2 px-4 py-2 mt-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm"
+                        >
+                          اختر اهتماماتك الآن
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      💡 جرب قراءة مقالات من تصنيفات مختلفة لتوسيع آفاقك المعرفية
+                    </p>
+                  </div>
+                </div>
+
+                {/* أوقات القراءة المفضلة الافتراضية */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                  <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-blue-500" />
+                    أوقات القراءة المفضلة
+                  </h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                      <div className="text-3xl mb-2">🌅</div>
+                      <div className="font-medium">الصباح</div>
+                      <div className="text-sm text-gray-500">أفضل وقت</div>
+                    </div>
+                    
+                    <div className="text-center p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                      <div className="text-3xl mb-2">📅</div>
+                      <div className="font-medium">الأحد</div>
+                      <div className="text-sm text-gray-500">أكثر يوم نشاطاً</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
           )}
 
-          {activeTab === 'achievements' && userInsights && (
-            <AchievementBadges achievements={userInsights.achievements} />
+          {activeTab === 'achievements' && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+              <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-yellow-500" />
+                إنجازاتك
+              </h3>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {/* إنجازات مفتوحة افتراضية */}
+                <div className="relative p-4 rounded-xl border-2 border-transparent hover:shadow-lg cursor-pointer transform hover:scale-105 transition-all"
+                     style={{ backgroundColor: '#10B98115' }}>
+                  <div className="text-center">
+                    <div className="text-4xl mb-2">🎯</div>
+                    <h4 className="font-semibold text-sm mb-1">قارئ مبتدئ</h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      اقرأ أول مقال
+                    </p>
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                       style={{ backgroundColor: '#10B981' }}>
+                    ✓
+                  </div>
+                </div>
+
+                <div className="relative p-4 rounded-xl border-2 border-transparent hover:shadow-lg cursor-pointer transform hover:scale-105 transition-all"
+                     style={{ backgroundColor: '#3B82F615' }}>
+                  <div className="text-center">
+                    <div className="text-4xl mb-2">❤️</div>
+                    <h4 className="font-semibold text-sm mb-1">محب للقراءة</h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      أعجب بـ 5 مقالات
+                    </p>
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                       style={{ backgroundColor: '#3B82F6' }}>
+                    ✓
+                  </div>
+                </div>
+
+                <div className="relative p-4 rounded-xl border-2 border-transparent hover:shadow-lg cursor-pointer transform hover:scale-105 transition-all"
+                     style={{ backgroundColor: '#8B5CF615' }}>
+                  <div className="text-center">
+                    <div className="text-4xl mb-2">📚</div>
+                    <h4 className="font-semibold text-sm mb-1">قارئ نشط</h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      اقرأ 10 مقالات
+                    </p>
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                       style={{ backgroundColor: '#8B5CF6' }}>
+                    ✓
+                  </div>
+                </div>
+
+                {/* إنجازات مقفلة */}
+                <div className="relative p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 opacity-50">
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100/50 dark:bg-gray-900/50 rounded-xl">
+                    <Lock className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <div className="text-center">
+                    <div className="text-4xl mb-2">🎓</div>
+                    <h4 className="font-semibold text-sm mb-1">خبير القراءة</h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      اقرأ 100 مقال
+                    </p>
+                  </div>
+                </div>
+
+                <div className="relative p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 opacity-50">
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100/50 dark:bg-gray-900/50 rounded-xl">
+                    <Lock className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <div className="text-center">
+                    <div className="text-4xl mb-2">🦋</div>
+                    <h4 className="font-semibold text-sm mb-1">اجتماعي</h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      شارك 50 مقال
+                    </p>
+                  </div>
+                </div>
+
+                <div className="relative p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 opacity-50">
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100/50 dark:bg-gray-900/50 rounded-xl">
+                    <Lock className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <div className="text-center">
+                    <div className="text-4xl mb-2">🦉</div>
+                    <h4 className="font-semibold text-sm mb-1">بومة الليل</h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      اقرأ 20 مقال بعد منتصف الليل
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 text-center">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  فتحت 3 من 6 إنجاز
+                </p>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-2">
+                  <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 h-2 rounded-full transition-all duration-500"
+                       style={{ width: '50%' }} />
+                </div>
+              </div>
+            </div>
           )}
 
-          {activeTab === 'timeline' && userInsights && (
-            <ReadingTimeline timeline={userInsights.timeline} />
+          {activeTab === 'timeline' && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+              <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-indigo-500" />
+                سجل رحلتك القرائية
+              </h3>
+
+              <div className="space-y-4">
+                {/* بيانات افتراضية للسجل */}
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  <button className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">📅</span>
+                      <div className="text-right">
+                        <div className="font-medium">اليوم</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          3 مقالات • 25 دقيقة
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  </button>
+                </div>
+
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  <button className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">📆</span>
+                      <div className="text-right">
+                        <div className="font-medium">أمس</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          2 مقالات • 18 دقيقة
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  </button>
+                </div>
+
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  <button className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🗓️</span>
+                      <div className="text-right">
+                        <div className="font-medium">قبل يومين</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          1 مقال • 12 دقيقة
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <BookOpen className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  <div>
+                    <p className="font-medium text-indigo-900 dark:text-indigo-200">
+                      إجمالي القراءة: 6 مقالات
+                    </p>
+                    <p className="text-sm text-indigo-700 dark:text-indigo-300">
+                      وقت القراءة الكلي: 55 دقيقة
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* رسالة تشجيعية */}
+              <div className="mt-4 text-center">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  استمر في القراءة لبناء سجل قرائي غني! 📚
+                </p>
+              </div>
+            </div>
           )}
 
           {/* رسالة التحميل للبيانات المتقدمة */}

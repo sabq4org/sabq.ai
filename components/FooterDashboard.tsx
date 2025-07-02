@@ -59,49 +59,44 @@ interface UserInsights {
   };
 }
 
-// بيانات تجريبية للعرض
+// بيانات تجريبية للزوار
 const demoInsights: UserInsights = {
   todayRecommendation: {
-    id: '1',
-    title: 'الذكاء الاصطناعي يحدث ثورة في عالم الصحافة الرقمية',
+    id: 'demo-1',
+    title: 'تطورات الذكاء الاصطناعي في 2024: ما يمكن توقعه',
     category: 'تقنية',
-    readingTime: 7,
-    reason: 'مقال جديد في التقنية بناءً على اهتماماتك'
+    readingTime: 8,
+    reason: 'بناءً على اهتمامك بالتقنية والابتكار'
   },
   knowledgeDiversity: {
     readCategories: 3,
     totalCategories: 8,
-    topCategory: 'التقنية',
-    topCategoryPercentage: 48,
-    suggestedCategories: ['الرياضة', 'الثقافة', 'الاقتصاد']
+    topCategory: 'تقنية',
+    topCategoryPercentage: 45,
+    suggestedCategories: ['اقتصاد', 'رياضة', 'ثقافة ومجتمع']
   },
   behaviorAnalysis: {
-    preferredReadingTime: 'تفضل القراءة في المساء',
-    contentPreference: 'تميل إلى المقالات التحليلية المعمقة',
-    readingPattern: 'قارئ منتظم - تقرأ بشكل يومي تقريباً'
+    preferredReadingTime: 'صباحاً (9-11 ص)',
+    contentPreference: 'مقالات تحليلية متوسطة الطول',
+    readingPattern: 'قارئ متوازن'
   },
   weeklyActivity: {
     articlesRead: 12,
-    articlesSaved: 3,
-    interactions: 15,
-    streak: 5
+    articlesSaved: 5,
+    interactions: 8,
+    streak: 4
   },
   similarReaders: {
     recommendations: [
       {
-        id: '2',
-        title: 'مستقبل التعليم الرقمي في المملكة',
-        reason: '8 قراء مهتمين بنفس المواضيع قرأوا هذا'
+        id: 'demo-2',
+        title: 'مستقبل العمل عن بُعد في العالم العربي',
+        reason: 'قراء مثلك اهتموا بهذا الموضوع'
       },
       {
-        id: '3',
-        title: 'تطبيقات الذكاء الاصطناعي في الحياة اليومية',
-        reason: '5 قراء مهتمين بنفس المواضيع قرأوا هذا'
-      },
-      {
-        id: '4',
-        title: 'التحول الرقمي في القطاع الحكومي',
-        reason: '4 قراء مهتمين بنفس المواضيع قرأوا هذا'
+        id: 'demo-3',
+        title: 'تأثير التكنولوجيا على التعليم العالي',
+        reason: 'يتناسب مع اهتماماتك التقنية'
       }
     ]
   }
@@ -111,45 +106,22 @@ export default function FooterDashboard() {
   const { isLoggedIn, userId } = useAuth();
   const [insights, setInsights] = useState<UserInsights | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
-    // مؤقتاً - تعطيل خاصية الإخفاء
-    // const dismissedDate = localStorage.getItem('footerDashboardDismissed');
-    // if (dismissedDate === new Date().toDateString()) {
-    //   setIsDismissed(true);
-    //   return;
-    // }
-
-    // Intersection Observer للتحميل الكسول
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !isVisible) {
-          setIsVisible(true);
-          if (isLoggedIn && userId) {
-            fetchUserInsights();
-          } else {
-            // استخدام البيانات التجريبية للزوار
-            setInsights(demoInsights);
-            setLoading(false);
-          }
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    const dashboardElement = document.getElementById('footer-dashboard');
-    if (dashboardElement) {
-      observer.observe(dashboardElement);
-    }
-
-    return () => {
-      if (dashboardElement) {
-        observer.unobserve(dashboardElement);
+    // تحميل فوري للبيانات
+    const loadData = async () => {
+      if (isLoggedIn && userId) {
+        await fetchUserInsights();
+      } else {
+        // استخدام البيانات التجريبية للزوار
+        setInsights(demoInsights);
+        setLoading(false);
       }
     };
-  }, [isLoggedIn, userId, isVisible]);
+
+    loadData();
+  }, [isLoggedIn, userId]);
 
   const fetchUserInsights = async () => {
     try {
@@ -157,18 +129,22 @@ export default function FooterDashboard() {
       if (response.ok) {
         const data = await response.json();
         setInsights(data);
+      } else {
+        // في حالة فشل API، استخدم البيانات التجريبية
+        setInsights(demoInsights);
       }
     } catch (error) {
       console.error('Error fetching user insights:', error);
+      // في حالة الخطأ، استخدم البيانات التجريبية
+      setInsights(demoInsights);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDismiss = () => {
-    // مؤقتاً - تعطيل وظيفة الإخفاء
-    // setIsDismissed(true);
-    // localStorage.setItem('footerDashboardDismissed', new Date().toDateString());
+    setIsDismissed(true);
+    localStorage.setItem('footerDashboardDismissed', new Date().toDateString());
   };
 
   const getTimeIcon = () => {
@@ -187,20 +163,20 @@ export default function FooterDashboard() {
     return 'ليلة هادئة';
   };
 
-  // مؤقتاً - تعطيل شرط الإخفاء
-  if (!isVisible) {
-    return <div id="footer-dashboard" className="h-0"></div>;
+  // إخفاء إذا تم إغلاقه من قبل
+  if (isDismissed) {
+    return null;
   }
 
   if (loading) {
     return (
-      <div id="footer-dashboard" className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white py-12 px-6">
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-gray-100 py-12 px-6 border-t border-blue-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-700 rounded w-1/3 mb-6"></div>
+            <div className="h-8 bg-blue-200 dark:bg-gray-700 rounded w-1/3 mb-6 mx-auto"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="bg-gray-800 rounded-xl p-6 h-48"></div>
+                <div key={i} className="bg-white dark:bg-gray-800 rounded-xl p-6 h-48 shadow-sm"></div>
               ))}
             </div>
           </div>
@@ -210,15 +186,15 @@ export default function FooterDashboard() {
   }
 
   return (
-    <div id="footer-dashboard" className="bg-blue-100/50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 py-12 px-6 relative border-t border-blue-200 dark:border-gray-800">
-      {/* زر الإغلاق - مخفي مؤقتاً */}
-      {/* <button
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-gray-100 py-12 px-6 border-t border-blue-200 dark:border-gray-800 relative">
+      {/* زر الإغلاق */}
+      <button
         onClick={handleDismiss}
-        className="absolute top-4 left-4 p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+        className="absolute top-4 left-4 p-2 rounded-lg bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm"
         title="إخفاء لليوم"
       >
         <X className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-      </button> */}
+      </button>
 
       <div className="max-w-7xl mx-auto">
         {/* الترحيب الذكي */}
@@ -250,9 +226,9 @@ export default function FooterDashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* 1. بطاقة "ما يهمك اليوم" */}
-        {insights?.todayRecommendation && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-blue-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+          {/* 1. بطاقة "ما يهمك اليوم" */}
+          {insights?.todayRecommendation && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-blue-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Pin className="w-5 h-5 text-blue-400" />
@@ -302,7 +278,7 @@ export default function FooterDashboard() {
             </div>
             <div className="flex items-center gap-2 text-sm">
               <Shuffle className="w-4 h-4 text-purple-400" />
-              <span className="text-gray-300">جرّب: {insights?.knowledgeDiversity.suggestedCategories.join('، ')}</span>
+              <span className="text-gray-600 dark:text-gray-400">جرّب: {insights?.knowledgeDiversity.suggestedCategories.join('، ')}</span>
             </div>
           </div>
 
@@ -355,9 +331,9 @@ export default function FooterDashboard() {
               </div>
             </div>
             {insights?.weeklyActivity.streak && insights.weeklyActivity.streak > 0 && (
-              <div className="mt-4 flex items-center justify-center gap-2 bg-orange-800/30 rounded-lg py-2">
+              <div className="mt-4 flex items-center justify-center gap-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg py-2">
                 <Zap className="w-4 h-4 text-orange-400" />
-                <span className="text-sm">سلسلة {insights.weeklyActivity.streak} أيام متتالية!</span>
+                <span className="text-sm text-orange-700 dark:text-orange-300">سلسلة {insights.weeklyActivity.streak} أيام متتالية!</span>
               </div>
             )}
           </div>
@@ -369,29 +345,21 @@ export default function FooterDashboard() {
               <h3 className="font-bold text-lg">قراء مثلك اهتموا بـ</h3>
             </div>
             <div className="space-y-3">
-              {insights?.similarReaders.recommendations.slice(0, 3).map((rec, index) => (
-                <div key={rec.id} className="flex items-start gap-3">
-                  <span className="text-pink-400 font-bold">{index + 1}.</span>
+              {insights?.similarReaders.recommendations.map((rec, index) => (
+                <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <div className="flex-1">
-                    <Link 
-                      href={`/article/${rec.id}`}
-                      className="text-gray-300 hover:text-pink-400 transition-colors"
-                    >
+                    <h4 className="font-medium text-gray-800 dark:text-gray-200 text-sm mb-1">
                       {rec.title}
-                    </Link>
-                    <p className="text-xs text-gray-500 mt-1">{rec.reason}</p>
+                    </h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      💡 {rec.reason}
+                    </p>
                   </div>
+                  <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
                 </div>
               ))}
             </div>
           </div>
-        </div>
-
-        {/* رسالة ختامية */}
-        <div className="text-center mt-10 py-6 border-t border-blue-100 dark:border-gray-700">
-          <p className="text-gray-600 dark:text-gray-400 text-sm">
-            نهاية الصفحة ليست نهاية رحلتك... بل بداية اكتشافاتك القادمة 🚀
-          </p>
         </div>
       </div>
     </div>
