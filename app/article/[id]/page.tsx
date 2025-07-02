@@ -145,8 +145,7 @@ export default function ArticlePage({ params }: PageProps) {
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [articleId, setArticleId] = useState<string>('');
-  const [relatedArticles, setRelatedArticles] = useState<RelatedArticle[]>([]);
-  const [recommendations, setRecommendations] = useState<any[]>([]);
+
   const [userId, setUserId] = useState<string | null>(null);
   const [readProgress, setReadProgress] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -312,95 +311,9 @@ export default function ArticlePage({ params }: PageProps) {
     }
   }, [article]);
 
-  // جلب المقالات ذات الصلة
-  useEffect(() => {
-    async function fetchRelatedArticles() {
-      if (!article) return;
-      
-      try {
-        const response = await fetch(`/api/articles?category_id=${article.category_id}&limit=5&exclude=${article.id}`);
-        
-        if (response.ok) {
-          const data = await response.json();
-          const articlesData = data.articles || data.data || [];
-          if (articlesData.length > 0) {
-            const filtered = articlesData.filter((a: any) => a.id !== article.id);
-            if (filtered.length > 0) {
-              setRelatedArticles(filtered.slice(0, 4));
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching related articles:', error);
-      }
-      
-      // بيانات تجريبية مؤقتة للتطوير
-      if (relatedArticles.length === 0) {
-        setRelatedArticles([
-          {
-            id: 'test-1',
-            title: 'تطورات جديدة في عالم الذكاء الاصطناعي',
-            featured_image: '/images/ai-tech.jpg',
-            reading_time: 5,
-            created_at: new Date().toISOString(),
-            category_name: 'تقنية'
-          },
-          {
-            id: 'test-2',
-            title: 'كيف يغير الذكاء الاصطناعي مستقبل الأعمال',
-            featured_image: '/images/ai-business.jpg',
-            reading_time: 7,
-            created_at: new Date().toISOString(),
-            category_name: 'أعمال'
-          }
-        ]);
-      }
-    }
-    
-    fetchRelatedArticles();
-  }, [article]);
 
-  // جلب التوصيات الذكية
-  useEffect(() => {
-    async function fetchRecommendations() {
-      if (!userId || userId.startsWith('guest-') || !article?.id) return;
-      
-      try {
-        const response = await fetch(`/api/content/personalized?user_id=${userId}&limit=3`);
-        
-        if (response.ok) {
-          const data = await response.json();
-          const articlesData = data.articles || (data.data && data.data.articles) || [];
-          if (data.success && articlesData.length > 0) {
-            const filtered = articlesData.filter((a: any) => a.id !== article.id);
-            setRecommendations(filtered.slice(0, 3));
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching recommendations:', error);
-      }
-      
-      // بيانات تجريبية مؤقتة للتطوير
-      if (recommendations.length === 0 && !userId.startsWith('guest-')) {
-        setRecommendations([
-          {
-            id: 'rec-1',
-            title: 'أفضل تطبيقات الذكاء الاصطناعي لعام 2024',
-            featured_image: '/images/ai-apps.jpg',
-            category_name: 'تطبيقات'
-          },
-          {
-            id: 'rec-2',
-            title: 'مستقبل الذكاء الاصطناعي في الطب',
-            featured_image: '/images/ai-medicine.jpg',
-            category_name: 'صحة'
-          }
-        ]);
-      }
-    }
-    
-    fetchRecommendations();
-  }, [userId, article]);
+
+
 
   // استخراج فهرس المحتويات عند تحديث المقال
   useEffect(() => {
@@ -1125,85 +1038,7 @@ export default function ArticlePage({ params }: PageProps) {
               {renderArticleContent(article.content)}
             </div>
 
-            {/* Share Bar */}
-            <div className="flex items-center gap-4 my-8 py-4 border-t border-b">
-              {/* زر الإعجاب */}
-              <button 
-                onClick={handleLike}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                  interaction.liked 
-                    ? 'text-red-500 bg-red-50 dark:bg-red-900/20' 
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-              >
-                <Heart className={`w-5 h-5 ${interaction.liked ? 'fill-current' : ''}`} />
-                <span>{interaction.liked ? 'أعجبني' : 'أعجبني'}</span>
-                {interaction.likesCount > 0 && (
-                  <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-                    {interaction.likesCount}
-                  </span>
-                )}
-              </button>
 
-              {/* زر الحفظ */}
-              <button 
-                onClick={handleSave}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                  interaction.saved 
-                    ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-              >
-                <Bookmark className={`w-5 h-5 ${interaction.saved ? 'fill-current' : ''}`} />
-                <span>{interaction.saved ? 'محفوظ' : 'حفظ'}</span>
-                {interaction.savesCount > 0 && (
-                  <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-                    {interaction.savesCount}
-                  </span>
-                )}
-              </button>
-
-              {/* زر المشاركة */}
-              <button 
-                onClick={() => setShowShareMenu(!showShareMenu)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all relative"
-              >
-                <Share2 className="w-5 h-5" />
-                <span>مشاركة</span>
-                {interaction.sharesCount > 0 && (
-                  <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-                    {interaction.sharesCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Share Menu */}
-              {showShareMenu && (
-                <div className="absolute bottom-full mb-2 left-0 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 min-w-[200px] z-10">
-                  <button
-                    onClick={() => handleShare('twitter')}
-                    className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                  >
-                    <Twitter className="w-4 h-4" />
-                    <span>تويتر</span>
-                  </button>
-                  <button
-                    onClick={() => handleShare('whatsapp')}
-                    className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>واتساب</span>
-                  </button>
-                  <button
-                    onClick={() => handleShare('copy')}
-                    className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                  >
-                    {copySuccess ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-                    <span>{copySuccess ? 'تم النسخ!' : 'نسخ الرابط'}</span>
-                  </button>
-                </div>
-              )}
-            </div>
           </section>
 
           {/* Sidebar */}
@@ -1366,124 +1201,9 @@ export default function ArticlePage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* AI Recommendations */}
-            {recommendations.length > 0 && (
-              <div className="sidebar-card">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <Hash className="w-5 h-5 text-purple-600" />
-                  ربما يعجبك أيضاً
-                </h3>
-                <div className="space-y-4">
-                  {recommendations.map((item) => (
-                    <div key={item.id} className="relative group">
-                      <Link 
-                        href={`/article/${item.id}`}
-                        className="block"
-                      >
-                        <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all">
-                          <div className="aspect-video relative overflow-hidden">
-                            <img
-                              src={getImageUrl(item.featured_image) || generatePlaceholderImage(item.title)}
-                              alt={item.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              onError={(e) => {
-                                e.currentTarget.src = generatePlaceholderImage(item.title);
-                              }}
-                            />
-                          </div>
-                          <div className="p-4">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              {item.category_name || 'عام'}
-                            </span>
-                            <h4 className="font-semibold mt-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
-                              {item.title}
-                            </h4>
-                          </div>
-                        </div>
-                      </Link>
-                      
-                      {/* زر "لا أرغب بهذا النوع" */}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          // TODO: تنفيذ منطق إخفاء هذا النوع
-                          const categoryName = item.category_name || 'هذا النوع';
-                          if (confirm(`هل تريد إخفاء محتوى "${categoryName}" من توصياتك؟`)) {
-                            alert('تم تحديث تفضيلاتك');
-                          }
-                        }}
-                        className="no-thanks-button"
-                        title="لا أرغب بهذا النوع من المحتوى"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
-            {/* Related Articles */}
-            {relatedArticles.length > 0 && (
-              <div className="sidebar-card">
-                <h3 className="text-lg font-bold mb-4">
-                  📎 مواضيع مقترحة لك
-                </h3>
-                <div className="related-articles-container">
-                  {relatedArticles.map((related) => (
-                    <div key={related.id} className="relative group">
-                      <Link
-                        href={`/article/${related.id}`}
-                        className="related-article-card"
-                      >
-                        <img
-                          src={getImageUrl(related.featured_image) || generatePlaceholderImage(related.title)}
-                          alt={related.title}
-                          className="related-article-image"
-                          onError={(e) => {
-                            e.currentTarget.src = generatePlaceholderImage(related.title);
-                          }}
-                        />
-                        <div className="related-article-content">
-                          <h4 className="related-article-title">
-                            {related.title}
-                          </h4>
-                          <div className="related-article-meta">
-                            <span>{formatRelativeDate(related.published_at || related.created_at || '')}</span>
-                            {related.reading_time && (
-                              <>
-                                <span>•</span>
-                                <span>{related.reading_time} دقائق قراءة</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </Link>
-                      
-                      {/* زر "لا أرغب بهذا النوع" */}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          const categoryName = related.category_name || article.category?.name_ar || 'هذا النوع';
-                          if (confirm(`هل تريد إخفاء محتوى "${categoryName}" من توصياتك؟`)) {
-                            // TODO: تنفيذ منطق إخفاء التصنيف
-                            alert('تم تحديث تفضيلاتك');
-                          }
-                        }}
-                        className="no-thanks-button"
-                        title="لا أرغب بهذا النوع من المحتوى"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+
+
           </aside>
         </div>
       </div>
