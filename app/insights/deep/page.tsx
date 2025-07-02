@@ -176,227 +176,74 @@ export default function DeepAnalysesPage() {
   return (
     <>
       <Header />
-      <div dir="rtl" className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        {/* Hero Section محسن للجوال */}
-        <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
-            <div className="absolute inset-0 bg-black/20" />
-            {/* نمط الشبكة */}
-            <div 
-              className="absolute inset-0 opacity-10"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-              }}
-            />
+      <div dir="rtl" className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        {/* Hero Section */}
+        <section className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 py-16">
+          <div className="absolute inset-0 bg-black/20" />
+          
+          {/* Animated Background Elements */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" />
+            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000" />
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000" />
           </div>
-
-          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
-            <div className="text-center">
-              <div className="inline-flex items-center justify-center p-3 bg-white/10 backdrop-blur-md rounded-full mb-6">
-                <Brain className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+          
+          <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
+            <div className="inline-flex items-center justify-center p-8 mb-8 relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full blur-xl opacity-70 animate-pulse" />
+              <div className="relative bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full p-6 shadow-2xl">
+                <Brain className="w-12 h-12 text-white drop-shadow-lg" />
               </div>
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white mb-4 sm:mb-6">
-                التحليلات العميقة
-              </h1>
-              <p className="text-lg sm:text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto mb-8 leading-relaxed px-4">
-                استكشف تحليلات معمقة ورؤى ثاقبة مدعومة بالذكاء الاصطناعي
-              </p>
+            </div>
+            <h1 className="text-5xl font-black text-white mb-6 drop-shadow-lg">
+              التحليلات العميقة
+            </h1>
+            <p className="text-xl text-gray-200 max-w-2xl mx-auto mb-8">
+              اكتشف تحليلات معمقة ورؤى ثاقبة مدعومة بالذكاء الاصطناعي
+            </p>
               
-              {/* إحصائيات محسنة للجوال */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-3xl mx-auto">
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 border border-white/20">
-                  <div className="text-2xl sm:text-4xl font-black text-white mb-1">
-                    {analyses.length}
-                  </div>
-                  <div className="text-xs sm:text-sm font-medium text-white/80">تحليل</div>
+              {/* Stats with Glass Effect */}
+              <div className="inline-flex flex-col sm:flex-row items-center gap-4 sm:gap-8 bg-black bg-opacity-20 backdrop-blur-md rounded-2xl px-6 sm:px-8 py-4 shadow-xl border border-white border-opacity-20">
+                <div className="text-center">
+                  <div className="text-2xl sm:text-3xl font-bold text-white mb-1 drop-shadow-lg">{analyses.length}</div>
+                  <div className="text-xs sm:text-sm text-white">تحليل عميق</div>
                 </div>
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 border border-white/20">
-                  <div className="text-2xl sm:text-4xl font-black text-white mb-1">
-                    {analyses.reduce((sum, a) => sum + a.views, 0).toLocaleString('ar-SA')}
+                <div className="hidden sm:block w-px h-12 bg-white bg-opacity-50"></div>
+                <div className="text-center">
+                  <div className="text-2xl sm:text-3xl font-bold text-white mb-1 drop-shadow-lg">
+                    {analyses.reduce((sum, a) => sum + a.views, 0).toLocaleString()}
                   </div>
-                  <div className="text-xs sm:text-sm font-medium text-white/80">مشاهدة</div>
+                  <div className="text-xs sm:text-sm text-white">مشاهدة إجمالية</div>
                 </div>
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 border border-white/20">
-                  <div className="text-2xl sm:text-4xl font-black text-white mb-1">
+                <div className="hidden sm:block w-px h-12 bg-white bg-opacity-50"></div>
+                <div className="text-center">
+                  <div className="text-2xl sm:text-3xl font-bold text-white mb-1 drop-shadow-lg">
                     {Math.round(analyses.reduce((sum, a) => sum + a.qualityScore, 0) / analyses.length)}%
                   </div>
-                  <div className="text-xs sm:text-sm font-medium text-white/80">جودة</div>
+                  <div className="text-xs sm:text-sm text-white">معدل الجودة</div>
                 </div>
               </div>
+            </div>
+        </section>
+
+        {/* Search Section */}
+        <section className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-16 z-10 shadow-md">
+          <div className="max-w-7xl mx-auto px-6 py-6">
+            <div className="relative w-full max-w-md mx-auto">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="ابحث في التحليلات..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pr-12 pl-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500 focus:ring-opacity-50 focus:border-transparent transition-all text-gray-900 dark:text-white"
+              />
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* شريط البحث والفلاتر - محسن للجوال */}
-        <div className={`sticky top-0 z-40 ${darkMode ? 'bg-gray-900' : 'bg-white'} border-b ${darkMode ? 'border-gray-800' : 'border-gray-200'} shadow-sm`}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-            {/* البحث وأزرار التحكم */}
-            <div className="flex items-center gap-3 mb-3">
-              {/* حقل البحث */}
-              <div className="flex-1 relative">
-                <Search className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
-                <input
-                  type="text"
-                  placeholder="ابحث في التحليلات..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`
-                    w-full pr-10 pl-4 py-2.5 rounded-xl border text-sm
-                    transition-all focus:outline-none focus:ring-2
-                    ${darkMode 
-                      ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500/20' 
-                      : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:border-blue-400 focus:ring-blue-400/20'
-                    }
-                  `}
-                />
-              </div>
-
-              {/* زر الفلاتر للجوال */}
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`
-                  sm:hidden p-2.5 rounded-xl border transition-all
-                  ${showFilters 
-                    ? darkMode ? 'bg-blue-600 border-blue-600 text-white' : 'bg-blue-50 border-blue-200 text-blue-600'
-                    : darkMode ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-gray-50 border-gray-200 text-gray-700'
-                  }
-                `}
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-              </button>
-
-              {/* أزرار التحكم للشاشات الكبيرة */}
-              <div className="hidden sm:flex items-center gap-2">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className={`
-                    px-4 py-2.5 rounded-xl border text-sm font-medium
-                    transition-all focus:outline-none
-                    ${darkMode 
-                      ? 'bg-gray-800 border-gray-700 text-gray-300' 
-                      : 'bg-gray-50 border-gray-200 text-gray-700'
-                    }
-                  `}
-                >
-                  <option value="newest">الأحدث</option>
-                  <option value="oldest">الأقدم</option>
-                  <option value="popular">الأكثر مشاهدة</option>
-                  <option value="quality">الأعلى جودة</option>
-                </select>
-
-                <div className={`flex items-center rounded-xl p-1 border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded-lg transition-all ${
-                      viewMode === 'grid' 
-                        ? darkMode ? 'bg-gray-700 text-blue-400' : 'bg-white text-blue-600 shadow-sm'
-                        : darkMode ? 'text-gray-400' : 'text-gray-500'
-                    }`}
-                  >
-                    <Grid className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`p-2 rounded-lg transition-all ${
-                      viewMode === 'list' 
-                        ? darkMode ? 'bg-gray-700 text-blue-400' : 'bg-white text-blue-600 shadow-sm'
-                        : darkMode ? 'text-gray-400' : 'text-gray-500'
-                    }`}
-                  >
-                    <List className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* الفلاتر للجوال */}
-            {showFilters && (
-              <div className="sm:hidden space-y-3 pb-3">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className={`
-                    w-full px-4 py-2.5 rounded-xl border text-sm font-medium
-                    ${darkMode 
-                      ? 'bg-gray-800 border-gray-700 text-gray-300' 
-                      : 'bg-gray-50 border-gray-200 text-gray-700'
-                    }
-                  `}
-                >
-                  <option value="newest">الأحدث</option>
-                  <option value="oldest">الأقدم</option>
-                  <option value="popular">الأكثر مشاهدة</option>
-                  <option value="quality">الأعلى جودة</option>
-                </select>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`
-                      flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all
-                      ${viewMode === 'grid' 
-                        ? 'bg-blue-600 border-blue-600 text-white' 
-                        : darkMode ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-gray-50 border-gray-200 text-gray-700'
-                      }
-                    `}
-                  >
-                    عرض شبكي
-                  </button>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`
-                      flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all
-                      ${viewMode === 'list' 
-                        ? 'bg-blue-600 border-blue-600 text-white' 
-                        : darkMode ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-gray-50 border-gray-200 text-gray-700'
-                      }
-                    `}
-                  >
-                    عرض قائمة
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* التصنيفات - محسنة للجوال */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-              <button
-                onClick={() => setSelectedCategory('all')}
-                className={`
-                  px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
-                  transition-all flex-shrink-0
-                  ${selectedCategory === 'all'
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                    : darkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-700'
-                  }
-                `}
-              >
-                جميع التحليلات
-              </button>
-              
-              {categories.map(category => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`
-                    px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
-                    transition-all flex-shrink-0
-                    ${selectedCategory === category
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                      : darkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-700'
-                    }
-                  `}
-                >
-                  {typeof category === 'string' ? category : ((category as any).name_ar || (category as any).name || 'عام')}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* المحتوى الرئيسي */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
+        {/* Categories Grid */}
+        <section className="max-w-7xl mx-auto px-6 py-12">
           {filteredAnalyses.length === 0 ? (
             <div className="text-center py-20">
               <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 ${
@@ -423,20 +270,20 @@ export default function DeepAnalysesPage() {
           ) : (
             <div className={`
               ${viewMode === 'grid' 
-                ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8' 
-                : 'space-y-4 sm:space-y-6'
+                ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' 
+                : 'space-y-6'
               }
             `}>
               {filteredAnalyses.map((analysis) => (
                 <DeepAnalysisCard 
-                  key={analysis.id} 
+                  key={analysis.id}
                   analysis={analysis} 
                   viewMode={viewMode}
                 />
               ))}
             </div>
           )}
-        </div>
+        </section>
       </div>
       <Footer />
 
@@ -447,6 +294,75 @@ export default function DeepAnalysesPage() {
         }
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
+        }
+        
+        /* تأثيرات backdrop blur للمتصفحات المختلفة */
+        .backdrop-blur-md {
+          -webkit-backdrop-filter: blur(12px);
+          backdrop-filter: blur(12px);
+        }
+        
+        /* خلفية سوداء شفافة */
+        .bg-black {
+          background-color: rgb(0, 0, 0);
+        }
+        
+        .bg-opacity-20 {
+          --tw-bg-opacity: 0.2;
+        }
+        
+        .bg-opacity-50 {
+          --tw-bg-opacity: 0.5;
+        }
+        
+        /* حدود بيضاء شفافة */
+        .border-white {
+          border-color: rgb(255, 255, 255);
+        }
+        
+        .border-opacity-20 {
+          --tw-border-opacity: 0.2;
+        }
+        
+        /* ضمان ظهور النصوص البيضاء */
+        .text-white {
+          color: rgb(255, 255, 255);
+        }
+        
+        /* تأثير الظل للنصوص */
+        .drop-shadow-lg {
+          filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.04)) drop-shadow(0 4px 3px rgba(0, 0, 0, 0.1));
+        }
+        
+        .shadow-xl {
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        @keyframes blob {
+          0% {
+            transform: translate(0px, 0px) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
+          100% {
+            transform: translate(0px, 0px) scale(1);
+          }
+        }
+        
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        
+        .animation-delay-4000 {
+          animation-delay: 4s;
         }
       `}</style>
     </>

@@ -199,141 +199,69 @@ export default function NewsPage() {
     <>
       <Header />
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        {/* Hero Section - تصميم بسيط وأنيق */}
-        <div className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-          <div className="max-w-7xl mx-auto px-6 py-12">
-            <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">جميع الأخبار</h1>
-              <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                تابع أحدث ما نُشر في صحيفة سبق من أخبار محلية وعالمية
-              </p>
-              
-              {/* إحصائيات - تصميم بسيط */}
-              <div className="flex items-center justify-center gap-8 mt-8">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{articles.length}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">مقال منشور</div>
-                </div>
-                <div className="w-px h-10 bg-gray-300 dark:bg-gray-600" />
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{categories.length}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">تصنيف</div>
-                </div>
-                <div className="w-px h-10 bg-gray-300 dark:bg-gray-600" />
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">24/7</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">تغطية مستمرة</div>
-                </div>
+        {/* Hero Section - تصميم ملون */}
+        <section className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 py-16">
+          <div className="absolute inset-0 bg-black/20" />
+          
+          {/* Animated Background Elements */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" />
+            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000" />
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000" />
+          </div>
+          
+          <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
+            <div className="inline-flex items-center justify-center p-8 mb-8 relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full blur-xl opacity-70 animate-pulse" />
+              <div className="relative bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full p-6 shadow-2xl">
+                <Newspaper className="w-12 h-12 text-white drop-shadow-lg" />
+              </div>
+            </div>
+            <h1 className="text-5xl font-black text-white mb-6 drop-shadow-lg">
+              أخبار سبق
+            </h1>
+            <p className="text-xl text-gray-200 max-w-2xl mx-auto mb-8">
+              تابع آخر الأخبار والمستجدات المحلية والعالمية لحظة بلحظة
+            </p>
+            
+            {/* Stats with Glass Effect */}
+            <div className="inline-flex flex-col sm:flex-row items-center gap-4 sm:gap-8 bg-black bg-opacity-20 backdrop-blur-md rounded-2xl px-6 sm:px-8 py-4 shadow-xl border border-white border-opacity-20">
+              <div className="text-center">
+                <div className="text-2xl sm:text-3xl font-bold text-white mb-1 drop-shadow-lg">{articles.length}</div>
+                <div className="text-xs sm:text-sm text-white">مقال منشور</div>
+              </div>
+              <div className="hidden sm:block w-px h-12 bg-white bg-opacity-50"></div>
+              <div className="text-center">
+                <div className="text-2xl sm:text-3xl font-bold text-white mb-1 drop-shadow-lg">{categories.length}</div>
+                <div className="text-xs sm:text-sm text-white">تصنيف متنوع</div>
+              </div>
+              <div className="hidden sm:block w-px h-12 bg-white bg-opacity-50"></div>
+              <div className="text-center">
+                <div className="text-2xl sm:text-3xl font-bold text-white mb-1 drop-shadow-lg">24/7</div>
+                <div className="text-xs sm:text-sm text-white">تغطية مستمرة</div>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Controls Section - تصميم بسيط وأنيق */}
-        <div className="sticky top-0 bg-white dark:bg-gray-900 z-40 border-b border-gray-100 dark:border-gray-800">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-              {/* Search - تصميم بسيط */}
-              <div className="relative w-full lg:w-96">
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="ابحث في الأخبار..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pr-10 pl-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:bg-white dark:focus:bg-gray-700 focus:border-blue-400 dark:focus:border-blue-500 transition-colors text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-                />
-              </div>
-
-              {/* Filters - تصميم بسيط */}
-              <div className="flex items-center gap-3">
-                {/* Sort Dropdown */}
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                  className="px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:bg-white dark:focus:bg-gray-700 focus:border-blue-400 dark:focus:border-blue-500 transition-colors text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  <option value="latest">الأحدث</option>
-                  <option value="popular">الأكثر مشاهدة</option>
-                  <option value="trending">الأكثر تفاعلاً</option>
-                </select>
-
-                {/* View Mode - تصميم بسيط */}
-                <div className="flex items-center bg-gray-50 dark:bg-gray-800 rounded-lg p-1 border border-gray-200 dark:border-gray-700">
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded transition-colors ${
-                      viewMode === 'grid' 
-                        ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' 
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                    }`}
-                  >
-                    <Grid className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`p-2 rounded transition-colors ${
-                      viewMode === 'list' 
-                        ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' 
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                    }`}
-                  >
-                    <List className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Categories - تصميم بسيط */}
-            <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide">
-              <button
-                onClick={() => setSelectedCategory(null)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                  selectedCategory === null
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-              >
-                جميع الأخبار
-              </button>
-              
-              {Array.isArray(categories) && categories.length > 0 && categories
-                .filter(category => category.is_active !== false)
-                .map((category) => {
-                  const isSelected = selectedCategory === category.id;
-                  const categoryColor = category.color_hex || '#6B7280';
-                  
-                  return (
-                    <button
-                      key={category.id}
-                      onClick={() => setSelectedCategory(category.id)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                        isSelected
-                          ? 'text-white'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                      }`}
-                      style={{
-                        backgroundColor: isSelected ? categoryColor : undefined
-                      }}
-                    >
-                      <span className="flex items-center gap-1.5">
-                        {category.icon && <span>{category.icon}</span>}
-                        {category.name_ar || category.name_en || category.name}
-                        {category.articles_count !== undefined && category.articles_count > 0 && (
-                          <span className="text-xs opacity-80">
-                            ({category.articles_count})
-                          </span>
-                        )}
-                      </span>
-                    </button>
-                  );
-                })}
+        {/* Search Section - تصميم بسيط */}
+        <section className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-16 z-10 shadow-md">
+          <div className="max-w-7xl mx-auto px-6 py-6">
+            <div className="relative w-full max-w-md mx-auto">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="ابحث في الأخبار..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pr-12 pl-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500 focus:ring-opacity-50 focus:border-transparent transition-all text-gray-900 dark:text-white"
+              />
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-6 py-12">
+        <section className="max-w-7xl mx-auto px-6 py-12">
           {loading && page === 1 ? (
             <div className="flex flex-col items-center justify-center py-20">
               <Loader2 className="w-12 h-12 animate-spin text-blue-500 mb-4" />
@@ -343,7 +271,7 @@ export default function NewsPage() {
             <>
               <div className={`${
                 viewMode === 'grid' 
-                  ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8' 
+                  ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' 
                   : 'space-y-6'
               }`}>
                 {filteredArticles.map((article) => (
@@ -383,9 +311,38 @@ export default function NewsPage() {
               <p className="text-gray-500 dark:text-gray-400">لم يتم العثور على أي مقالات منشورة حالياً</p>
             </div>
           )}
-        </div>
+        </section>
       </div>
       <Footer />
+      
+      <style jsx>{`
+        @keyframes blob {
+          0% {
+            transform: translate(0px, 0px) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
+          100% {
+            transform: translate(0px, 0px) scale(1);
+          }
+        }
+        
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+      `}</style>
     </>
   );
 } 

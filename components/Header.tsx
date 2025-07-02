@@ -192,7 +192,8 @@ export default function Header() {
     { label: 'الرئيسية', url: '/', order: 1 },
     { label: 'الأخبار', url: '/news', order: 2 },
     { label: 'التصنيفات', url: '/categories', order: 3 },
-    { label: 'تواصل معنا', url: '/contact', order: 4 }
+    { label: 'التحليلات العميقة', url: '/insights/deep', order: 4 },
+    { label: 'تواصل معنا', url: '/contact', order: 5 }
   ];
 
   return (
