@@ -4,8 +4,9 @@
 
 1. حساب DigitalOcean
 2. مستودع GitHub متصل
-3. قاعدة بيانات PlanetScale
+3. قاعدة بيانات PlanetScale (أو MySQL متوافق)
 4. حساب Cloudinary
+5. **مهم**: استخدام Node.js 18.x أو 20.x (لا تستخدم 22)
 
 ## خطوات النشر
 
@@ -38,6 +39,12 @@ NEXTAUTH_SECRET=your-nextauth-secret
 - **Node Version**: `18.x` (مهم: لا تستخدم Node 22)
 
 ### 4. حل المشاكل الشائعة
+
+#### مشكلة DATABASE_URL أثناء البناء
+إذا واجهت خطأ "DATABASE_URL is required":
+- سكريبت البناء `build:do` يضع DATABASE_URL مؤقت تلقائياً
+- تأكد من إضافة DATABASE_URL الحقيقي في متغيرات البيئة
+- البناء سيعمل حتى بدون DATABASE_URL حقيقي، لكن التطبيق يحتاجه للعمل
 
 #### مشكلة Prisma binaries
 إذا واجهت خطأ في تحميل Prisma binaries:
