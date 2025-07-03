@@ -25,8 +25,8 @@ NEXTAUTH_SECRET=your-nextauth-secret
 
 1. انتقل إلى [DigitalOcean App Platform](https://cloud.digitalocean.com/apps)
 2. اضغط على "Create App"
-3. اختر GitHub repository
-4. اختر الفرع `clean-main`
+3. اختر GitHub repository: `sabq4org/sabq-ai-cms`
+4. **مهم**: اختر الفرع `clean-main` (ليس `main`)
 
 ### 3. تكوين البناء
 
@@ -56,6 +56,11 @@ Error: request to https://binaries.prisma.sh failed
 
 #### مشكلة المتغيرات
 تأكد من إضافة جميع المتغيرات المطلوبة في قسم Environment Variables
+
+#### مفتاح OpenAI (اختياري)
+- إذا لم يكن لديك مفتاح OpenAI، يمكن ترك `OPENAI_API_KEY` فارغاً
+- التطبيق سيعمل بدون ميزات AI
+- يمكن إضافة المفتاح لاحقاً من إعدادات النظام
 
 ### 5. البناء المحلي للاختبار
 

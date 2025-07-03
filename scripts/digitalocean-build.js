@@ -12,7 +12,9 @@ const requiredEnvVars = {
   NEXT_PUBLIC_CLOUDINARY_API_KEY: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY || '559894124915114',
   JWT_SECRET: process.env.JWT_SECRET || 'default-jwt-secret-for-build',
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'default-nextauth-secret-for-build',
-  NODE_ENV: 'production'
+  NODE_ENV: 'production',
+  // OpenAI اختياري - إذا لم يكن موجوداً، سيتم تعطيل ميزات AI
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY || ''
 };
 
 // إنشاء ملف .env.production للبناء

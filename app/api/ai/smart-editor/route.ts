@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
 
-// تهيئة OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_AI_EDITOR_KEY!
-});
+// لا ننشئ OpenAI client مباشرة، بل نؤجله حتى وقت الاستخدام
+let openai: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI | null {
+  if (!openai) {
+    const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_AI_EDITOR_KEY;
+    if (apiKey && apiKey !== 'sk-...' && apiKey.length > 20) {
+      try {
+        openai = new OpenAI({ apiKey });
+      } catch (error) {
+        console.error('Failed to initialize OpenAI client:', error);
+        return null;
+      }
+    }
+  }
+  return openai;
+}
 
 // أنواع المهام المتاحة للمحرر الذكي
 type SmartEditorAction = 
@@ -210,6 +223,16 @@ export async function POST(request: NextRequest) {
     console.log('🔄 طلب المحرر الذكي:', { action, contentLength: content.length });
     
     // استدعاء OpenAI
+    const openai = getOpenAIClient();
+    if (!openai) {
+      console.error('OpenAI client not initialized');
+      return NextResponse.json({
+        result: getMockResponse(action, content),
+        mock: true,
+        error: 'حدث خطأ في تهيئة OpenAI'
+      });
+    }
+    
     const completion = await openai.chat.completions.create({
       model: 'gpt-4',
       messages: [

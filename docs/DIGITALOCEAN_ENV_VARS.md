@@ -16,6 +16,9 @@ CLOUDINARY_API_SECRET=your-cloudinary-api-secret
 
 # مفتاح NextAuth
 NEXTAUTH_SECRET=your-nextauth-secret-minimum-32-characters
+
+# مفتاح OpenAI (اختياري - إذا كنت تريد استخدام ميزات AI)
+OPENAI_API_KEY=sk-proj-your-openai-api-key-here
 ```
 
 ## المتغيرات العامة (Plain Text Variables)

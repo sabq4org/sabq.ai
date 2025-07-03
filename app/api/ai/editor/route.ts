@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
-// مفتاح OpenAI منفصل للمحرر الذكي
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_AI_EDITOR_KEY || process.env.OPENAI_API_KEY,
-});
+// لا ننشئ OpenAI client مباشرة، بل نؤجله حتى وقت الاستخدام
+let openai: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI | null {
+  if (!openai) {
+    const apiKey = process.env.OPENAI_AI_EDITOR_KEY || process.env.OPENAI_API_KEY;
+    if (apiKey && apiKey !== 'sk-...' && apiKey.length > 20) {
+      try {
+        openai = new OpenAI({ apiKey });
+      } catch (error) {
+        console.error('Failed to initialize OpenAI client:', error);
+        return null;
+      }
+    }
+  }
+  return openai;
+}
 
 // أنواع الخدمات المتاحة
 type EditorService = 
@@ -169,6 +182,14 @@ export async function POST(request: NextRequest) {
     });
 
     // استدعاء OpenAI
+    const openai = getOpenAIClient();
+    if (!openai) {
+      return NextResponse.json(
+        { success: false, error: 'فشل في الاتصال بـ OpenAI' },
+        { status: 500 }
+      );
+    }
+
     const completion = await openai.chat.completions.create({
       model: process.env.OPENAI_AI_EDITOR_MODEL || 'gpt-4',
       messages: [
