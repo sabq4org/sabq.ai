@@ -7,7 +7,8 @@ console.log('🌊 بدء تحسين البناء لـ DigitalOcean...');
 
 // التحقق من المتغيرات المطلوبة
 const requiredEnvVars = {
-  DATABASE_URL: process.env.DATABASE_URL,
+  // إضافة DATABASE_URL للبناء فقط (سيتم استبداله في الإنتاج)
+  DATABASE_URL: process.env.DATABASE_URL || 'mysql://build:build@localhost:3306/build?ssl={"rejectUnauthorized":false}',
   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dybhezmvb',
   NEXT_PUBLIC_CLOUDINARY_API_KEY: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY || '559894124915114',
   JWT_SECRET: process.env.JWT_SECRET || 'default-jwt-secret-for-build',
@@ -36,6 +37,29 @@ if (!fs.existsSync(prismaDir)) {
   console.log('✅ تم إنشاء مجلد prisma');
 }
 
+// التحقق من وجود schema.prisma
+const schemaPath = path.join(prismaDir, 'schema.prisma');
+if (!fs.existsSync(schemaPath)) {
+  // إنشاء ملف schema أساسي للبناء
+  const basicSchema = `
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id String @id @default(cuid())
+}
+`;
+  fs.writeFileSync(schemaPath, basicSchema);
+  console.log('✅ تم إنشاء ملف schema.prisma مؤقت');
+}
+
 // التحقق من وجود مجلد lib/generated/prisma
 const generatedDir = path.join(process.cwd(), 'lib', 'generated', 'prisma');
 if (!fs.existsSync(generatedDir)) {
@@ -53,8 +77,9 @@ console.log('   - PRISMA_CLI_BINARY_TARGETS:', process.env.PRISMA_CLI_BINARY_TAR
 
 console.log('\n🚀 البناء جاهز للبدء!');
 console.log('💡 نصائح لـ DigitalOcean:');
-console.log('   - تأكد من إضافة جميع متغيرات البيئة في App Platform');
+console.log('   - تأكد من إضافة DATABASE_URL الحقيقي في App Platform');
 console.log('   - استخدم Node.js 18 أو 20 (ليس 22)');
 console.log('   - تحقق من حجم الذاكرة المتاحة');
+console.log('   - DATABASE_URL المؤقت للبناء فقط، سيتم استبداله في الإنتاج');
 
 process.exit(0); 

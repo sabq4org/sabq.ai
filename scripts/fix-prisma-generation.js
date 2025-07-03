@@ -58,20 +58,46 @@ if (!success) {
   const fallbackClient = `
 // This is a fallback Prisma Client for build purposes
 export class PrismaClient {
-  constructor() {
-    console.warn('Using fallback Prisma Client - database operations will not work');
+  constructor(options) {
+    console.warn('[Prisma] Using fallback client for build - database operations will not work');
   }
   
   $connect() { return Promise.resolve(); }
   $disconnect() { return Promise.resolve(); }
+  $use() {}
+  $on() {}
+  $transaction() { return Promise.resolve([]); }
   
-  // Add basic model stubs
-  user = {};
-  article = {};
-  category = {};
-  // Add more models as needed
+  // نماذج أساسية مع عمليات dummy
+  user = {
+    findMany: () => Promise.resolve([]),
+    findUnique: () => Promise.resolve(null),
+    findFirst: () => Promise.resolve(null),
+    create: () => Promise.resolve({}),
+    update: () => Promise.resolve({}),
+    delete: () => Promise.resolve({}),
+    count: () => Promise.resolve(0),
+    aggregate: () => Promise.resolve({}),
+    groupBy: () => Promise.resolve([])
+  };
+  
+  article = this.user;
+  category = this.user;
+  interaction = this.user;
+  loyaltyPoint = this.user;
+  loyaltyTransaction = this.user;
+  deepAnalysis = this.user;
+  author = this.user;
+  mediaFile = this.user;
+  aiInteraction = this.user;
+  impression = this.user;
+  preference = this.user;
 }
 
+// Export named exports
+export { PrismaClient };
+
+// Default export
 export default PrismaClient;
 `;
 
