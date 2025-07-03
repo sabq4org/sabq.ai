@@ -1,0 +1,33 @@
+name: sabq-ai-cms
+region: fra
+services:
+- environment_slug: node-js
+  github:
+    branch: clean-main
+    deploy_on_push: true
+    repo: sabq4org/sabq-ai-cms
+  http_port: 3000
+  instance_count: 1
+  instance_size_slug: professional-xs
+  name: web
+  build_command: npm run build:do
+  run_command: npm start
+  envs:
+  - key: NODE_ENV
+    value: production
+  - key: DATABASE_URL
+    type: SECRET
+  - key: JWT_SECRET
+    type: SECRET
+  - key: NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+    value: dybhezmvb
+  - key: NEXT_PUBLIC_CLOUDINARY_API_KEY
+    value: "559894124915114"
+  - key: CLOUDINARY_API_SECRET
+    type: SECRET
+  - key: NEXTAUTH_SECRET
+    type: SECRET
+  - key: PORT
+    value: "3000"
+  - key: PRISMA_CLI_BINARY_TARGETS
+    value: '["debian-openssl-3.0.x"]' 

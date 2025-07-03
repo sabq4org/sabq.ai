@@ -8,7 +8,10 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('🚀 بدء تحسين البناء لـ Vercel...');
+const platform = process.env.VERCEL ? 'Vercel' : 
+                process.env.DO_APP_PLATFORM ? 'DigitalOcean' : 
+                'Local';
+console.log(`🚀 بدء تحسين البناء لـ ${platform}...`);
 
 // التحقق من وجود ملفات مهمة
 const requiredFiles = [

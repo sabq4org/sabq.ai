@@ -42,6 +42,10 @@ production.env
 # vercel
 .vercel
 
+# digitalocean
+.do/deploy.template.yaml
+.env.production
+
 # Private files
 PRIVATE_ENV_VARS.txt
 .env

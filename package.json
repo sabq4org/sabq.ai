@@ -2,10 +2,15 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=18.0.0 <23.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "dev:staging": "NODE_ENV=development next dev",
-    "build": "node scripts/fix-vercel-build.js && prisma generate && next build",
+    "build": "node scripts/vercel-build-optimization.js && prisma generate --no-engine && next build",
+    "build:do": "node scripts/digitalocean-build.js && node scripts/fix-prisma-generation.js && next build",
     "build:force": "rm -rf .next && NEXT_TELEMETRY_DISABLED=1 next build",
     "test-build": "node scripts/test-build.js",
     "start": "next start",
@@ -22,7 +27,7 @@
     "build:production": "SKIP_EMAIL_VERIFICATION=true next build",
     "fix-build": "node scripts/fix-build-deps.js",
     "check-deps": "node scripts/check-deps.js",
-    "postinstall": "prisma generate || true",
+    "postinstall": "prisma generate --no-engine || echo 'Prisma generate failed, continuing...'",
     "db:migrate:deploy": "echo 'Run your migration tool here'",
     "db:backup": "bash scripts/backup-production.sh",
     "check:production": "node scripts/check-production-safety.js",

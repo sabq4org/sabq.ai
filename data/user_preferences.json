@@ -83,5 +83,19 @@
     "source": "manual",
     "created_at": "2025-07-02T09:22:21.225Z",
     "updated_at": "2025-07-02T09:22:21.225Z"
+  },
+  {
+    "user_id": "122d322a-184b-4a89-a45b-c1eb27891016",
+    "category_id": "94604730-5d3b-43f2-ab8d-fab7b1114f6b",
+    "source": "manual",
+    "created_at": "2025-07-02T20:27:28.725Z",
+    "updated_at": "2025-07-02T20:27:28.725Z"
+  },
+  {
+    "user_id": "122d322a-184b-4a89-a45b-c1eb27891016",
+    "category_id": "a806adbd-ead7-4242-8117-b316d120e7a6",
+    "source": "manual",
+    "created_at": "2025-07-02T20:27:28.725Z",
+    "updated_at": "2025-07-02T20:27:28.725Z"
   }
 ]

@@ -1,23 +1,29 @@
 [
   {
     "id": "1",
-    "name": "أخبار اليوم الوطني",
-    "position": "afterHighlights",
+    "name": "لحظة بلحظة",
+    "position": "topBanner",
     "type": "smart",
     "status": "inactive",
-    "displayType": "grid",
+    "displayType": "horizontal",
     "keywords": [
-      "اليوم الوطني"
+      "لحظة بلحظة",
+      "أخبار"
     ],
-    "articlesCount": 6,
+    "articlesCount": 10,
     "theme": {
-      "primaryColor": "#00BFA6",
+      "primaryColor": "#3a88fe",
       "backgroundColor": "#f8fafc",
       "textColor": "#1a1a1a"
     },
     "order": 1,
     "createdAt": "2025-06-27T06:53:04.687Z",
-    "updatedAt": "2025-06-27T11:42:02.621Z"
+    "updatedAt": "2025-07-02T20:25:51.978Z",
+    "schedule": {
+      "isAlwaysActive": true,
+      "startDate": "",
+      "endDate": ""
+    }
   },
   {
     "id": "2",
