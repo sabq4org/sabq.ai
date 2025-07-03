@@ -6,7 +6,8 @@ import {
   Upload, Download, AlertCircle, Loader, Eye, EyeOff, Share2,
   Building, Mail, Phone, Twitter, Instagram, Facebook,
   Youtube, Smartphone, Lock, Bell, RefreshCw, FileText, 
-  Type, Bot, Languages, ShieldAlert, Key, HardDrive, History, Info, Image as ImageIcon
+  Type, Bot, Languages, ShieldAlert, Key, HardDrive, History, Info, Image as ImageIcon,
+  MessageCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { TabsEnhanced, TabItem } from '@/components/ui/tabs-enhanced';
@@ -27,6 +28,15 @@ interface SettingsData {
     model: string;
     maxTokens: number;
     temperature: number;
+    useCustomModel?: boolean;
+    enableDeepAnalysis?: boolean;
+    aiOutputLanguage?: string;
+    lockoutAttempts?: number;
+    allowedIPs?: string[];
+    notifyOnSettingsChange?: boolean;
+    notifyOnBackup?: boolean;
+    notifyOnUpdate?: boolean;
+    keepChangeLog?: boolean;
   };
   cloudinary: {
     cloudName: string;
@@ -41,6 +51,7 @@ interface SettingsData {
     aiEditor: boolean;
     analytics: boolean;
     notifications: boolean;
+    commentsEnabled?: boolean;
   };
 }
 
@@ -61,7 +72,16 @@ export default function SettingsPage() {
       apiKey: '',
       model: 'gpt-4',
       maxTokens: 2000,
-      temperature: 0.7
+      temperature: 0.7,
+      useCustomModel: false,
+      enableDeepAnalysis: false,
+      aiOutputLanguage: 'auto',
+      lockoutAttempts: 5,
+      allowedIPs: [],
+      notifyOnSettingsChange: true,
+      notifyOnBackup: true,
+      notifyOnUpdate: true,
+      keepChangeLog: true
     },
     cloudinary: {
       cloudName: '',
@@ -75,7 +95,8 @@ export default function SettingsPage() {
     features: {
       aiEditor: true,
       analytics: true,
-      notifications: true
+      notifications: true,
+      commentsEnabled: true
     }
   });
 
@@ -981,6 +1002,25 @@ export default function SettingsPage() {
                     />
                   </label>
 
+                  <Separator className="my-4" />
+
+                  <label className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 transition-all cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <MessageCircle className="w-5 h-5 text-amber-600" />
+                      <span className={`transition-colors duration-300 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>تفعيل نظام التعليقات</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.features.commentsEnabled ?? true}
+                      onChange={(e) => {
+                        updateSetting('features', 'commentsEnabled', e.target.checked);
+                        // حفظ حالة التعليقات مباشرة
+                        localStorage.setItem('comments_enabled', e.target.checked.toString());
+                      }}
+                      className="w-4 h-4"
+                    />
+                  </label>
+
                   <div className="p-3">
                     <label className={`block text-sm font-medium mb-2 transition-colors duration-300 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       <Languages className="inline w-4 h-4 ml-2" />
@@ -1063,7 +1103,7 @@ export default function SettingsPage() {
                         تحديد IPs مسموحة للدخول للوحة التحكم
                       </label>
                       <textarea
-                        value={settings.openai.allowedIPs.join('\n')}
+                        value={(settings.openai.allowedIPs || []).join('\n')}
                         onChange={(e) => updateSetting('openai', 'allowedIPs', e.target.value.split('\n').filter(ip => ip.trim()) as string[])}
                         placeholder="192.168.1.1&#10;10.0.0.0/24"
                         rows={3}
