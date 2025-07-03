@@ -536,7 +536,7 @@ export default function PersonalizedContent() {
               </div>
 
               <div className="p-4 space-y-4">
-                {categoryArticles.slice(0, 3).map((article) => (
+                {categoryArticles.slice(0, 12).map((article) => (
                   <div key={article.id} className="relative group">
                     <Link 
                       href={`/article/${article.id}`}
@@ -651,7 +651,7 @@ export default function PersonalizedContent() {
                 ))}
 
                 {/* رابط عرض المزيد */}
-                {categoryArticles.length > 3 && (
+                {categoryArticles.length > 12 && (
                   <div className="text-center pt-2">
                     <Link 
                       href={`/categories/${category}`}

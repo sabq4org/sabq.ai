@@ -15,6 +15,7 @@ import ArticleJsonLd from '@/components/ArticleJsonLd';
 import Footer from '@/components/Footer';
 import { marked } from 'marked';
 import Header from '@/components/Header';
+import CommentsSection from '@/components/comments/CommentsSection';
 
 // تعريف نوع twttr لتويتر
 declare global {
@@ -103,6 +104,7 @@ interface Article {
   seo_keywords?: string | string[];
   related_articles?: RelatedArticle[];
   ai_summary?: string;
+  allow_comments?: boolean;
 }
 
 interface RelatedArticle {
@@ -1279,6 +1281,14 @@ export default function ArticlePage({ params }: PageProps) {
 
 
           </aside>
+        </div>
+
+        {/* قسم التعليقات */}
+        <div className="mt-12">
+          <CommentsSection 
+            articleId={article.id} 
+            allowComments={article.allow_comments !== false}
+          />
         </div>
       </div>
 

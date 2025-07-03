@@ -766,4 +766,14 @@
 
 .hilal-title-effect:hover::after {
   transform: scaleX(1);
+}
+
+/* إخفاء شريط التمرير */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
 } 

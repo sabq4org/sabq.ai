@@ -11,6 +11,8 @@ export interface User {
   avatar_url?: string;
   permissions?: string[];
   sections?: number[];
+  role?: string;
+  isAdmin?: boolean;
 }
 
 export interface Permission {
@@ -63,23 +65,49 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 
 // الحصول على المستخدم الحالي من الجلسة
 export async function getCurrentUser(): Promise<User | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('auth-token');
-  
-  if (!token) return null;
-  
-  const payload = await verifyToken(token.value);
-  if (!payload) return null;
-  
-  // هنا يجب استعلام قاعدة البيانات للحصول على بيانات المستخدم الكاملة
-  // مؤقتاً نرجع بيانات تجريبية
-  return {
-    id: payload.id,
-    email: payload.email,
-    name: 'User Name',
-    role_id: payload.role_id,
-    status: 'active'
-  };
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token');
+    
+    if (!token) return null;
+    
+    const payload = await verifyToken(token.value);
+    if (!payload) return null;
+    
+    // استعلام قاعدة البيانات للحصول على بيانات المستخدم الكاملة
+    const { PrismaClient } = await import('@/lib/generated/prisma');
+    const prisma = new PrismaClient();
+    
+    const user = await prisma.user.findUnique({
+      where: { id: payload.id || payload.userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        isAdmin: true,
+        avatar: true
+      }
+    });
+    
+    await prisma.$disconnect();
+    
+    if (!user) return null;
+    
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name || 'User',
+      role_id: user.isAdmin ? 1 : 2, // 1 for admin, 2 for user
+      status: 'active',
+      avatar_url: user.avatar || undefined,
+      // إضافة role للتحقق في API
+      role: user.role
+    } as User & { role: string };
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    return null;
+  }
 }
 
 // التحقق من صلاحية معينة

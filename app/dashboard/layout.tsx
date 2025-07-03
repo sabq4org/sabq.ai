@@ -26,7 +26,8 @@ import {
   ChevronRight,
   Sun,
   Moon,
-  Image
+  Image,
+  MessageCircle
 } from 'lucide-react';
 import { getCurrentUser, logActions } from '@/lib/log-activity';
 import { useDarkModeContext } from '@/contexts/DarkModeContext';
@@ -588,6 +589,37 @@ export default function DashboardLayout({
                           ? 'text-gray-400 group-hover:text-orange-300' 
                           : 'text-gray-500 group-hover:text-orange-600'
                       }`}>فحص وإصلاح الصور</p>
+                    </div>
+                  </Link>
+
+                  <Link href="/dashboard/comments" 
+                    onClick={() => setSidebarOpen(false)}
+                    className={`group flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-2 lg:py-3 rounded-xl transition-all duration-300 hover:shadow-md hover:translate-x-1 ${
+                    darkMode 
+                      ? 'text-gray-300 hover:bg-gradient-to-r hover:from-amber-900/30 hover:to-yellow-900/30 hover:text-amber-300' 
+                      : 'text-gray-700 hover:bg-gradient-to-r hover:from-amber-50 hover:to-yellow-50 hover:text-amber-700'
+                  }`}>
+                    <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                      darkMode 
+                        ? 'bg-amber-900/40 group-hover:bg-amber-500 group-hover:text-white' 
+                        : 'bg-amber-100 group-hover:bg-amber-500 group-hover:text-white'
+                    }`}>
+                      <MessageCircle className="w-4 h-4 lg:w-5 lg:h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-sm lg:text-base font-medium">إدارة التعليقات</span>
+                      <p className={`text-xs hidden lg:block transition-colors duration-300 ${
+                        darkMode 
+                          ? 'text-gray-400 group-hover:text-amber-300' 
+                          : 'text-gray-500 group-hover:text-amber-600'
+                      }`}>مراجعة وإدارة التعليقات</p>
+                    </div>
+                    <div className={`px-2 py-1 rounded-full text-xs font-bold transition-all ${
+                      darkMode 
+                        ? 'bg-amber-900/40 text-amber-300 group-hover:bg-amber-500 group-hover:text-white' 
+                        : 'bg-amber-100 text-amber-700 group-hover:bg-amber-500 group-hover:text-white'
+                    }`}>
+                      جديد
                     </div>
                   </Link>
 

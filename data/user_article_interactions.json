@@ -2829,6 +2829,406 @@
       "timestamp": "2025-07-03T07:25:44.537Z",
       "source": "article_page",
       "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+      "article_id": "e06a2d9f-b588-4843-82ad-1ba277e7b059",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T08:50:33.767Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+      "article_id": "e06a2d9f-b588-4843-82ad-1ba277e7b059",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T08:50:54.036Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+      "article_id": "e06a2d9f-b588-4843-82ad-1ba277e7b059",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T08:50:54.059Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+      "article_id": "e06a2d9f-b588-4843-82ad-1ba277e7b059",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T08:51:08.817Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+      "article_id": "32829369-97d2-4694-a2f6-2ae50ca74011",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T08:51:19.431Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+      "article_id": "32829369-97d2-4694-a2f6-2ae50ca74011",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T08:51:20.935Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+      "article_id": "568f0ff2-8728-41a7-b421-babef568e761",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T08:51:37.098Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+      "article_id": "568f0ff2-8728-41a7-b421-babef568e761",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T08:51:37.338Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+      "article_id": "dee1d3b6-9eb7-4e28-ab65-6a1c4d8e8dd9",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T08:52:09.511Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+      "article_id": "dee1d3b6-9eb7-4e28-ab65-6a1c4d8e8dd9",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T08:52:09.537Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "e06a2d9f-b588-4843-82ad-1ba277e7b059",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T08:54:17.393Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "e06a2d9f-b588-4843-82ad-1ba277e7b059",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T08:54:56.347Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "e06a2d9f-b588-4843-82ad-1ba277e7b059",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T08:54:56.864Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "e06a2d9f-b588-4843-82ad-1ba277e7b059",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T11:36:41.344Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "e06a2d9f-b588-4843-82ad-1ba277e7b059",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T11:37:21.017Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "e06a2d9f-b588-4843-82ad-1ba277e7b059",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T11:38:08.505Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "e06a2d9f-b588-4843-82ad-1ba277e7b059",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T11:38:08.892Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+      "article_id": "dee1d3b6-9eb7-4e28-ab65-6a1c4d8e8dd9",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T11:55:28.875Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+      "article_id": "dee1d3b6-9eb7-4e28-ab65-6a1c4d8e8dd9",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T11:55:28.898Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+      "article_id": "dee1d3b6-9eb7-4e28-ab65-6a1c4d8e8dd9",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T11:57:24.900Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+      "article_id": "dee1d3b6-9eb7-4e28-ab65-6a1c4d8e8dd9",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T11:57:24.920Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+      "article_id": "dee1d3b6-9eb7-4e28-ab65-6a1c4d8e8dd9",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T12:04:27.654Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+      "article_id": "dee1d3b6-9eb7-4e28-ab65-6a1c4d8e8dd9",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T12:04:29.062Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+      "article_id": "dee1d3b6-9eb7-4e28-ab65-6a1c4d8e8dd9",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T12:05:48.636Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
+      "article_id": "dee1d3b6-9eb7-4e28-ab65-6a1c4d8e8dd9",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T12:05:48.692Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T12:47:05.670Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T12:47:05.691Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T13:03:31.233Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T13:03:31.260Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T14:14:10.380Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T14:14:10.422Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T14:16:46.920Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T14:16:47.981Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T14:22:31.410Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T14:22:32.007Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T14:23:39.270Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T14:23:39.390Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T14:27:25.795Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T14:27:25.813Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T14:41:33.877Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T14:41:34.373Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T14:48:24.725Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T14:48:25.122Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T14:48:30.106Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T15:18:48.059Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T15:18:48.083Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T15:28:48.572Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T15:28:49.615Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T17:57:53.808Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+      "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c",
+      "interaction_type": "view",
+      "timestamp": "2025-07-03T17:57:53.854Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
     }
   ]
 }

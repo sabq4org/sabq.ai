@@ -27,7 +27,7 @@ export function TabsEnhanced({ tabs, activeTab, onTabChange, className = '' }: T
         ? 'bg-gray-800 border-gray-700' 
         : 'bg-white border-gray-100'
     } ${className}`}>
-      <div className="flex gap-2 justify-start pr-8">
+      <div className="flex gap-2 justify-start overflow-x-auto scrollbar-hide">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -35,7 +35,7 @@ export function TabsEnhanced({ tabs, activeTab, onTabChange, className = '' }: T
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`w-48 flex flex-col items-center justify-center gap-2 py-4 pb-3 px-3 rounded-xl font-medium text-sm transition-all duration-300 relative ${
+              className={`min-w-[120px] flex flex-col items-center justify-center gap-1 py-3 px-3 rounded-xl font-medium text-xs transition-all duration-300 relative ${
                 isActive
                   ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform scale-105'
                   : darkMode
@@ -45,13 +45,13 @@ export function TabsEnhanced({ tabs, activeTab, onTabChange, className = '' }: T
             >
               {/* خط سفلي للتاب النشط */}
               {isActive && (
-                <div className="absolute bottom-0 left-6 right-6 h-1 bg-white/30 rounded-full" />
+                <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-white/30 rounded-full" />
               )}
               
-              <Icon className={`w-5 h-5 ${isActive ? 'text-white' : ''}`} />
-              <span className={isActive ? 'font-semibold' : ''}>{tab.name}</span>
+              <Icon className={`w-4 h-4 ${isActive ? 'text-white' : ''}`} />
+              <span className={`${isActive ? 'font-semibold' : ''} whitespace-nowrap`}>{tab.name}</span>
               {tab.count !== undefined && tab.count > 0 && (
-                <span className={`absolute -top-1 -right-1 px-2 py-0.5 text-xs rounded-full font-bold ${
+                <span className={`absolute -top-1 -right-1 px-1.5 py-0.5 text-[10px] rounded-full font-bold ${
                   isActive
                     ? 'bg-white text-blue-600 shadow-md'
                     : darkMode

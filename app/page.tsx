@@ -308,12 +308,12 @@ function NewspaperHomePage(): React.ReactElement {
   const [blocksConfig, setBlocksConfig] = useState({
     briefing: { enabled: true, order: 1 },
     trending: { enabled: true, order: 2 },
-    analysis: { enabled: true, order: 3 },
+    analysis: { enabled: false, order: 3 }, // موجز اليوم الذكي - مخفي
     recommendation: { enabled: true, order: 4 },
-    categories: { enabled: true, order: 5 },
-    audio: { enabled: true, order: 6 },
+    categories: { enabled: false, order: 5 }, // استكشف بحسب اهتماماتك - مخفي
+    audio: { enabled: false, order: 6 }, // استمع لأبرز الأخبار - مخفي
     todayEvent: { enabled: true, order: 7 },
-    regions: { enabled: true, order: 8 }
+    regions: { enabled: false, order: 8 } // جغرافيا الأخبار - مخفي
   });
   const [deepInsights, setDeepInsights] = useState<any[]>([]);
   const [deepInsightsLoading, setDeepInsightsLoading] = useState(true);
@@ -1734,13 +1734,24 @@ function NewspaperHomePage(): React.ReactElement {
       {/* Header */}
       <Header />
 
+      {/* عرض جميع البلوكات الذكية */}
+      {getOrderedBlocks().some(block => blocksConfig[block.key]?.enabled) && (
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          {getOrderedBlocks().map(block => (
+            <div key={block.key} className="mb-6">
+              {block.component}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Smart Blocks - Below Header - أول بلوك أسفل الهيدر مباشرة */}
-      <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="max-w-7xl mx-auto px-6">
         <SmartSlot position="below_header" />
       </div>
 
       {/* Smart Blocks - Top Banner (للتوافق مع النظام القديم) */}
-      <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="max-w-7xl mx-auto px-6">
         <SmartSlot position="topBanner" />
       </div>
 
@@ -1753,7 +1764,7 @@ function NewspaperHomePage(): React.ReactElement {
       )}
 
       {/* Smart Blocks - Below Deep Analysis */}
-      <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="max-w-7xl mx-auto px-6">
         <SmartSlot position="below_deep_analysis" />
       </div>
 
@@ -1761,7 +1772,7 @@ function NewspaperHomePage(): React.ReactElement {
       {/* <SmartSlot position="afterHighlights" /> */}
 
       {/* Elegant Separator */}
-      <div className="max-w-7xl mx-auto px-6 mb-12">
+      <div className="max-w-7xl mx-auto px-6 mb-6 mt-6">
         <div className="flex items-center justify-center">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
           <div className={`px-6 py-2 rounded-full ${darkMode ? 'bg-gray-800 text-gray-400 dark:text-gray-500' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
@@ -1775,8 +1786,9 @@ function NewspaperHomePage(): React.ReactElement {
         </div>
       </div>
 
-      {/* شريط التنقل بالتصنيفات */}
-      <section className="max-w-7xl mx-auto px-6 mb-16">
+      {/* شريط التنقل بالتصنيفات - مخفي حسب طلب المستخدم */}
+      {blocksConfig.categories.enabled && (
+      <section className="max-w-7xl mx-auto px-6 mb-8">
         <div className={`rounded-3xl p-8 transition-all duration-500 shadow-lg dark:shadow-gray-900/50 ${darkMode ? 'bg-blue-900/10 border border-blue-800/30' : 'bg-blue-50 dark:bg-blue-900/20/50 border border-blue-200/50'}`} style={{ 
           backdropFilter: 'blur(10px)',
           background: darkMode 
@@ -1886,7 +1898,7 @@ function NewspaperHomePage(): React.ReactElement {
                   ) : categoryArticles.length > 0 ? (
                     <>
                       {/* Grid Layout for Cards */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {categoryArticles.map((article: any) => (
                           <Link key={article.id} href={`/article/${article.id}`} className="group">
                             <article className={`h-full rounded-3xl overflow-hidden shadow-xl dark:shadow-gray-900/50 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700'}`}>
@@ -2005,9 +2017,10 @@ function NewspaperHomePage(): React.ReactElement {
           )}
         </div>
       </section>
+      )}
       
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-12">
+      <main className="max-w-7xl mx-auto px-6 py-6">
         {/* Enhanced News Section */}
         <section className="mb-20">
           <div className="text-center mb-12">
@@ -2151,7 +2164,7 @@ function NewspaperHomePage(): React.ReactElement {
               {(showPersonalized && personalizedArticles.length > 0) ? (
                 // عرض المقالات المخصصة للمستخدمين المسجلين
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                  {personalizedArticles.slice(0, 8).map((news) => (
+                  {personalizedArticles.slice(0, 12).map((news) => (
                     <div key={news.id} className="relative">
                       {/* شارة "مخصص لك" */}
                       <div className="absolute top-3 left-3 z-10">
@@ -2171,7 +2184,7 @@ function NewspaperHomePage(): React.ReactElement {
               ) : articles.length > 0 ? (
                 // عرض آخر المقالات للزوار أو المستخدمين بدون تفضيلات
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                  {articles.slice(0, 8).map((news) => (
+                  {articles.slice(0, 12).map((news) => (
                     <NewsCard key={news.id} news={news} />
                   ))}
                 </div>
