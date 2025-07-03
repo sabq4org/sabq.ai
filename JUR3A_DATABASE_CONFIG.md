@@ -4,15 +4,15 @@
 
 ### في ملف .env أو .env.local:
 ```env
-DATABASE_URL="mysql://j3uar_sabq_user:hugsiP-tiswaf-vitte2@jur3a.ai:3306/j3uar_sabq_db"
+DATABASE_URL="mysql://username:password@host:3306/database_name"
 ```
 
 ### تفاصيل الاتصال:
-- **الخادم**: jur3a.ai
+- **الخادم**: [YOUR_HOST]
 - **المنفذ**: 3306 (MySQL الافتراضي)
-- **قاعدة البيانات**: j3uar_sabq_db
-- **المستخدم**: j3uar_sabq_user
-- **كلمة المرور**: hugsiP-tiswaf-vitte2
+- **قاعدة البيانات**: [YOUR_DATABASE_NAME]
+- **المستخدم**: [YOUR_USERNAME]
+- **كلمة المرور**: [YOUR_PASSWORD]
 
 ## خطوات الإعداد
 

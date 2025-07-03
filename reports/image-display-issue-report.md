@@ -40,9 +40,9 @@
 ### 1. إعدادات Cloudinary
 ```typescript
 const cloudinaryConfig = {
-  cloud_name: 'dybhezmvb',
-  api_key: '559894124915114',
-  api_secret: 'vuiA8rLNm7d1U-UAOTED6FyC4hY',
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 };
 ```
 

@@ -74,9 +74,9 @@ npm run build
 
 تم التأكد من وجود متغيرات Cloudinary الصحيحة:
 ```env
-CLOUDINARY_CLOUD_NAME=dybhezmvb
-CLOUDINARY_API_KEY=559894124915114
-CLOUDINARY_API_SECRET=vuiA8rLNm7d1U-UAOTED6FyC4hY
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
 ## الملفات المعدلة
