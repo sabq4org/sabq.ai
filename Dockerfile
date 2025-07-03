@@ -17,6 +17,8 @@ WORKDIR /app
 
 # نسخ التبعيات من المرحلة السابقة
 COPY --from=deps /app/node_modules ./node_modules
+# نسخ السكريبتات أولاً
+COPY scripts ./scripts
 COPY . .
 
 # متغيرات البيئة للبناء
@@ -24,8 +26,14 @@ ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# توليد Prisma Client
-RUN npx prisma generate
+# إضافة DATABASE_URL مؤقت للبناء إذا لم يكن موجوداً
+ENV DATABASE_URL=${DATABASE_URL:-mysql://build:build@localhost:3306/build?ssl={"rejectUnauthorized":false}}
+
+# تشغيل سكريبت التحضير للبناء على DigitalOcean
+RUN node scripts/digitalocean-build.js || echo "No build script found, continuing..."
+
+# توليد Prisma Client مع fallback
+RUN npx prisma generate || node scripts/fix-prisma-generation.js || echo "Prisma generation failed, using fallback"
 
 # البناء
 RUN npm run build
