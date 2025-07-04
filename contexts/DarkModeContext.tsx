@@ -32,3 +32,5 @@ export function DarkModeProvider({ children }: { children: React.ReactNode }) {
 export function useDarkModeContext() {
   return useContext(DarkModeContext);
 } 
+
+// Force rebuild - 2025-01-04 

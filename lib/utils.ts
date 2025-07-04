@@ -140,4 +140,6 @@ export function getImageUrl(imagePath: string | undefined | null): string {
   }
   
   return imagePath;
-} 
+}
+
+// Force rebuild - 2025-01-04 

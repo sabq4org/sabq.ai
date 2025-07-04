@@ -137,4 +137,6 @@ export function getSaudiNow(): Date {
   const now = new Date();
   const saudiOffset = 3 * 60 * 60 * 1000; // +3 hours
   return new Date(now.getTime() + saudiOffset);
-} 
+}
+
+// Force rebuild - 2025-01-04 

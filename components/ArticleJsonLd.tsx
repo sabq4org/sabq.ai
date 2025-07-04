@@ -99,4 +99,6 @@ export default function ArticleJsonLd({ article }: ArticleJsonLdProps) {
       strategy="afterInteractive"
     />
   );
-} 
+}
+
+// Force rebuild - 2025-01-04 

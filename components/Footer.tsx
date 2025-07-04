@@ -92,4 +92,6 @@ export default function Footer() {
       </div>
     </footer>
   );
-} 
+}
+
+// Force rebuild - 2025-01-04 
