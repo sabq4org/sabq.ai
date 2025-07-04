@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { Menu, X, Search, User, Sun, Moon, Bell, Clock, Activity } from 'lucide-react'
+import { Menu, X, Search, User, Sun, Moon, Bell, Activity } from 'lucide-react'
 import { useDarkModeContext } from '@/contexts/DarkModeContext'
 
 export function StaticHeader() {
@@ -104,19 +104,6 @@ export function StaticHeader() {
 
           {/* الأدوات */}
           <div className="flex items-center gap-4">
-            {/* رابط اللحظة بلحظة مع تنبيه */}
-            <Link
-              href="/moment-by-moment"
-              className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              {newEventsCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                  {newEventsCount > 9 ? '9+' : newEventsCount}
-                </span>
-              )}
-            </Link>
-
             {/* البحث */}
             <button
               onClick={() => setSearchOpen(!searchOpen)}

@@ -367,5 +367,32 @@
       "article_id": "136c145e-3ad1-4537-9c65-b25af073d74c"
     },
     "timestamp": "2025-07-03T17:57:53.856Z"
+  },
+  {
+    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "e06a2d9f-b588-4843-82ad-1ba277e7b059"
+    },
+    "timestamp": "2025-07-04T05:21:22.724Z"
+  },
+  {
+    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "e06a2d9f-b588-4843-82ad-1ba277e7b059"
+    },
+    "timestamp": "2025-07-04T05:21:22.741Z"
+  },
+  {
+    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "e06a2d9f-b588-4843-82ad-1ba277e7b059"
+    },
+    "timestamp": "2025-07-04T05:21:43.396Z"
   }
 ]

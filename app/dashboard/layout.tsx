@@ -466,12 +466,12 @@ export default function DashboardLayout({
                       <FileText className="w-4 h-4 lg:w-5 lg:h-5" />
                     </div>
                     <div className="flex-1">
-                      <span className="text-sm lg:text-base font-medium">إدارة الأخبار</span>
+                      <span className="text-sm lg:text-base font-medium">إدارة المقالات</span>
                       <p className={`text-xs hidden lg:block transition-colors duration-300 ${
                         darkMode 
                           ? 'text-gray-400 group-hover:text-green-300' 
                           : 'text-gray-500 group-hover:text-green-600'
-                      }`}>المقالات والمحتوى</p>
+                      }`}>المقالات والأخبار</p>
                     </div>
                     <div className={`px-2 py-1 rounded-full text-xs font-bold transition-all ${
                       darkMode 
@@ -479,6 +479,37 @@ export default function DashboardLayout({
                         : 'bg-green-100 text-green-700 group-hover:bg-green-500 group-hover:text-white'
                     }`}>
                       8
+                    </div>
+                  </Link>
+
+                  <Link href="/dashboard/opinions" 
+                    onClick={() => setSidebarOpen(false)}
+                    className={`group flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-2 lg:py-3 rounded-xl transition-all duration-300 hover:shadow-md hover:translate-x-1 ${
+                    darkMode 
+                      ? 'text-gray-300 hover:bg-gradient-to-r hover:from-teal-900/30 hover:to-emerald-900/30 hover:text-teal-300' 
+                      : 'text-gray-700 hover:bg-gradient-to-r hover:from-teal-50 hover:to-emerald-50 hover:text-teal-700'
+                  }`}>
+                    <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                      darkMode 
+                        ? 'bg-teal-900/40 group-hover:bg-teal-500 group-hover:text-white' 
+                        : 'bg-teal-100 group-hover:bg-teal-500 group-hover:text-white'
+                    }`}>
+                      <FileText className="w-4 h-4 lg:w-5 lg:h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-sm lg:text-base font-medium">مقالات الرأي</span>
+                      <p className={`text-xs hidden lg:block transition-colors duration-300 ${
+                        darkMode 
+                          ? 'text-gray-400 group-hover:text-teal-300' 
+                          : 'text-gray-500 group-hover:text-teal-600'
+                      }`}>إدارة مقالات الرأي</p>
+                    </div>
+                    <div className={`px-2 py-1 rounded-full text-xs font-bold transition-all ${
+                      darkMode 
+                        ? 'bg-teal-900/40 text-teal-300 group-hover:bg-teal-500 group-hover:text-white' 
+                        : 'bg-teal-100 text-teal-700 group-hover:bg-teal-500 group-hover:text-white'
+                    }`}>
+                      جديد
                     </div>
                   </Link>
 
