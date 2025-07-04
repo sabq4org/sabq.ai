@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now();
     
     // جلب إعدادات التحليل
-    const settings = await prisma.aIModerationSettings.findFirst();
+    const settings = null; // DISABLED: aIModerationSettings
     
     let analysisResult;
     let aiProvider = 'local';

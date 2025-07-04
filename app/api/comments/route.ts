@@ -68,8 +68,7 @@ export async function GET(request: NextRequest) {
                 id: true,
                 title: true
               }
-            },
-            aiAnalyses: includeAiAnalysis ? true : false
+            }
           },
           orderBy: {
             createdAt: 'desc'
@@ -84,7 +83,7 @@ export async function GET(request: NextRequest) {
         success: true,
         comments: comments.map(comment => ({
           ...comment,
-          aiAnalysis: comment.aiAnalyses?.[0] || null
+          aiAnalysis: []?.[0] || null
         })),
         pagination: {
           total,
@@ -125,16 +124,6 @@ export async function GET(request: NextRequest) {
               avatar: true
             }
           },
-          reactions: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true
-                }
-              }
-            }
-          },
           replies: {
             where: user && ['admin', 'moderator'].includes(userRole) 
               ? {} 
@@ -147,7 +136,6 @@ export async function GET(request: NextRequest) {
                   avatar: true
                 }
               },
-              reactions: true,
               replies: {
                 where: user && ['admin', 'moderator'].includes(userRole) 
                   ? {} 
@@ -159,15 +147,9 @@ export async function GET(request: NextRequest) {
                       name: true,
                       avatar: true
                     }
-                  },
-                  reactions: true
+                  }
                 }
               }
-            }
-          },
-          _count: {
-            select: {
-              reports: true
             }
           }
         },
@@ -193,7 +175,7 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil(total / limit)
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching comments:', error);
     return NextResponse.json(
       { success: false, error: 'فشل في جلب التعليقات' },
@@ -229,8 +211,7 @@ export async function POST(request: NextRequest) {
         select: {
           id: true,
           allowComments: true,
-          commentSettings: true
-        }
+          }
       }),
       // جلب الكلمات المحظورة مرة واحدة
       prisma.bannedWord.findMany({
@@ -316,7 +297,7 @@ export async function POST(request: NextRequest) {
             processing_time: aiResult.processingTime,
             reason: aiResult.reason
           };
-        } catch (error) {
+        } catch (error: any) {
           console.error('OpenAI classification failed, falling back to local:', error);
           // في حالة فشل OpenAI، نستخدم التحليل المحلي
           analysisResult = quickLocalAnalysis(content);
@@ -404,15 +385,15 @@ export async function POST(request: NextRequest) {
     // إنشاء التعليق
     const comment = await prisma.comment.create({
       data: {
-        articleId,
+articleId,
         userId: user?.id || null,
         parentId,
         content: processedContent,
         status: commentStatus,
-        aiScore,
-        aiClassification,
-        aiAnalyzedAt: aiAnalysis ? new Date() : null,
-        metadata: {
+        // // aiScore,
+// // aiClassification,
+// aiAnalyzedAt: ...,
+metadata: {
           guestName: !user ? body.guestName : null,
           requiresModeration,
           ipAddress,
@@ -421,13 +402,12 @@ export async function POST(request: NextRequest) {
         }
       },
       select: {
-        id: true,
+id: true,
         content: true,
         status: true,
-        aiScore: true,
-        aiClassification: true,
-        aiAnalyzedAt: true,
-        createdAt: true,
+        // aiClassification: true,
+// aiAnalyzedAt: true,
+createdAt: true,
         metadata: true,
         user: {
           select: {
@@ -505,7 +485,7 @@ export async function POST(request: NextRequest) {
         }
       })
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating comment:', error);
     return NextResponse.json(
       { success: false, error: 'فشل في إنشاء التعليق' },
@@ -520,22 +500,16 @@ function formatComment(comment: any) {
     id: comment.id,
     content: comment.content,
     status: comment.status,
-    aiScore: comment.aiScore,
-    aiClassification: comment.aiClassification,
+    aiClassification: comment.aiClassification || null,
     aiAnalyzedAt: comment.aiAnalyzedAt,
     createdAt: comment.createdAt,
     user: comment.user || {
       name: comment.metadata?.guestName || 'زائر',
       avatar: null
     },
-    reactions: {
-      likes: comment.reactions?.filter((r: any) => r.reactionType === 'like').length || 0,
-      dislikes: comment.reactions?.filter((r: any) => r.reactionType === 'dislike').length || 0,
-      userReaction: comment.reactions?.find((r: any) => r.userId === comment.userId)?.reactionType || null
-    },
     replies: comment.replies?.map(formatComment) || [],
     reportsCount: comment._count?.reports || 0,
     metadata: comment.metadata,
-    aiAnalysis: comment.aiAnalyses?.[0] || comment.aiAnalysis || null
+    aiAnalysis: []?.[0] || comment.aiAnalysis || null
   };
 } 

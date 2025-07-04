@@ -66,9 +66,7 @@ export async function GET(request: NextRequest) {
       const latestArticles = await prisma.article.findMany({
         where: { status: 'published' },
         include: {
-          category: {
-            select: { id: true, name: true, slug: true, color: true, icon: true }
-          }
+          category: { select: { id: true, name: true, slug: true,  } }
         },
         orderBy: { publishedAt: 'desc' },
         take: limit
@@ -88,9 +86,7 @@ export async function GET(request: NextRequest) {
         categoryId: { in: categoryIds }
       },
       include: {
-        category: {
-          select: { id: true, name: true, slug: true, color: true, icon: true }
-        }
+        category: { select: { id: true, name: true, slug: true,  } }
       },
       orderBy: [
         { featured: 'desc' },

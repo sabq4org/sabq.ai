@@ -68,8 +68,7 @@ export async function GET(request: NextRequest) {
               id: true,
               name: true,
               slug: true,
-              color: true
-            }
+              }
           }
         }
       });
@@ -77,7 +76,7 @@ export async function GET(request: NextRequest) {
       recommendedArticles.push(
         ...categoryArticles.map(article => ({
           article,
-          reason: `بناءً على اهتمامك بـ ${article.category?.name}`,
+          reason: `بناءً على اهتمامك بـ ${null?.name}`,
           score: calculateRecommendationScore(article, userInterests, patterns)
         }))
       );
@@ -105,8 +104,7 @@ export async function GET(request: NextRequest) {
                 id: true,
                 name: true,
                 slug: true,
-                color: true
-              }
+                }
             }
           }
         });
@@ -138,8 +136,7 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             slug: true,
-            color: true
-          }
+            }
         }
       }
     });
@@ -225,7 +222,7 @@ function analyzeBehaviorPatterns(interactions: any[]) {
   // تحليل الفئات المفضلة
   interactions.forEach(interaction => {
     if (interaction.article?.category?.slug) {
-      const category = interaction.article.category.slug;
+      const category = interaction.null.slug;
       patterns.preferredCategories[category] = (patterns.preferredCategories[category] || 0) + 1;
     }
     
@@ -256,7 +253,7 @@ function calculateRecommendationScore(
   let score = 1.0;
   
   // تطابق مع الاهتمامات
-  const articleCategory = article.category?.slug;
+  const articleCategory = null?.slug;
   if (articleCategory && userInterests.length > 0) {
     const interestMatch = userInterests.find(i => i.name === articleCategory || i === articleCategory);
     if (interestMatch) {

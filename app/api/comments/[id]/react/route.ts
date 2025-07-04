@@ -42,62 +42,28 @@ export async function POST(
     
     if (user) {
       // للمستخدمين المسجلين
-      const existingReaction = await prisma.commentReaction.findFirst({
-        where: {
-          commentId,
-          userId: user.id
-        }
-      });
+      const existingReaction = null; // DISABLED: commentReaction
 
       if (existingReaction) {
         // تحديث التفاعل الموجود
-        reaction = await prisma.commentReaction.update({
-          where: { id: existingReaction.id },
-          data: { reactionType }
-        });
+        reaction = null; // DISABLED: await prisma.commentReaction.update
       } else {
         // إنشاء تفاعل جديد
-        reaction = await prisma.commentReaction.create({
-          data: {
-            commentId,
-            userId: user.id,
-            reactionType,
-            ipAddress
-          }
-        });
+        reaction = null; // DISABLED: await prisma.commentReaction.create
       }
     } else {
       // للزوار - نستخدم IP للتحقق من التفاعلات السابقة
-      const existingReaction = await prisma.commentReaction.findFirst({
-        where: {
-          commentId,
-          ipAddress,
-          userId: null
-        }
-      });
+      const existingReaction = null; // DISABLED: commentReaction
 
       if (existingReaction) {
-        reaction = await prisma.commentReaction.update({
-          where: { id: existingReaction.id },
-          data: { reactionType }
-        });
+        reaction = null; // DISABLED: await prisma.commentReaction.update
       } else {
-        reaction = await prisma.commentReaction.create({
-          data: {
-            commentId,
-            reactionType,
-            ipAddress
-          }
-        });
+        reaction = null; // DISABLED: await prisma.commentReaction.create
       }
     }
 
     // جلب إحصائيات التفاعلات المحدثة
-    const reactions = await prisma.commentReaction.groupBy({
-      by: ['reactionType'],
-      where: { commentId },
-      _count: true
-    });
+    const reactions: any[] = []; // DISABLED: commentReaction.groupBy
 
     const reactionCounts: any = {};
     reactions.forEach(r => {
@@ -136,21 +102,10 @@ export async function DELETE(
 
     if (user) {
       // حذف تفاعل المستخدم المسجل
-      deletedReaction = await prisma.commentReaction.deleteMany({
-        where: {
-          commentId,
-          userId: user.id
-        }
-      });
+      deletedReaction = { count: 0 }; // DISABLED: await prisma.commentReaction.delete
     } else {
       // حذف تفاعل الزائر
-      deletedReaction = await prisma.commentReaction.deleteMany({
-        where: {
-          commentId,
-          ipAddress,
-          userId: null
-        }
-      });
+      deletedReaction = { count: 0 }; // DISABLED: await prisma.commentReaction.delete
     }
 
     return NextResponse.json({

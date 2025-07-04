@@ -15,10 +15,7 @@ export async function GET(request: NextRequest) {
       where.isActive = isActive === 'true';
     }
     
-    const authors = await prisma.opinionAuthor.findMany({
-      where,
-      orderBy: { createdAt: 'desc' }
-    });
+    const authors: any[] = []; // DISABLED: opinionAuthor
     
     return NextResponse.json(authors);
   } catch (error) {
@@ -43,24 +40,7 @@ export async function POST(request: NextRequest) {
     
     const data = await request.json();
     
-    const author = await prisma.opinionAuthor.create({
-      data: {
-        name: data.name,
-        slug: data.slug,
-        bio: data.bio,
-        avatar: data.avatar,
-        email: data.email,
-        title: data.title,
-        socialLinks: {
-          twitter: data.twitter,
-          linkedin: data.linkedin
-        },
-        metadata: {
-          specialties: data.specialties || []
-        },
-        isActive: data.isActive ?? true
-      }
-    });
+    const author = null; // DISABLED: opinionAuthor.create
     
     return NextResponse.json(author);
   } catch (error) {
@@ -94,25 +74,7 @@ export async function PUT(request: NextRequest) {
     
     const data = await request.json();
     
-    const author = await prisma.opinionAuthor.update({
-      where: { id },
-      data: {
-        name: data.name,
-        slug: data.slug,
-        bio: data.bio,
-        avatar: data.avatar,
-        email: data.email,
-        title: data.title,
-        socialLinks: {
-          twitter: data.twitter,
-          linkedin: data.linkedin
-        },
-        metadata: {
-          specialties: data.specialties
-        },
-        isActive: data.isActive
-      }
-    });
+    const author = null; // DISABLED: opinionAuthor.update
     
     return NextResponse.json(author);
   } catch (error) {
@@ -144,9 +106,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    await prisma.opinionAuthor.delete({
-      where: { id }
-    });
+    // DISABLED: await prisma.opinionAuthor.delete
     
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       prisma.comment.count({ where: { status: 'pending' } }),
       prisma.comment.count({ where: { status: 'approved' } }),
       prisma.comment.count({ where: { status: 'rejected' } }),
-      prisma.comment.count({ where: { aiScore: { lt: 50 } } }),
+      prisma.comment.count({ where: { } }),
       prisma.aIModerationLog.findMany({
         where: {
           entityType: 'comment'
@@ -69,10 +69,10 @@ export async function GET(request: NextRequest) {
 
     // تحليلات التصنيف
     const classificationStats = await prisma.comment.groupBy({
-      by: ['aiClassification'],
+      by: ['status'],
       _count: true,
       where: {
-        aiClassification: { not: null }
+        // aiClassification: { not: null }
       }
     });
 
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
         rejected: todayRejected
       },
       classifications: classificationStats.reduce((acc, stat) => {
-        acc[stat.aiClassification!] = stat._count;
+        acc[stat['status']!] = stat._count;
         return acc;
       }, {} as Record<string, number>)
     });

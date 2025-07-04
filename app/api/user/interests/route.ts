@@ -32,8 +32,7 @@ export async function GET(request: NextRequest) {
         id: true,
         name: true,
         slug: true,
-        icon: true,
-        color: true
+        // color: true
       }
     });
 

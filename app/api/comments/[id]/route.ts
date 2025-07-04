@@ -77,17 +77,7 @@ export async function PUT(
 
     // تسجيل عملية التعديل
     if (['admin', 'moderator'].includes(userRole)) {
-      await prisma.commentModerationLog.create({
-        data: {
-          commentId,
-          moderatorId: user.id,
-          action: 'edit',
-          oldContent: comment.content,
-          metadata: {
-            newContent: content
-          }
-        }
-      });
+      // DISABLED: await prisma.commentModerationLog.create
     }
 
     return NextResponse.json({
@@ -174,14 +164,7 @@ export async function DELETE(
 
     // تسجيل عملية الحذف
     if (['admin', 'moderator'].includes(userRole)) {
-      await prisma.commentModerationLog.create({
-        data: {
-          commentId,
-          moderatorId: user.id,
-          action: 'delete',
-          oldContent: comment.content
-        }
-      });
+      // DISABLED: await prisma.commentModerationLog.create
     }
 
     return NextResponse.json({

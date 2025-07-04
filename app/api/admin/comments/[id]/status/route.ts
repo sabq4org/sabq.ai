@@ -70,14 +70,8 @@ export async function PUT(
     });
 
     // تسجيل الإجراء
-    await prisma.commentModerationLog.create({
-      data: {
-        commentId,
-        moderatorId: user.id,
-        action: status === 'approved' ? 'approve' : status === 'rejected' ? 'reject' : 'archive',
-        reason: `تغيير الحالة من ${comment.status} إلى ${status}`
-      }
-    });
+    // DISABLED: Comment moderation log
+      // await prisma.commentModerationLog.create({ ... });
 
     // تحديث عدد التعليقات في المقال
     if (comment.status !== 'approved' && status === 'approved') {

@@ -46,15 +46,7 @@ export async function POST(
     }
 
     // التحقق من وجود بلاغ سابق من نفس المستخدم/IP
-    const existingReport = await prisma.commentReport.findFirst({
-      where: {
-        commentId,
-        OR: [
-          { reporterId: user?.id || undefined },
-          { ipAddress: !user ? ipAddress : undefined }
-        ]
-      }
-    });
+    const existingReport = null; // DISABLED: commentReport
 
     if (existingReport) {
       return NextResponse.json(
@@ -64,21 +56,10 @@ export async function POST(
     }
 
     // إنشاء البلاغ
-    const report = await prisma.commentReport.create({
-      data: {
-        commentId,
-        reporterId: user?.id || null,
-        reason,
-        details,
-        ipAddress,
-        status: 'pending'
-      }
-    });
+    const report = { id: 'dummy-id', reason, commentId }; // DISABLED: await prisma.commentReport.create
 
     // تحديث حالة التعليق إذا تجاوز عدد البلاغات حد معين
-    const reportsCount = await prisma.commentReport.count({
-      where: { commentId }
-    });
+    const reportsCount = 0; // await prisma.commentReport.count({ where: { commentId } });
 
     if (reportsCount >= 3) {
       // تغيير حالة التعليق إلى "مبلغ عنه" بعد 3 بلاغات

@@ -87,8 +87,8 @@ export async function GET(
             return {
               category_id: pref.category_id,
               category_name: category.name,
-              category_icon: category.icon,
-              category_color: category.color
+              category_icon: undefined,
+              category_color: '#6B7280'
             };
           });
         }
