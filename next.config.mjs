@@ -30,6 +30,16 @@ const nextConfig = {
     // حل مشاكل module resolution
     config.resolve = {
       ...config.resolve,
+      alias: {
+        ...config.resolve.alias,
+        '@': '.',
+        '@/components': './components',
+        '@/contexts': './contexts',
+        '@/lib': './lib',
+        '@/hooks': './hooks',
+        '@/types': './types',
+        '@/config': './config',
+      },
       fallback: {
         ...config.resolve.fallback,
         fs: false,
