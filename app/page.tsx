@@ -81,7 +81,8 @@ import {
   ChevronUp,
   Heart,
   Bookmark,
-  MessageSquare
+  MessageSquare,
+  MonitorSmartphone
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getCookie, setCookie } from '@/lib/cookies';
@@ -310,7 +311,7 @@ function NewspaperHomePage(): React.ReactElement {
     trending: { enabled: true, order: 2 },
     analysis: { enabled: false, order: 3 }, // موجز اليوم الذكي - مخفي
     recommendation: { enabled: true, order: 4 },
-    categories: { enabled: false, order: 5 }, // استكشف بحسب اهتماماتك - مخفي
+    categories: { enabled: true, order: 5 }, // استكشف بحسب اهتماماتك - مفعل
     audio: { enabled: false, order: 6 }, // استمع لأبرز الأخبار - مخفي
     todayEvent: { enabled: true, order: 7 },
     regions: { enabled: false, order: 8 } // جغرافيا الأخبار - مخفي
@@ -1311,58 +1312,58 @@ function NewspaperHomePage(): React.ReactElement {
     );
   };
 
+  // Categories Block - تصميم جديد بالصور والعدادات
   const CategoriesBlock = () => (
-    <div className={`rounded-3xl p-6 shadow-xl dark:shadow-gray-900/50 border transition-all duration-300 hover:shadow-2xl min-h-[320px] flex flex-col ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${darkMode ? 'bg-indigo-900/30' : 'bg-indigo-50'}`}>
-            <Compass className="w-5 h-5 text-indigo-600" />
-          </div>
-          <div>
-            <h2 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-800 dark:text-gray-100'}`}>استكشف بحسب اهتماماتك</h2>
-            <p className={`text-sm ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400 dark:text-gray-500'}`}>أقسام مختارة لك</p>
-          </div>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 gap-4">
-        {categoriesData.map((category, index) => (
-          <div key={index} className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:shadow-lg dark:shadow-gray-900/50 hover:scale-[1.02] ${darkMode ? 'bg-gray-700/30 border-gray-600 hover:bg-gray-700/50' : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-800'}`}>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <span className="text-xl">{category.icon}</span>
-                <div>
-                  <h4 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800 dark:text-gray-100'}`}>{category.name}</h4>
-                  <span className={`text-xs ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400 dark:text-gray-500'}`}>
-                    {category.articles.length} مقال متاح
-                  </span>
-                </div>
-              </div>
-              <ChevronRight className={`w-4 h-4 ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400 dark:text-gray-500'}`} />
+    <div className={`rounded-3xl overflow-hidden shadow-2xl dark:shadow-gray-900/50 transition-all duration-300 hover:shadow-3xl ${darkMode ? 'bg-gradient-to-br from-gray-800 to-gray-900' : 'bg-gradient-to-br from-white to-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+      <div className="p-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className={`p-3 rounded-2xl ${darkMode ? 'bg-gradient-to-br from-blue-600 to-blue-800' : 'bg-gradient-to-br from-blue-500 to-blue-700'}`}>
+              <Tag className="w-6 h-6 text-white" />
             </div>
-            
-            <div className="space-y-2">
-                             {category.articles.slice(0, 2).map((article, i) => (
-                 <div key={i} className="flex items-start justify-between">
-                   <p className={`text-sm hover:text-indigo-600 cursor-pointer transition-colors leading-relaxed whitespace-pre-line flex-1 ${darkMode ? 'text-gray-300' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
-                     • {article}
-                   </p>
-                  <div className="flex items-center gap-1">
-                    <Eye className={`w-3 h-3 ${darkMode ? 'text-gray-500 dark:text-gray-400 dark:text-gray-500' : 'text-gray-400 dark:text-gray-500'}`} />
-                    <span className={`text-xs ${darkMode ? 'text-gray-500 dark:text-gray-400 dark:text-gray-500' : 'text-gray-400 dark:text-gray-500'}`}>
-                      {((i + 1) * 1.2).toFixed(1)}K
-                    </span>
+            <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>استكشف التصنيفات</h3>
+          </div>
+          <Link href="/categories" className={`text-sm font-medium flex items-center gap-1 transition-colors ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'}`}>
+            عرض الكل
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+        </div>
+        
+        <p className={`text-sm mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          تصفح المحتوى حسب اهتماماتك من خلال التصنيفات المتاحة
+        </p>
+        
+        <div className="space-y-4">
+          {[
+            { name: 'تقنية', icon: MonitorSmartphone, count: 342, color: 'from-purple-500 to-indigo-600', trend: '+12%' },
+            { name: 'رياضة', icon: Trophy, count: 128, color: 'from-orange-500 to-red-600', trend: '+8%' },
+            { name: 'اقتصاد', icon: TrendingUp, count: 256, color: 'from-green-500 to-emerald-600', trend: '+15%' },
+            { name: 'سياسة', icon: Globe, count: 189, color: 'from-blue-500 to-cyan-600', trend: '+5%' }
+          ].map((category, idx) => (
+            <Link key={idx} href={`/categories/${category.name}`} className="block group">
+              <div className={`p-4 rounded-2xl transition-all duration-300 transform hover:scale-105 ${darkMode ? 'bg-gray-800/50 hover:bg-gray-700/50' : 'bg-gray-50 hover:bg-gray-100'} border ${darkMode ? 'border-gray-700 hover:border-gray-600' : 'border-gray-200 hover:border-gray-300'}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className={`p-2 rounded-xl bg-gradient-to-br ${category.color}`}>
+                      <category.icon className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className={`font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{category.name}</h4>
+                      <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{category.count} مقال</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-xs font-medium ${category.trend.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
+                      {category.trend}
+                    </p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>هذا الأسبوع</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        ))}
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
-      
-      <button className={`w-full mt-4 py-2 text-sm font-medium rounded-xl transition-all duration-300 shadow-sm dark:shadow-gray-900/50 hover:shadow-md dark:shadow-gray-900/50 ${darkMode ? 'bg-indigo-900/30 hover:bg-indigo-800/30 text-indigo-300' : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700'}`}>
-        استكشف جميع الأقسام
-      </button>
     </div>
   );
 
@@ -1515,7 +1516,6 @@ function NewspaperHomePage(): React.ReactElement {
       { key: 'trending' as keyof typeof blocksConfig, component: <TrendingBlock /> },
       { key: 'analysis' as keyof typeof blocksConfig, component: <AnalysisBlock /> },
       { key: 'recommendation' as keyof typeof blocksConfig, component: <RecommendationBlock /> },
-      { key: 'categories' as keyof typeof blocksConfig, component: <CategoriesBlock /> },
       { key: 'audio' as keyof typeof blocksConfig, component: <AudioBlock /> },
       { key: 'todayEvent' as keyof typeof blocksConfig, component: <TodayEventBlock /> },
       { key: 'regions' as keyof typeof blocksConfig, component: <RegionsBlock /> }
@@ -1786,8 +1786,7 @@ function NewspaperHomePage(): React.ReactElement {
         </div>
       </div>
 
-      {/* شريط التنقل بالتصنيفات - مخفي حسب طلب المستخدم */}
-      {blocksConfig.categories.enabled && (
+      {/* شريط التنقل بالتصنيفات */}
       <section className="max-w-7xl mx-auto px-6 mb-8">
         <div className={`rounded-3xl p-8 transition-all duration-500 shadow-lg dark:shadow-gray-900/50 ${darkMode ? 'bg-blue-900/10 border border-blue-800/30' : 'bg-blue-50 dark:bg-blue-900/20/50 border border-blue-200/50'}`} style={{ 
           backdropFilter: 'blur(10px)',
@@ -2017,7 +2016,6 @@ function NewspaperHomePage(): React.ReactElement {
           )}
         </div>
       </section>
-      )}
       
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-6">

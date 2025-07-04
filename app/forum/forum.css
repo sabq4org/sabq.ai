@@ -1,0 +1,136 @@
+/* أساليب RTL لمنتدى سبق */
+
+/* تحسينات RTL عامة */
+[dir="rtl"] .forum-container {
+  text-align: right;
+}
+
+/* تعديل اتجاه العناصر المرنة */
+[dir="rtl"] .flex-row-reverse {
+  flex-direction: row;
+}
+
+/* تعديل الأيقونات */
+[dir="rtl"] .icon-left {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+[dir="rtl"] .icon-right {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
+
+/* تحسين حقول الإدخال */
+[dir="rtl"] input,
+[dir="rtl"] textarea {
+  text-align: right;
+  direction: rtl;
+}
+
+/* تحسين عرض الإحصائيات */
+[dir="rtl"] .stats-container {
+  direction: ltr;
+  text-align: center;
+}
+
+/* تحسين عرض التواريخ والأرقام */
+[dir="rtl"] .date-time,
+[dir="rtl"] .number-display {
+  direction: ltr;
+  unicode-bidi: embed;
+}
+
+/* تحسين عرض الأوسمة */
+[dir="rtl"] .badge-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* تحسين قوائم المنتدى */
+[dir="rtl"] .forum-list-item {
+  padding-right: 1rem;
+  padding-left: 0.5rem;
+}
+
+/* تحسين أزرار الإجراءات */
+[dir="rtl"] .action-buttons {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+/* تحسين عرض المؤلف */
+[dir="rtl"] .author-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* تحسين الجداول */
+[dir="rtl"] table {
+  text-align: right;
+}
+
+[dir="rtl"] th,
+[dir="rtl"] td {
+  text-align: right;
+}
+
+/* تحسين البطاقات */
+[dir="rtl"] .card-header {
+  text-align: right;
+}
+
+/* تحسين القوائم المنسدلة */
+[dir="rtl"] .dropdown-menu {
+  right: 0;
+  left: auto;
+}
+
+/* تحسين التنبيهات */
+[dir="rtl"] .alert {
+  text-align: right;
+}
+
+/* تحسين التبويبات */
+[dir="rtl"] .tabs-list {
+  justify-content: flex-start;
+}
+
+/* تحسينات خاصة بالموبايل */
+@media (max-width: 768px) {
+  [dir="rtl"] .mobile-menu {
+    right: 0;
+    left: auto;
+  }
+  
+  [dir="rtl"] .mobile-search {
+    text-align: right;
+  }
+}
+
+/* تحسين الرسوم المتحركة */
+[dir="rtl"] .slide-in-right {
+  animation: slideInFromLeft 0.3s ease-out;
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* تحسين التمرير الأفقي */
+[dir="rtl"] .horizontal-scroll {
+  direction: rtl;
+}
+
+[dir="rtl"] .horizontal-scroll > * {
+  direction: ltr;
+} 

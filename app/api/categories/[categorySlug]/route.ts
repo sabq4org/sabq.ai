@@ -52,17 +52,57 @@ export async function GET(
       });
       
       if (category) {
+        // معالجة JSON من حقل description
+        let metadata: any = {};
+        let icon = '📁';
+        let colorHex = '#6B7280';
+        let nameAr = category.name;
+        let nameEn = '';
+        let descriptionText = '';
+        
+        if (category.description) {
+          try {
+            // محاولة تحليل JSON من حقل description
+            const parsedData = JSON.parse(category.description);
+            if (parsedData && typeof parsedData === 'object') {
+              icon = parsedData.icon || icon;
+              colorHex = parsedData.color_hex || parsedData.color || colorHex;
+              nameAr = parsedData.name_ar || nameAr;
+              nameEn = parsedData.name_en || nameEn;
+              descriptionText = parsedData.ar || parsedData.en || '';
+              metadata = parsedData;
+            } else {
+              // إذا لم يكن JSON، استخدم النص كما هو
+              descriptionText = category.description;
+            }
+          } catch (e) {
+            // إذا فشل تحليل JSON، استخدم النص كما هو
+            descriptionText = category.description;
+          }
+        }
+        
         return NextResponse.json({
           success: true,
           data: {
-            ...category,
-            name_ar: category.name,
-            name_en: category.name_en,
-            color_hex: category.color,
+            id: category.id,
+            name: nameAr,
+            name_ar: nameAr,
+            name_en: nameEn,
+            slug: category.slug,
+            description: descriptionText,
+            description_ar: descriptionText,
+            description_en: metadata.en || '',
+            color: colorHex,
+            color_hex: colorHex,
+            icon: icon,
             articles_count: category._count.articles,
             is_active: category.isActive,
             parent_id: category.parentId,
-            position: category.displayOrder
+            parent: category.parent,
+            position: category.displayOrder,
+            created_at: category.createdAt.toISOString(),
+            updated_at: category.updatedAt.toISOString(),
+            metadata: metadata
           }
         });
       }
@@ -130,27 +170,43 @@ export async function PUT(
       }
     }
     
+    // معالجة البيانات الموجودة
+    let existingMetadata: any = {};
+    if (existingCategory.description) {
+      try {
+        existingMetadata = JSON.parse(existingCategory.description);
+      } catch (e) {
+        // إذا فشل التحليل، استخدم قيم افتراضية
+      }
+    }
+    
+    // دمج البيانات الجديدة مع القديمة
+    const updatedMetadata = {
+      ...existingMetadata,
+      ar: body.description !== undefined ? body.description : existingMetadata.ar,
+      en: body.description_en !== undefined ? body.description_en : existingMetadata.en,
+      name_ar: body.name || body.name_ar || existingCategory.name,
+      name_en: body.name_en !== undefined ? body.name_en : existingMetadata.name_en,
+      color_hex: body.color || body.color_hex || existingMetadata.color_hex || '#6B7280',
+      icon: body.icon !== undefined ? body.icon : existingMetadata.icon || '📁',
+      meta_title: body.meta_title !== undefined ? body.meta_title : existingMetadata.meta_title,
+      meta_description: body.meta_description !== undefined ? body.meta_description : existingMetadata.meta_description,
+      og_image_url: body.og_image_url !== undefined ? body.og_image_url : existingMetadata.og_image_url,
+      canonical_url: body.canonical_url !== undefined ? body.canonical_url : existingMetadata.canonical_url,
+      noindex: body.noindex !== undefined ? body.noindex : existingMetadata.noindex,
+      og_type: body.og_type !== undefined ? body.og_type : existingMetadata.og_type || 'website'
+    };
+    
     // Update category
     const updatedCategory = await prisma.category.update({
       where: { id: existingCategory.id },
       data: {
         name: body.name || body.name_ar || existingCategory.name,
-        name_en: body.name_en !== undefined ? body.name_en : existingCategory.name_en,
         slug: body.slug || existingCategory.slug,
-        description: body.description !== undefined ? body.description : existingCategory.description,
-        color: body.color || body.color_hex || existingCategory.color,
-        icon: body.icon !== undefined ? body.icon : existingCategory.icon,
+        description: JSON.stringify(updatedMetadata),
         parentId: body.parent_id !== undefined ? body.parent_id : existingCategory.parentId,
         displayOrder: body.order_index ?? body.position ?? existingCategory.displayOrder,
-        isActive: body.is_active ?? existingCategory.isActive,
-        metadata: {
-          meta_title: body.meta_title,
-          meta_description: body.meta_description,
-          og_image_url: body.og_image_url,
-          canonical_url: body.canonical_url,
-          noindex: body.noindex,
-          og_type: body.og_type || 'website'
-        }
+        isActive: body.is_active ?? existingCategory.isActive
       }
     });
     

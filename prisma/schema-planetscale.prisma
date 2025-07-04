@@ -109,6 +109,7 @@ model Article {
   deepAnalysis    DeepAnalysis?
   keywords        ArticleKeyword[]
   comments        Comment[]
+  doseContents    DoseContent[]
   
   @@map("articles")
   @@index([slug])
@@ -335,4 +336,72 @@ model SiteSettings {
   
   @@map("site_settings")
   @@index([section])
+}
+
+// نموذج الجرعات اليومية
+model DailyDose {
+  id          String           @id @default(uuid())
+  period      DailyDose_period
+  title       String           @db.VarChar(500)
+  subtitle    String           @db.VarChar(500)
+  date        DateTime         @db.Date
+  status      DailyDose_status @default(draft)
+  publishedAt DateTime?
+  views       Int              @default(0)
+  metadata    Json?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  contents    DoseContent[]    @relation("DoseToContents")
+
+  @@unique([date, period])
+  @@index([date])
+  @@index([period])
+  @@index([status])
+  @@map("daily_doses")
+}
+
+// نموذج محتوى الجرعات
+model DoseContent {
+  id           String                  @id @default(uuid())
+  doseId       String
+  articleId    String?
+  contentType  DoseContent_contentType
+  title        String                  @db.VarChar(500)
+  summary      String                  @db.Text
+  audioUrl     String?                 @db.Text
+  imageUrl     String?                 @db.Text
+  displayOrder Int                     @default(0)
+  metadata     Json?
+  createdAt    DateTime                @default(now())
+
+  dose         DailyDose               @relation("DoseToContents", fields: [doseId], references: [id])
+  article      Article?                @relation(fields: [articleId], references: [id])
+
+  @@index([articleId])
+  @@index([doseId])
+  @@map("dose_contents")
+}
+
+enum DailyDose_period {
+  morning
+  afternoon
+  evening
+  night
+}
+
+enum DoseContent_contentType {
+  article
+  weather
+  quote
+  tip
+  audio
+  analysis
+}
+
+enum DailyDose_status {
+  draft
+  published
+  scheduled
+  archived
 } 

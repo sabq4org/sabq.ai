@@ -117,9 +117,13 @@ export async function GET(request: NextRequest) {
         data: {
           name: 'عام',
           slug: 'general',
-          description: 'التصنيف الافتراضي',
-          color: '#6B7280',
-          icon: '📄',
+          description: JSON.stringify({
+            ar: 'التصنيف الافتراضي',
+            name_ar: 'عام',
+            name_en: 'General',
+            color_hex: '#6B7280',
+            icon: '📄'
+          }),
           isActive: true,
           displayOrder: 0
         }
@@ -133,26 +137,56 @@ export async function GET(request: NextRequest) {
       const parent = category.parentId ? parentsMap.get(category.parentId) : null;
       const articleCount = articleCountMap.get(category.id) || 0;
       
+      // معالجة JSON من حقل description
+      let metadata: any = {};
+      let icon = '📁';
+      let colorHex = '#6B7280';
+      let nameAr = category.name;
+      let nameEn = '';
+      let descriptionText = '';
+      
+      if (category.description) {
+        try {
+          // محاولة تحليل JSON من حقل description
+          const parsedData = JSON.parse(category.description);
+          if (parsedData && typeof parsedData === 'object') {
+            icon = parsedData.icon || icon;
+            // البحث عن اللون في color_hex أو color
+            colorHex = parsedData.color_hex || parsedData.color || colorHex;
+            nameAr = parsedData.name_ar || nameAr;
+            nameEn = parsedData.name_en || nameEn;
+            descriptionText = parsedData.ar || parsedData.en || '';
+            metadata = parsedData;
+          } else {
+            // إذا لم يكن JSON، استخدم النص كما هو
+            descriptionText = category.description;
+          }
+        } catch (e) {
+          // إذا فشل تحليل JSON، استخدم النص كما هو
+          descriptionText = category.description;
+        }
+      }
+      
       return {
         id: category.id,
-        name: category.name,
-        name_ar: category.name, // للتوافق العكسي
-        name_en: category.name_en,
+        name: nameAr,
+        name_ar: nameAr,
+        name_en: nameEn,
         slug: category.slug,
-        description: category.description,
-        color: category.color || '#6B7280', // لون افتراضي
-        color_hex: category.color || '#6B7280', // للتوافق العكسي
-        icon: category.icon || '📁', // أيقونة افتراضية
+        description: descriptionText,
+        color: colorHex,
+        color_hex: colorHex,
+        icon: icon,
         parent_id: category.parentId,
         parent: parent,
-        children: [], // يمكن جلبها بطلب منفصل
+        children: [],
         articles_count: articleCount,
-        children_count: 0, // يمكن حسابها بطلب منفصل
+        children_count: 0,
         order_index: category.displayOrder,
         is_active: category.isActive,
         created_at: category.createdAt.toISOString(),
         updated_at: category.updatedAt.toISOString(),
-        metadata: category.metadata
+        metadata: metadata
       };
     });
     
@@ -204,22 +238,24 @@ export async function POST(request: NextRequest) {
     const newCategory = await prisma.category.create({
       data: {
         name: categoryName,
-        name_en: body.name_en,
         slug: categorySlug,
-        description: body.description,
-        color: body.color || body.color_hex || '#6B7280',
-        icon: body.icon || '📁',
-        parentId: body.parent_id,
-        displayOrder: body.order_index || body.position || 0,
-        isActive: body.is_active !== false,
-        metadata: {
+        description: JSON.stringify({
+          ar: body.description,
+          en: body.description_en,
+          name_ar: categoryName,
+          name_en: body.name_en,
+          color_hex: body.color || body.color_hex || '#6B7280',
+          icon: body.icon || '📁',
           meta_title: body.meta_title,
           meta_description: body.meta_description,
           og_image_url: body.og_image_url,
           canonical_url: body.canonical_url,
           noindex: body.noindex,
           og_type: body.og_type || 'website'
-        }
+        }),
+        parentId: body.parent_id,
+        displayOrder: body.order_index || body.position || 0,
+        isActive: body.is_active !== false
       }
     });
     
@@ -263,19 +299,42 @@ export async function PUT(request: NextRequest) {
       }, 404);
     }
     
+    // معالجة البيانات الموجودة
+    let existingMetadata: any = {};
+    if (existingCategory.description) {
+      try {
+        existingMetadata = JSON.parse(existingCategory.description);
+      } catch (e) {
+        // إذا فشل التحليل، استخدم قيم افتراضية
+      }
+    }
+    
+    // دمج البيانات الجديدة مع القديمة
+    const updatedMetadata = {
+      ...existingMetadata,
+      ar: body.description !== undefined ? body.description : existingMetadata.ar,
+      en: body.description_en !== undefined ? body.description_en : existingMetadata.en,
+      name_ar: body.name || body.name_ar || existingCategory.name,
+      name_en: body.name_en !== undefined ? body.name_en : existingMetadata.name_en,
+      color_hex: body.color || body.color_hex || existingMetadata.color_hex || '#6B7280',
+      icon: body.icon !== undefined ? body.icon : existingMetadata.icon || '📁',
+      meta_title: body.meta_title !== undefined ? body.meta_title : existingMetadata.meta_title,
+      meta_description: body.meta_description !== undefined ? body.meta_description : existingMetadata.meta_description,
+      og_image_url: body.og_image_url !== undefined ? body.og_image_url : existingMetadata.og_image_url,
+      canonical_url: body.canonical_url !== undefined ? body.canonical_url : existingMetadata.canonical_url,
+      noindex: body.noindex !== undefined ? body.noindex : existingMetadata.noindex,
+      og_type: body.og_type !== undefined ? body.og_type : existingMetadata.og_type || 'website'
+    };
+    
     // تحديث الفئة
     const updatedCategory = await prisma.category.update({
       where: { id: body.id },
       data: {
         name: body.name || body.name_ar || existingCategory.name,
-        name_en: body.name_en !== undefined ? body.name_en : existingCategory.name_en,
-        description: body.description !== undefined ? body.description : existingCategory.description,
-        color: body.color || body.color_hex || existingCategory.color,
-        icon: body.icon !== undefined ? body.icon : existingCategory.icon,
+        description: JSON.stringify(updatedMetadata),
         parentId: body.parent_id !== undefined ? body.parent_id : existingCategory.parentId,
         displayOrder: body.order_index ?? body.position ?? existingCategory.displayOrder,
-        isActive: body.is_active ?? existingCategory.isActive,
-        metadata: body.metadata !== undefined ? body.metadata : existingCategory.metadata
+        isActive: body.is_active ?? existingCategory.isActive
       }
     });
     

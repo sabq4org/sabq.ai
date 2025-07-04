@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار نظام الجرعات اليومية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8 text-center">🧪 اختبار نظام الجرعات اليومية</h1>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">1️⃣ اختبار API</h2>
+            <button onclick="testAPI()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                اختبار جلب الجرعة
+            </button>
+            <div id="api-result" class="mt-4 p-4 bg-gray-50 rounded hidden"></div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">2️⃣ اختبار توليد الجرعات</h2>
+            <button onclick="generateDose()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                توليد جرعة جديدة
+            </button>
+            <div id="generate-result" class="mt-4 p-4 bg-gray-50 rounded hidden"></div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-bold mb-4">3️⃣ روابط سريعة</h2>
+            <div class="space-y-2">
+                <a href="http://localhost:3001/" target="_blank" class="block text-blue-600 hover:underline">
+                    🏠 الصفحة الرئيسية
+                </a>
+                <a href="http://localhost:3001/test-time-slots" target="_blank" class="block text-blue-600 hover:underline">
+                    ⏰ اختبار الفترات الزمنية
+                </a>
+                <a href="http://localhost:3001/daily-dose" target="_blank" class="block text-blue-600 hover:underline">
+                    📖 صفحة الجرعة الكاملة
+                </a>
+                <a href="http://localhost:3001/dashboard/daily-doses" target="_blank" class="block text-blue-600 hover:underline">
+                    ⚙️ لوحة التحكم
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = '<div class="text-gray-600">جاري الاختبار...</div>';
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/daily-doses');
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="text-green-600 font-bold mb-2">✅ نجح الاختبار!</div>
+                    <div class="text-sm">
+                        <p><strong>الفترة:</strong> ${data.period}</p>
+                        <p><strong>العنوان:</strong> ${data.title}</p>
+                        <p><strong>العنوان الفرعي:</strong> ${data.subtitle}</p>
+                        <p><strong>عدد المحتويات:</strong> ${data.contents.length}</p>
+                    </div>
+                    <details class="mt-2">
+                        <summary class="cursor-pointer text-blue-600">عرض البيانات الكاملة</summary>
+                        <pre class="mt-2 text-xs overflow-auto bg-gray-100 p-2 rounded">${JSON.stringify(data, null, 2)}</pre>
+                    </details>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="text-red-600 font-bold mb-2">❌ فشل الاختبار</div>
+                    <div class="text-sm text-red-500">${error.message}</div>
+                `;
+            }
+        }
+
+        async function generateDose() {
+            const resultDiv = document.getElementById('generate-result');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = '<div class="text-gray-600">جاري التوليد...</div>';
+            
+            try {
+                // الحصول على التاريخ الحالي والفترة
+                const now = new Date();
+                const hour = now.getHours();
+                let period = 'morning';
+                
+                if (hour >= 11 && hour < 16) {
+                    period = 'afternoon';
+                } else if (hour >= 16 && hour < 19) {
+                    period = 'evening';
+                } else if (hour >= 19 || hour < 6) {
+                    period = 'night';
+                }
+                
+                const response = await fetch('http://localhost:3001/api/daily-doses/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        date: now.toISOString().split('T')[0], // YYYY-MM-DD
+                        period: period
+                    })
+                });
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    const dose = data.dose;
+                    resultDiv.innerHTML = `
+                        <div class="text-green-600 font-bold mb-2">✅ تم توليد الجرعة بنجاح!</div>
+                        <div class="text-sm">
+                            <p><strong>ID:</strong> ${dose.id}</p>
+                            <p><strong>الفترة:</strong> ${dose.period}</p>
+                            <p><strong>العنوان:</strong> ${dose.title}</p>
+                            <p><strong>العنوان الفرعي:</strong> ${dose.subtitle}</p>
+                            <p><strong>عدد المحتويات:</strong> ${dose.contents?.length || 0}</p>
+                            <p><strong>الحالة:</strong> ${dose.status}</p>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-600">
+                            ${data.message}
+                        </div>
+                    `;
+                } else {
+                    throw new Error(data.error || 'حدث خطأ');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="text-red-600 font-bold mb-2">❌ فشل التوليد</div>
+                    <div class="text-sm text-red-500">${error.message}</div>
+                    <div class="text-xs text-gray-500 mt-2">تأكد من وجود OPENAI_API_KEY في ملف .env.local</div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html> 

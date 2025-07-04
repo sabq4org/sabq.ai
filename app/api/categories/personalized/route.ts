@@ -173,21 +173,53 @@ export async function GET(request: NextRequest) {
       const articleCount = articleCountMap.get(category.id) || 0;
       const score = categoryScores[category.id] || 0;
       
+      // معالجة JSON من حقل description
+      let metadata: any = {};
+      let icon = '📁';
+      let colorHex = '#6B7280';
+      let nameAr = category.name;
+      let nameEn = '';
+      let descriptionText = '';
+      
+      if (category.description) {
+        try {
+          // محاولة تحليل JSON من حقل description
+          const parsedData = JSON.parse(category.description);
+          if (parsedData && typeof parsedData === 'object') {
+            icon = parsedData.icon || icon;
+            // البحث عن اللون في color_hex أو color
+            colorHex = parsedData.color_hex || parsedData.color || colorHex;
+            nameAr = parsedData.name_ar || nameAr;
+            nameEn = parsedData.name_en || nameEn;
+            descriptionText = parsedData.ar || parsedData.en || '';
+            metadata = parsedData;
+          } else {
+            // إذا لم يكن JSON، استخدم النص كما هو
+            descriptionText = category.description;
+          }
+        } catch (e) {
+          // إذا فشل تحليل JSON، استخدم النص كما هو
+          descriptionText = category.description;
+        }
+      }
+      
       return {
         id: category.id,
-        name: category.name,
-        name_ar: category.name,
-        name_en: category.name_en,
+        name: nameAr,
+        name_ar: nameAr,
+        name_en: nameEn,
         slug: category.slug,
-        description: category.description,
-        color: category.color || '#6B7280',
-        icon: category.icon || '📁',
+        description: descriptionText,
+        color: colorHex,
+        color_hex: colorHex,
+        icon: icon,
         articles_count: articleCount,
         is_active: category.isActive,
         created_at: category.createdAt.toISOString(),
         updated_at: category.updatedAt.toISOString(),
         personalization_score: score,
-        is_personalized: score > 0
+        is_personalized: score > 0,
+        metadata: metadata
       };
     });
 

@@ -1,9 +1,9 @@
-import { PrismaClient } from '../lib/generated/prisma'
+const { PrismaClient } = require('../lib/generated/prisma');
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 بدء عملية Seeding...')
+  console.log('🌱 بدء عملية Seeding...');
   
   // التصنيفات الأساسية
   const categories = [
@@ -135,81 +135,47 @@ async function main() {
       displayOrder: 8,
       isActive: true,
     },
-  ]
+  ];
 
-  console.log('📝 إضافة التصنيفات الأساسية...')
+  console.log('📝 إضافة التصنيفات الأساسية...');
   
   for (const category of categories) {
-    const result = await prisma.category.upsert({
-      where: { slug: category.slug },
-      update: {
-        name: category.name,
-        description: category.description,
-        displayOrder: category.displayOrder,
-        isActive: category.isActive,
-      },
-      create: category,
-    })
-    
-    const metadata = JSON.parse(result.description || '{}')
-    console.log(`   ✅ ${metadata.icon || '📁'} ${category.name} (${category.slug})`)
-  }
-
-  // إضافة المستخدمين الإداريين الأساسيين (إذا لم يكونوا موجودين)
-  console.log('\n👥 التحقق من المستخدمين الإداريين...')
-  
-  const adminUsers = [
-    {
-      email: 'admin@sabq.org',
-      name: 'مدير النظام',
-      role: 'ADMIN',
-      isAdmin: true,
-      isVerified: true,
-    },
-    {
-      email: 'system@sabq.org',
-      name: 'حساب النظام',
-      role: 'ADMIN',
-      isAdmin: true,
-      isVerified: true,
-    }
-  ]
-
-  for (const adminUser of adminUsers) {
-    const existingUser = await prisma.user.findUnique({
-      where: { email: adminUser.email }
-    })
-    
-    if (!existingUser) {
-      await prisma.user.create({
-        data: {
-          ...adminUser,
-          passwordHash: '$2a$10$XZQZQZQZQZQZQZQZQZQZQe', // كلمة مرور مؤقتة - يجب تغييرها
-        }
-      })
-      console.log(`   ✅ تم إنشاء مستخدم إداري: ${adminUser.email}`)
-    } else {
-      console.log(`   ℹ️ المستخدم ${adminUser.email} موجود بالفعل`)
+    try {
+      const result = await prisma.category.upsert({
+        where: { slug: category.slug },
+        update: {
+          name: category.name,
+          description: category.description,
+          displayOrder: category.displayOrder,
+          isActive: category.isActive,
+        },
+        create: category,
+      });
+      
+      const metadata = JSON.parse(result.description || '{}');
+      console.log(`   ✅ ${metadata.icon || '📁'} ${category.name} (${category.slug})`);
+    } catch (error) {
+      console.error(`   ❌ خطأ في إضافة ${category.name}:`, error.message);
     }
   }
 
-  console.log('\n✨ تمت عملية Seeding بنجاح!')
+  console.log('\n✨ تمت عملية Seeding بنجاح!');
   
   // عرض ملخص التصنيفات
-  const totalCategories = await prisma.category.count()
-  const activeCategories = await prisma.category.count({ where: { isActive: true } })
+  const totalCategories = await prisma.category.count();
+  const activeCategories = await prisma.category.count({ where: { isActive: true } });
   
-  console.log(`\n📊 ملخص:`)
-  console.log(`   • إجمالي التصنيفات: ${totalCategories}`)
-  console.log(`   • التصنيفات النشطة: ${activeCategories}`)
+  console.log(`\n📊 ملخص:`);
+  console.log(`   • إجمالي التصنيفات: ${totalCategories}`);
+  console.log(`   • التصنيفات النشطة: ${activeCategories}`);
 }
 
 main()
   .catch((e) => {
-    console.error('❌ خطأ في عملية Seeding:', e)
-    process.exit(1)
+    console.error('❌ خطأ في عملية Seeding:', e);
+    process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect()
-    console.log('\n🔌 تم قطع الاتصال بقاعدة البيانات')
-  }) 
+    await prisma.$disconnect();
+    console.log('\n🔌 تم قطع الاتصال بقاعدة البيانات');
+  }); 
