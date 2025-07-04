@@ -19,7 +19,7 @@ __tests__/
 *.spec.ts
 
 # ملفات الأدوات
-scripts/
+# scripts/ - نحتاج scripts/vercel-build-optimization.js للبناء
 docs/
 reports/
 
@@ -62,3 +62,9 @@ prisma/migrations/
 *.md
 README.md
 LICENSE
+
+# استثناءات - ملفات مطلوبة للبناء
+!scripts/vercel-build-optimization.js
+!scripts/digitalocean-build.js
+!scripts/fix-prisma-generation.js
+!scripts/test-build.js
