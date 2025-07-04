@@ -203,7 +203,7 @@ export default function DeepAnalysisWidget({ insights }: DeepAnalysisWidgetProps
                               </>
                             ) : (
                               <>
-                                <span className="text-sm">📊</span>
+                                <span className="text-sm">🤔</span>
                                 <span>تحليل عميق</span>
                               </>
                             )}
