@@ -32,6 +32,7 @@ model User {
   preferences       UserPreference[]
   userRoles         UserRole[]
   comments          Comment[]
+  commentReactions  CommentReaction[]
 
   @@index([email])
   @@index([role])
@@ -46,6 +47,8 @@ model Category {
   displayOrder Int        @default(0) @map("display_order")
   isActive     Boolean    @default(true) @map("is_active")
   parentId     String?    @map("parent_id")
+  color        String?    @db.VarChar(7)
+  icon         String?    @db.VarChar(50)
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
   parent       Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -90,6 +93,7 @@ model Article {
   seoKeywords    String?          @map("seo_keywords")
   socialImage    String?          @map("social_image")
   allowComments  Boolean          @default(true) @map("allow_comments")
+  commentSettings Json?           @map("comment_settings")
   metadata       Json?
   createdAt      DateTime         @default(now()) @map("created_at")
   updatedAt      DateTime         @updatedAt @map("updated_at")
@@ -258,25 +262,33 @@ model UserPreference {
 }
 
 model Comment {
-  id        String    @id @default(uuid())
-  articleId String    @map("article_id")
-  userId    String?   @map("user_id")
-  parentId  String?   @map("parent_id")
-  content   String    @db.Text
-  status    String    @default("pending")
-  likes     Int       @default(0)
-  metadata  Json?
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  article   Article   @relation(fields: [articleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  user      User?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  replies   Comment[] @relation("CommentReplies")
+  id               String                 @id @default(uuid())
+  articleId        String                 @map("article_id")
+  userId           String?                @map("user_id")
+  parentId         String?                @map("parent_id")
+  content          String                 @db.Text
+  status           String                 @default("pending")
+  likes            Int                    @default(0)
+  aiScore          Float?                 @map("ai_score")
+  aiClassification String?                @map("ai_classification")
+  aiAnalyzedAt     DateTime?              @map("ai_analyzed_at")
+  metadata         Json?
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+  article          Article                @relation(fields: [articleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user             User?                  @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parent           Comment?               @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies          Comment[]              @relation("CommentReplies")
+  reactions        CommentReaction[]
+  reports          CommentReport[]
+  aiAnalyses       AICommentAnalysis[]
+  moderationLogs   CommentModerationLog[]
 
   @@index([articleId])
   @@index([userId])
   @@index([parentId])
   @@index([status])
+  @@index([aiClassification])
   @@map("comments")
 }
 
@@ -340,6 +352,155 @@ model dose_contents {
 
   @@index([articleId])
   @@index([doseId])
+}
+
+model CommentReaction {
+  id        String   @id @default(uuid())
+  commentId String   @map("comment_id")
+  userId    String?  @map("user_id")
+  reactionType String @map("reaction_type") @db.VarChar(20) // like, love, laugh, angry, sad
+  ipAddress String?  @map("ip_address") @db.VarChar(45)
+  createdAt DateTime @default(now()) @map("created_at")
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([commentId, userId, reactionType])
+  @@index([commentId])
+  @@index([userId])
+  @@map("comment_reactions")
+}
+
+model CommentReport {
+  id         String   @id @default(uuid())
+  commentId  String   @map("comment_id")
+  userId     String?  @map("user_id")
+  reporterId String?  @map("reporter_id") // Alias for userId
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  reason     String   @db.VarChar(100)
+  details    String?  @db.Text
+  status     String   @default("pending") @db.VarChar(20)
+  resolvedAt DateTime? @map("resolved_at")
+  resolvedBy String?  @map("resolved_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+  comment    Comment  @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([commentId])
+  @@index([userId])
+  @@index([reporterId])
+  @@index([status])
+  @@map("comment_reports")
+}
+
+model CommentModerationLog {
+  id           String   @id @default(uuid())
+  commentId    String   @map("comment_id")
+  moderatorId  String   @map("moderator_id")
+  action       String   @db.VarChar(50)
+  reason       String?  @db.Text
+  oldContent   String?  @map("old_content") @db.Text
+  previousStatus String? @map("previous_status") @db.VarChar(20)
+  newStatus    String?  @map("new_status") @db.VarChar(20)
+  metadata     Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+  comment      Comment  @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([commentId])
+  @@index([moderatorId])
+  @@map("comment_moderation_logs")
+}
+
+model AICommentAnalysis {
+  id             String   @id @default(uuid())
+  commentId      String   @map("comment_id")
+  analysisType   String   @map("analysis_type") @default("content") @db.VarChar(50)
+  score          Float
+  classification String   @db.VarChar(50)
+  confidence     Float
+  suggestedAction String? @map("suggested_action") @db.VarChar(50)
+  aiProvider     String   @map("ai_provider") @default("local") @db.VarChar(50)
+  analysisDetails Json?   @map("analysis_details")
+  flaggedWords   Json?    @map("flagged_words")
+  categories     Json?
+  processingTime Int      @default(0) @map("processing_time")
+  details        Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+  comment        Comment  @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([commentId])
+  @@index([analysisType])
+  @@map("ai_comment_analyses")
+}
+
+model AIModerationSettings {
+  id                  String   @id @default(uuid())
+  enabled             Boolean  @default(true)
+  spamThreshold       Float    @default(0.8) @map("spam_threshold")
+  toxicityThreshold   Float    @default(0.8) @map("toxicity_threshold")
+  autoRejectThreshold Float    @default(0.95) @map("auto_reject_threshold")
+  autoApproveThreshold Float   @default(0.1) @map("auto_approve_threshold")
+  checkSpam           Boolean  @default(true) @map("check_spam")
+  checkToxicity       Boolean  @default(true) @map("check_toxicity")
+  checkRelevance      Boolean  @default(true) @map("check_relevance")
+  apiKeyEncrypted     String?  @map("api_key_encrypted") @db.Text
+  metadata            Json?
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@map("ai_moderation_settings")
+}
+
+model AIModerationLog {
+  id           String   @id @default(uuid())
+  entityType   String   @map("entity_type") @db.VarChar(50)
+  entityId     String   @map("entity_id")
+  action       String   @db.VarChar(50)
+  scores       Json
+  decision     String   @db.VarChar(50)
+  aiDecision   String?  @map("ai_decision") @db.VarChar(50)
+  humanDecision String? @map("human_decision") @db.VarChar(50)
+  overridden   Boolean  @default(false)
+  reason       String?  @db.Text
+  metadata     Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+  include      Json?    // For storing related data
+
+  @@index([entityType, entityId])
+  @@map("ai_moderation_logs")
+}
+
+model BannedWord {
+  id        String   @id @default(uuid())
+  word      String   @unique @db.VarChar(100)
+  severity  String   @default("medium") @db.VarChar(20)
+  action    String   @default("block") @db.VarChar(20) // block, replace, flag
+  replacement String? @db.VarChar(100)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([word])
+  @@map("banned_words")
+}
+
+model OpinionAuthor {
+  id           String   @id @default(uuid())
+  name         String   @db.VarChar(200)
+  slug         String   @unique @db.VarChar(200)
+  email        String?  @db.VarChar(200)
+  bio          String?  @db.Text
+  avatar       String?  @db.Text
+  title        String?  @db.VarChar(200)
+  credentials  String?  @db.Text
+  socialLinks  Json?    @map("social_links")
+  isActive     Boolean  @default(true) @map("is_active")
+  displayOrder Int      @default(0) @map("display_order")
+  metadata     Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  
+  // Virtual field for count
+  articles     Json?    // Will be populated in queries
+
+  @@index([slug])
+  @@map("opinion_authors")
 }
 
 enum InteractionType {

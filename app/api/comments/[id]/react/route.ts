@@ -42,12 +42,10 @@ export async function POST(
     
     if (user) {
       // للمستخدمين المسجلين
-      const existingReaction = await prisma.commentReaction.findUnique({
+      const existingReaction = await prisma.commentReaction.findFirst({
         where: {
-          commentId_userId: {
-            commentId,
-            userId: user.id
-          }
+          commentId,
+          userId: user.id
         }
       });
 

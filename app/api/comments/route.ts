@@ -229,11 +229,7 @@ export async function POST(request: NextRequest) {
         select: {
           id: true,
           allowComments: true,
-          commentSettings: {
-            select: {
-              requiresApproval: true
-            }
-          }
+          commentSettings: true
         }
       }),
       // جلب الكلمات المحظورة مرة واحدة
@@ -398,7 +394,7 @@ export async function POST(request: NextRequest) {
         }
       }
       
-      if (commentStatus === 'pending' && !requiresModeration && article.commentSettings?.requiresApproval === false) {
+      if (commentStatus === 'pending' && !requiresModeration && (article.commentSettings as any)?.requiresApproval === false) {
         commentStatus = 'approved'; // الموافقة التلقائية إذا كانت الإعدادات تسمح
       }
     }

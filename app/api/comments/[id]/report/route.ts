@@ -10,7 +10,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { reason, description } = await request.json();
+    const { reason, details } = await request.json();
     const { id: commentId } = await params;
 
     if (!['spam', 'offensive', 'misleading', 'harassment', 'other'].includes(reason)) {
@@ -20,7 +20,7 @@ export async function POST(
       );
     }
 
-    if (reason === 'other' && !description) {
+    if (reason === 'other' && !details) {
       return NextResponse.json(
         { success: false, error: 'يرجى توضيح سبب البلاغ' },
         { status: 400 }
@@ -69,7 +69,7 @@ export async function POST(
         commentId,
         reporterId: user?.id || null,
         reason,
-        description,
+        details,
         ipAddress,
         status: 'pending'
       }

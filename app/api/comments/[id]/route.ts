@@ -83,7 +83,9 @@ export async function PUT(
           moderatorId: user.id,
           action: 'edit',
           oldContent: comment.content,
-          newContent: content
+          metadata: {
+            newContent: content
+          }
         }
       });
     }

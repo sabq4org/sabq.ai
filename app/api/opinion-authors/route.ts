@@ -17,11 +17,6 @@ export async function GET(request: NextRequest) {
     
     const authors = await prisma.opinionAuthor.findMany({
       where,
-      include: {
-        _count: {
-          select: { articles: true }
-        }
-      },
       orderBy: { createdAt: 'desc' }
     });
     
@@ -55,10 +50,14 @@ export async function POST(request: NextRequest) {
         bio: data.bio,
         avatar: data.avatar,
         email: data.email,
-        twitter: data.twitter,
-        linkedin: data.linkedin,
         title: data.title,
-        specialties: data.specialties || [],
+        socialLinks: {
+          twitter: data.twitter,
+          linkedin: data.linkedin
+        },
+        metadata: {
+          specialties: data.specialties || []
+        },
         isActive: data.isActive ?? true
       }
     });
@@ -103,10 +102,14 @@ export async function PUT(request: NextRequest) {
         bio: data.bio,
         avatar: data.avatar,
         email: data.email,
-        twitter: data.twitter,
-        linkedin: data.linkedin,
         title: data.title,
-        specialties: data.specialties,
+        socialLinks: {
+          twitter: data.twitter,
+          linkedin: data.linkedin
+        },
+        metadata: {
+          specialties: data.specialties
+        },
         isActive: data.isActive
       }
     });

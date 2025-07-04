@@ -21,8 +21,8 @@ export async function GET(request: NextRequest) {
       prisma.comment.count({ where: { status: 'rejected' } }),
       prisma.comment.count({ where: { aiScore: { lt: 50 } } }),
       prisma.aIModerationLog.findMany({
-        include: {
-          comment: true
+        where: {
+          entityType: 'comment'
         }
       })
     ]);

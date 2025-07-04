@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     const dateObj = new Date(date);
     dateObj.setHours(0, 0, 0, 0);
     
-    const existingDose = await prisma.dailyDose.findFirst({
+    const existingDose = await prisma.daily_doses.findFirst({
       where: {
         date: dateObj,
         period: period as any
@@ -73,11 +73,11 @@ export async function POST(request: NextRequest) {
 
     if (existingDose) {
       // حذف الجرعة الموجودة والمحتويات المرتبطة بها
-      await prisma.doseContent.deleteMany({
+      await prisma.dose_contents.deleteMany({
         where: { doseId: existingDose.id }
       });
       
-      await prisma.dailyDose.delete({
+      await prisma.daily_doses.delete({
         where: { id: existingDose.id }
       });
       
@@ -257,7 +257,7 @@ ${articles.map((a, i) => `${i + 1}. ${a.title} - ${a.category?.name || 'عام'}
 
     // إنشاء الجرعة الجديدة
     const doseId = require('crypto').randomUUID();
-    const newDose = await prisma.dailyDose.create({
+    const newDose = await prisma.daily_doses.create({
       data: {
         id: doseId,
         period: period as any,
@@ -272,7 +272,7 @@ ${articles.map((a, i) => `${i + 1}. ${a.title} - ${a.category?.name || 'عام'}
     // إنشاء المحتويات
     const createdContents = await Promise.all(
       contents.map(content => 
-        prisma.doseContent.create({
+        prisma.dose_contents.create({
           data: {
             id: require('crypto').randomUUID(),
             doseId: doseId,
