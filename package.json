@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "next dev",
     "dev:staging": "NODE_ENV=development next dev",
-    "build": "node scripts/vercel-build-optimization.js && prisma generate --no-engine && next build",
+    "build": "prisma generate --no-engine && next build",
+    "build:vercel": "node scripts/vercel-build-optimization.js && prisma generate --no-engine && next build",
     "build:do": "node scripts/digitalocean-build.js && prisma generate || node scripts/fix-prisma-generation.js && next build",
     "build:force": "rm -rf .next && NEXT_TELEMETRY_DISABLED=1 next build",
     "test-build": "node scripts/test-build.js",
