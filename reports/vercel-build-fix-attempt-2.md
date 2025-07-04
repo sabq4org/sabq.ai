@@ -29,7 +29,7 @@ Vercel build يفشل مع خطأ "Module not found" للملفات التالي
 
 ## الحلول المطبقة
 
-### 1. إضافة jsconfig.json
+### 1. إضافة jsconfig.json ✅
 أضفت ملف `jsconfig.json` لمساعدة Vercel في حل المسارات:
 ```json
 {
@@ -42,29 +42,67 @@ Vercel build يفشل مع خطأ "Module not found" للملفات التالي
 }
 ```
 
+### 2. تحديث tsconfig.json ✅
+أضفت `baseUrl` إلى tsconfig.json:
+```json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    }
+  }
+}
+```
+
+### 3. prebuild script موجود بالفعل ✅
+package.json يحتوي على:
+```json
+"prebuild": "echo 'Checking files...' && ls -la contexts/DarkModeContext.tsx lib/date-utils.ts lib/utils.ts components/ArticleJsonLd.tsx components/Footer.tsx"
+```
+
 ## الحلول الإضافية المقترحة
 
-### 2. التحقق من حساسية الأحرف
-يجب التأكد من أن جميع imports تستخدم نفس حالة الأحرف:
-- `DarkModeContext` وليس `darkModeContext`
-- `date-utils` وليس `dateUtils`
+### 1. تغيير imports إلى مسارات نسبية
+إذا استمرت المشكلة، يمكن تغيير imports في `app/article/[id]/page.tsx` من:
+```typescript
+import { useDarkModeContext } from '@/contexts/DarkModeContext';
+```
+إلى:
+```typescript
+import { useDarkModeContext } from '../../contexts/DarkModeContext';
+```
 
-### 3. إعادة تشغيل Build على Vercel
+### 2. إعادة تشغيل Build على Vercel
 - Vercel يستخدم كوميت قديم `f8d5d8d`
-- آخر كوميت على GitHub هو `6a87a37`
-- قد يحتاج Vercel إلى:
-  1. Clear cache and redeploy
-  2. أو trigger new deployment
+- آخر كوميت على GitHub هو `72b57f9`
+- في Vercel Dashboard:
+  1. اذهب إلى Settings > Git
+  2. تأكد من أن Branch هو `main` أو `clean-main`
+  3. اضغط على "Redeploy" مع خيار "Clear cache and redeploy"
 
-### 4. التحقق من Environment Variables
-تأكد من أن جميع المتغيرات البيئية المطلوبة موجودة في Vercel.
+### 3. التحقق من إعدادات Build & Output Settings في Vercel
+تأكد من أن:
+- Build Command: `npm run build` أو `npm run build:vercel`
+- Output Directory: `.next`
+- Install Command: `npm install`
+
+### 4. إضافة NODE_VERSION
+في Vercel settings، أضف environment variable:
+```
+NODE_VERSION=20.x
+```
 
 ## الخطوات التالية
-1. دفع jsconfig.json إلى GitHub
+1. ✅ دفع jsconfig.json و tsconfig.json المحدث إلى GitHub
 2. إعادة تشغيل deployment على Vercel مع clear cache
-3. إذا استمرت المشكلة، قد نحتاج لتغيير imports من `@/` إلى مسارات نسبية
+3. إذا استمرت المشكلة، تغيير imports إلى مسارات نسبية
+4. التحقق من إعدادات Vercel Build
 
 ## الملاحظات
 - الملفات موجودة في Git وفي الكوميت الصحيح
 - البناء المحلي يعمل بدون مشاكل
-- المشكلة قد تكون خاصة ببيئة Vercel أو cache قديم 
+- المشكلة قد تكون:
+  - Cache قديم في Vercel
+  - اختلاف في بيئة البناء بين المحلي و Vercel
+  - مشكلة في TypeScript paths resolution في Vercel 
