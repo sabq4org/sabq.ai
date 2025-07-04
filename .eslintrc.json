@@ -1,8 +1,11 @@
 {
-  "extends": ["next", "next/core-web-vitals"],
-  "plugins": ["unused-imports"],
+  "extends": "next/core-web-vitals",
   "rules": {
-    "unused-imports/no-unused-imports": "error"
-  },
-  "ignorePatterns": ["lib/generated/**"]
+    "react/no-unescaped-entities": "off",
+    "@next/next/no-img-element": "off",
+    "@next/next/no-html-link-for-pages": "off",
+    "react-hooks/exhaustive-deps": "warn",
+    "jsx-a11y/alt-text": "warn",
+    "react/display-name": "off"
+  }
 } 

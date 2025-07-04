@@ -32,7 +32,6 @@ model User {
   preferences       UserPreference[]
   userRoles         UserRole[]
   comments          Comment[]
-  commentReactions  CommentReaction[]
 
   @@index([email])
   @@index([role])
@@ -47,8 +46,6 @@ model Category {
   displayOrder Int        @default(0) @map("display_order")
   isActive     Boolean    @default(true) @map("is_active")
   parentId     String?    @map("parent_id")
-  color        String?    @db.VarChar(7)
-  icon         String?    @db.VarChar(50)
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
   parent       Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -93,7 +90,6 @@ model Article {
   seoKeywords    String?          @map("seo_keywords")
   socialImage    String?          @map("social_image")
   allowComments  Boolean          @default(true) @map("allow_comments")
-  commentSettings Json?           @map("comment_settings")
   metadata       Json?
   createdAt      DateTime         @default(now()) @map("created_at")
   updatedAt      DateTime         @updatedAt @map("updated_at")
@@ -262,33 +258,25 @@ model UserPreference {
 }
 
 model Comment {
-  id               String                 @id @default(uuid())
-  articleId        String                 @map("article_id")
-  userId           String?                @map("user_id")
-  parentId         String?                @map("parent_id")
-  content          String                 @db.Text
-  status           String                 @default("pending")
-  likes            Int                    @default(0)
-  aiScore          Float?                 @map("ai_score")
-  aiClassification String?                @map("ai_classification")
-  aiAnalyzedAt     DateTime?              @map("ai_analyzed_at")
-  metadata         Json?
-  createdAt        DateTime               @default(now()) @map("created_at")
-  updatedAt        DateTime               @updatedAt @map("updated_at")
-  article          Article                @relation(fields: [articleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  user             User?                  @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  parent           Comment?               @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  replies          Comment[]              @relation("CommentReplies")
-  reactions        CommentReaction[]
-  reports          CommentReport[]
-  aiAnalyses       AICommentAnalysis[]
-  moderationLogs   CommentModerationLog[]
+  id        String    @id @default(uuid())
+  articleId String    @map("article_id")
+  userId    String?   @map("user_id")
+  parentId  String?   @map("parent_id")
+  content   String    @db.Text
+  status    String    @default("pending")
+  likes     Int       @default(0)
+  metadata  Json?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  article   Article   @relation(fields: [articleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies   Comment[] @relation("CommentReplies")
 
   @@index([articleId])
   @@index([userId])
   @@index([parentId])
   @@index([status])
-  @@index([aiClassification])
   @@map("comments")
 }
 
@@ -354,153 +342,157 @@ model dose_contents {
   @@index([doseId])
 }
 
-model CommentReaction {
-  id        String   @id @default(uuid())
-  commentId String   @map("comment_id")
-  userId    String?  @map("user_id")
-  reactionType String @map("reaction_type") @db.VarChar(20) // like, love, laugh, angry, sad
-  ipAddress String?  @map("ip_address") @db.VarChar(45)
-  createdAt DateTime @default(now()) @map("created_at")
-  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  user      User?    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  @@unique([commentId, userId, reactionType])
-  @@index([commentId])
-  @@index([userId])
-  @@map("comment_reactions")
+model forum_badges {
+  id           String    @id @default(dbgenerated("(uuid())"))
+  name         String    @db.VarChar(255)
+  name_ar      String    @db.VarChar(255)
+  description  String?   @db.Text
+  icon         String?   @db.VarChar(50)
+  color        String?   @db.VarChar(50)
+  requirements Json?
+  points       Int?      @default(0)
+  is_active    Boolean?  @default(true)
+  created_at   DateTime? @default(now()) @db.DateTime(0)
+  updated_at   DateTime? @default(now()) @db.DateTime(0)
 }
 
-model CommentReport {
-  id         String   @id @default(uuid())
-  commentId  String   @map("comment_id")
-  userId     String?  @map("user_id")
-  reporterId String?  @map("reporter_id") // Alias for userId
-  ipAddress  String?  @map("ip_address") @db.VarChar(45)
-  reason     String   @db.VarChar(100)
-  details    String?  @db.Text
-  status     String   @default("pending") @db.VarChar(20)
-  resolvedAt DateTime? @map("resolved_at")
-  resolvedBy String?  @map("resolved_by")
-  createdAt  DateTime @default(now()) @map("created_at")
-  comment    Comment  @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model forum_categories {
+  id            String    @id @default(dbgenerated("(uuid())"))
+  name          String    @db.VarChar(255)
+  name_ar       String    @db.VarChar(255)
+  slug          String    @unique(map: "slug") @db.VarChar(255)
+  description   String?   @db.Text
+  icon          String?   @db.VarChar(50)
+  color         String?   @db.VarChar(50)
+  display_order Int?      @default(0)
+  is_active     Boolean?  @default(true)
+  created_at    DateTime? @default(now()) @db.DateTime(0)
+  updated_at    DateTime? @default(now()) @db.DateTime(0)
 
-  @@index([commentId])
-  @@index([userId])
-  @@index([reporterId])
-  @@index([status])
-  @@map("comment_reports")
+  @@index([display_order], map: "idx_order")
+  @@index([slug], map: "idx_slug")
 }
 
-model CommentModerationLog {
-  id           String   @id @default(uuid())
-  commentId    String   @map("comment_id")
-  moderatorId  String   @map("moderator_id")
-  action       String   @db.VarChar(50)
-  reason       String?  @db.Text
-  oldContent   String?  @map("old_content") @db.Text
-  previousStatus String? @map("previous_status") @db.VarChar(20)
-  newStatus    String?  @map("new_status") @db.VarChar(20)
-  metadata     Json?
-  createdAt    DateTime @default(now()) @map("created_at")
-  comment      Comment  @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model forum_follows {
+  id          String                    @id @default(dbgenerated("(uuid())"))
+  user_id     String
+  target_type forum_follows_target_type
+  target_id   String
+  created_at  DateTime?                 @default(now()) @db.DateTime(0)
 
-  @@index([commentId])
-  @@index([moderatorId])
-  @@map("comment_moderation_logs")
+  @@unique([user_id, target_type, target_id], map: "unique_follow")
+  @@index([target_type, target_id], map: "idx_target")
+  @@index([user_id], map: "idx_user")
 }
 
-model AICommentAnalysis {
-  id             String   @id @default(uuid())
-  commentId      String   @map("comment_id")
-  analysisType   String   @map("analysis_type") @default("content") @db.VarChar(50)
-  score          Float
-  classification String   @db.VarChar(50)
-  confidence     Float
-  suggestedAction String? @map("suggested_action") @db.VarChar(50)
-  aiProvider     String   @map("ai_provider") @default("local") @db.VarChar(50)
-  analysisDetails Json?   @map("analysis_details")
-  flaggedWords   Json?    @map("flagged_words")
-  categories     Json?
-  processingTime Int      @default(0) @map("processing_time")
-  details        Json?
-  createdAt      DateTime @default(now()) @map("created_at")
-  comment        Comment  @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model forum_notifications {
+  id          String    @id @default(dbgenerated("(uuid())"))
+  user_id     String
+  type        String    @db.VarChar(50)
+  target_type String?   @db.VarChar(50)
+  target_id   String?
+  data        Json?
+  is_read     Boolean?  @default(false)
+  created_at  DateTime? @default(now()) @db.DateTime(0)
 
-  @@index([commentId])
-  @@index([analysisType])
-  @@map("ai_comment_analyses")
+  @@index([created_at], map: "idx_created")
+  @@index([user_id, is_read], map: "idx_user_unread")
 }
 
-model AIModerationSettings {
-  id                  String   @id @default(uuid())
-  enabled             Boolean  @default(true)
-  spamThreshold       Float    @default(0.8) @map("spam_threshold")
-  toxicityThreshold   Float    @default(0.8) @map("toxicity_threshold")
-  autoRejectThreshold Float    @default(0.95) @map("auto_reject_threshold")
-  autoApproveThreshold Float   @default(0.1) @map("auto_approve_threshold")
-  checkSpam           Boolean  @default(true) @map("check_spam")
-  checkToxicity       Boolean  @default(true) @map("check_toxicity")
-  checkRelevance      Boolean  @default(true) @map("check_relevance")
-  apiKeyEncrypted     String?  @map("api_key_encrypted") @db.Text
-  metadata            Json?
-  updatedAt           DateTime @updatedAt @map("updated_at")
+model forum_replies {
+  id          String                @id @default(dbgenerated("(uuid())"))
+  topic_id    String
+  parent_id   String?
+  author_id   String
+  content     String                @db.Text
+  is_accepted Boolean?              @default(false)
+  status      forum_replies_status? @default(active)
+  edited_at   DateTime?             @db.DateTime(0)
+  edited_by   String?
+  created_at  DateTime?             @default(now()) @db.DateTime(0)
+  updated_at  DateTime?             @default(now()) @db.DateTime(0)
 
-  @@map("ai_moderation_settings")
+  @@index([author_id], map: "idx_author")
+  @@index([created_at], map: "idx_created")
+  @@index([parent_id], map: "idx_parent")
+  @@index([topic_id], map: "idx_topic")
 }
 
-model AIModerationLog {
-  id           String   @id @default(uuid())
-  entityType   String   @map("entity_type") @db.VarChar(50)
-  entityId     String   @map("entity_id")
-  action       String   @db.VarChar(50)
-  scores       Json
-  decision     String   @db.VarChar(50)
-  aiDecision   String?  @map("ai_decision") @db.VarChar(50)
-  humanDecision String? @map("human_decision") @db.VarChar(50)
-  overridden   Boolean  @default(false)
-  reason       String?  @db.Text
-  metadata     Json?
-  createdAt    DateTime @default(now()) @map("created_at")
-  include      Json?    // For storing related data
+model forum_reports {
+  id          String                    @id @default(dbgenerated("(uuid())"))
+  reporter_id String
+  target_type forum_reports_target_type
+  target_id   String
+  reason      String                    @db.VarChar(255)
+  description String?                   @db.Text
+  status      forum_reports_status?     @default(pending)
+  resolved_by String?
+  resolved_at DateTime?                 @db.DateTime(0)
+  created_at  DateTime?                 @default(now()) @db.DateTime(0)
 
-  @@index([entityType, entityId])
-  @@map("ai_moderation_logs")
+  @@index([reporter_id], map: "idx_reporter")
+  @@index([status], map: "idx_status")
+  @@index([target_type, target_id], map: "idx_target")
 }
 
-model BannedWord {
-  id        String   @id @default(uuid())
-  word      String   @unique @db.VarChar(100)
-  severity  String   @default("medium") @db.VarChar(20)
-  action    String   @default("block") @db.VarChar(20) // block, replace, flag
-  replacement String? @db.VarChar(100)
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
+model forum_reputation {
+  id          String    @id @default(dbgenerated("(uuid())"))
+  user_id     String
+  points      Int?      @default(0)
+  action_type String    @db.VarChar(50)
+  target_type String?   @db.VarChar(50)
+  target_id   String?
+  description String?   @db.Text
+  created_at  DateTime? @default(now()) @db.DateTime(0)
 
-  @@index([word])
-  @@map("banned_words")
+  @@index([created_at], map: "idx_created")
+  @@index([user_id], map: "idx_user")
 }
 
-model OpinionAuthor {
-  id           String   @id @default(uuid())
-  name         String   @db.VarChar(200)
-  slug         String   @unique @db.VarChar(200)
-  email        String?  @db.VarChar(200)
-  bio          String?  @db.Text
-  avatar       String?  @db.Text
-  title        String?  @db.VarChar(200)
-  credentials  String?  @db.Text
-  socialLinks  Json?    @map("social_links")
-  isActive     Boolean  @default(true) @map("is_active")
-  displayOrder Int      @default(0) @map("display_order")
-  metadata     Json?
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-  
-  // Virtual field for count
-  articles     Json?    // Will be populated in queries
+model forum_topics {
+  id            String               @id @default(dbgenerated("(uuid())"))
+  title         String               @db.VarChar(500)
+  content       String               @db.Text
+  author_id     String
+  category_id   String
+  is_pinned     Boolean?             @default(false)
+  is_locked     Boolean?             @default(false)
+  is_featured   Boolean?             @default(false)
+  status        forum_topics_status? @default(active)
+  views         Int?                 @default(0)
+  last_reply_at DateTime?            @db.DateTime(0)
+  last_reply_by String?
+  created_at    DateTime?            @default(now()) @db.DateTime(0)
+  updated_at    DateTime?            @default(now()) @db.DateTime(0)
 
-  @@index([slug])
-  @@map("opinion_authors")
+  @@index([author_id], map: "idx_author")
+  @@index([category_id], map: "idx_category")
+  @@index([last_reply_at], map: "idx_last_reply")
+  @@index([status, created_at], map: "idx_status_created")
+}
+
+model forum_user_badges {
+  id        String    @id @default(dbgenerated("(uuid())"))
+  user_id   String
+  badge_id  String
+  earned_at DateTime? @default(now()) @db.DateTime(0)
+
+  @@unique([user_id, badge_id], map: "unique_user_badge")
+  @@index([badge_id], map: "idx_badge")
+  @@index([user_id], map: "idx_user")
+}
+
+model forum_votes {
+  id          String                  @id @default(dbgenerated("(uuid())"))
+  user_id     String
+  target_type forum_votes_target_type
+  target_id   String
+  vote_type   forum_votes_vote_type
+  created_at  DateTime?               @default(now()) @db.DateTime(0)
+
+  @@unique([user_id, target_type, target_id], map: "unique_vote")
+  @@index([target_type, target_id], map: "idx_target")
+  @@index([user_id], map: "idx_user")
 }
 
 enum InteractionType {
@@ -532,4 +524,45 @@ enum daily_doses_status {
   published
   scheduled
   archived
+}
+
+enum forum_follows_target_type {
+  topic
+  user
+  category
+}
+
+enum forum_reports_target_type {
+  topic
+  reply
+}
+
+enum forum_votes_target_type {
+  topic
+  reply
+}
+
+enum forum_votes_vote_type {
+  like
+  dislike
+}
+
+enum forum_replies_status {
+  active
+  pending
+  hidden
+  deleted
+}
+
+enum forum_reports_status {
+  pending
+  resolved
+  dismissed
+}
+
+enum forum_topics_status {
+  active
+  pending
+  hidden
+  deleted
 }
