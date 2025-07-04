@@ -215,11 +215,9 @@ export async function POST(request: NextRequest) {
       }),
       // جلب الكلمات المحظورة مرة واحدة
       prisma.bannedWord.findMany({
-        where: { isActive: true },
         select: {
           word: true,
-          action: true,
-          replacement: true
+          severity: true
         }
       }),
       // جلب إعدادات الذكاء الاصطناعي مرة واحدة
@@ -348,16 +346,18 @@ export async function POST(request: NextRequest) {
       for (const bannedWord of bannedWords) {
         const regex = new RegExp(bannedWord.word, 'gi');
         if (regex.test(content)) {
-          switch (bannedWord.action) {
-            case 'reject':
+          // تطبيق الإجراء بناءً على مستوى الخطورة
+          switch (bannedWord.severity) {
+            case 'high':
               return NextResponse.json(
                 { success: false, error: 'التعليق يحتوي على كلمات غير مسموحة' },
                 { status: 400 }
               );
-            case 'replace':
-              processedContent = processedContent.replace(regex, bannedWord.replacement || '***');
+            case 'medium':
+              processedContent = processedContent.replace(regex, '***');
+              requiresModeration = true;
               break;
-            case 'flag':
+            case 'low':
               requiresModeration = true;
               break;
           }
@@ -375,8 +375,9 @@ export async function POST(request: NextRequest) {
         }
       }
       
-      if (commentStatus === 'pending' && !requiresModeration && (article.commentSettings as any)?.requiresApproval === false) {
-        commentStatus = 'approved'; // الموافقة التلقائية إذا كانت الإعدادات تسمح
+      if (commentStatus === 'pending' && !requiresModeration) {
+        // يمكن تطبيق منطق إضافي للموافقة التلقائية هنا
+        // commentStatus = 'approved';
       }
     }
 
@@ -435,7 +436,7 @@ createdAt: true,
           categories: aiAnalysis.categories || {},
           processingTime: aiAnalysis.processing_time || 0
         }
-      }).catch(error => {
+      }).catch((error: any) => {
         console.error('Error saving AI analysis:', error);
       });
     }

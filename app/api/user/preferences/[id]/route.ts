@@ -40,8 +40,8 @@ export async function GET(
           preferences = categories.map(cat => ({
             category_id: cat.id,
             category_name: cat.name,
-            category_icon: cat.icon || '📌',
-            category_color: cat.color || '#6B7280'
+            category_icon: '📌',
+            category_color: '#6B7280'
           }));
         }
       } catch (parseError) {

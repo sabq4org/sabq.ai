@@ -147,20 +147,16 @@ export async function POST(request: NextRequest) {
     
     const startTime = Date.now();
     
-    // جلب إعدادات التحليل
-    const settings = null; // DISABLED: aIModerationSettings
-    
+    // جلب إعدادات التحليل (معطل مؤقتاً)
     let analysisResult;
     let aiProvider = 'local';
     
     // استخدم التحليل المحلي السريع افتراضياً
     analysisResult = quickLocalAnalysis(comment);
     
-    // محاولة التحليل بـ OpenAI فقط إذا كان التعليق مشبوهاً
-    if (settings?.enabled && settings.apiKeyEncrypted && analysisResult.score < 70) {
-      // في الإنتاج: فك تشفير المفتاح
-      const apiKey = process.env.OPENAI_API_KEY || settings.apiKeyEncrypted;
-      const openAIResult = await analyzeWithOpenAI(comment, apiKey);
+    // محاولة التحليل بـ OpenAI فقط إذا كان متاحاً والتعليق مشبوهاً
+    if (process.env.OPENAI_API_KEY && analysisResult.score < 70) {
+      const openAIResult = await analyzeWithOpenAI(comment, process.env.OPENAI_API_KEY);
       if (openAIResult) {
         analysisResult = openAIResult;
         aiProvider = 'openai';

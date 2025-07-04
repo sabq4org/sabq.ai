@@ -20,17 +20,13 @@ export async function GET(request: NextRequest) {
       prisma.comment.count({ where: { status: 'approved' } }),
       prisma.comment.count({ where: { status: 'rejected' } }),
       prisma.comment.count({ where: { } }),
-      prisma.aIModerationLog.findMany({
-        where: {
-          entityType: 'comment'
-        }
-      })
+      prisma.aIModerationLog.findMany()
     ]);
 
     // حساب دقة الذكاء الاصطناعي
     let aiAccuracy = 0;
     if (aiModerationLogs.length > 0) {
-      const correctDecisions = aiModerationLogs.filter(log => {
+      const correctDecisions = aiModerationLogs.filter((log: any) => {
         // إذا لم يتم تجاوز قرار الذكاء الاصطناعي، فهو صحيح
         if (!log.overridden) return true;
         

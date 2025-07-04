@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
       recommendedArticles.push(
         ...categoryArticles.map(article => ({
           article,
-          reason: `بناءً على اهتمامك بـ ${null?.name}`,
+          reason: `بناءً على اهتمامك بـ ${article.category?.name || 'هذه الفئة'}`,
           score: calculateRecommendationScore(article, userInterests, patterns)
         }))
       );
@@ -253,7 +253,7 @@ function calculateRecommendationScore(
   let score = 1.0;
   
   // تطابق مع الاهتمامات
-  const articleCategory = null?.slug;
+  const articleCategory = article.category?.slug;
   if (articleCategory && userInterests.length > 0) {
     const interestMatch = userInterests.find(i => i.name === articleCategory || i === articleCategory);
     if (interestMatch) {
