@@ -27,11 +27,13 @@ import {
   Users,
   AlertCircle,
   Activity,
-  ChevronRight
+  ChevronRight,
+  Plus
 } from 'lucide-react';
 import Link from 'next/link';
 import { useDarkModeContext } from '@/contexts/DarkModeContext';
 import Header from '@/components/Header';
+import '@/styles/moment-by-moment.css';
 
 interface TimelineEvent {
   id: string;
@@ -69,6 +71,7 @@ export default function MomentByMomentPage() {
   const [hasMore, setHasMore] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [stats, setStats] = useState<any>({});
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
 
   // أنواع المحتوى وألوانها
   const eventTypes = {
@@ -237,216 +240,140 @@ export default function MomentByMomentPage() {
       {/* Header الرسمي */}
       <Header />
 
-      {/* Page Header - محسّن بخلفية متدرجة */}
-      <div className={`relative overflow-hidden ${
-        darkMode 
-          ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800' 
-          : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'
-      } border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-        {/* خلفية متحركة */}
+      {/* Hero Section */}
+      <section className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 py-16">
+        <div className="absolute inset-0 bg-black/20" />
+        
+        {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className={`absolute -top-1/2 -right-1/2 w-96 h-96 rounded-full ${
-            darkMode ? 'bg-blue-900/20' : 'bg-blue-200/30'
-          } blur-3xl animate-pulse`}></div>
-          <div className={`absolute -bottom-1/2 -left-1/2 w-96 h-96 rounded-full ${
-            darkMode ? 'bg-purple-900/20' : 'bg-purple-200/30'
-          } blur-3xl animate-pulse delay-1000`}></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000" />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000" />
         </div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {/* العنوان الرئيسي والوصف */}
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className={`p-4 rounded-2xl ${
-                darkMode 
-                  ? 'bg-gradient-to-br from-blue-600 to-purple-600' 
-                  : 'bg-gradient-to-br from-blue-500 to-purple-600'
-              } shadow-xl`}>
-                <Clock className="w-10 h-10 text-white" />
-              </div>
-              <h1 className={`text-5xl font-bold ${
-                darkMode 
-                  ? 'text-white' 
-                  : 'bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent'
-              }`}>
-                اللحظة بلحظة
-              </h1>
+        
+        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
+          <div className="inline-flex items-center justify-center p-8 mb-8 relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full blur-xl opacity-70 animate-pulse" />
+            <div className="relative bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full p-6 shadow-2xl">
+              <Activity className="w-12 h-12 text-white drop-shadow-lg animate-pulse" />
             </div>
-            <p className={`text-lg max-w-3xl mx-auto ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              تابع أحدث الأحداث والمحتويات والتحديثات في صحيفة سبق لحظة بلحظة، في تسلسل زمني تفاعلي
-            </p>
           </div>
-
-          {/* الإحصائيات - تصميم أنيق ومدمج */}
-          <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
-            {/* العدد الإجمالي */}
-            <div className={`group relative overflow-hidden px-6 py-3 rounded-2xl ${
-              darkMode 
-                ? 'bg-gray-800/50 backdrop-blur-sm border border-gray-700' 
-                : 'bg-white/70 backdrop-blur-sm border border-gray-200 shadow-lg'
-            } transition-all hover:scale-105`}>
-              <div className="flex items-center gap-3">
-                <Activity className={`w-5 h-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-                <div>
-                  <span className={`text-3xl font-bold ${
-                    darkMode ? 'text-blue-400' : 'text-blue-600'
-                  }`}>{stats.total || events.length}</span>
-                  <span className={`text-sm font-medium mr-2 ${
-                    darkMode ? 'text-gray-300' : 'text-gray-700'
-                  }`}>لحظة موثقة</span>
+          <h1 className="text-5xl font-black text-white mb-6 drop-shadow-lg">
+            لحظة بلحظة
+          </h1>
+          <p className="text-xl text-gray-200 max-w-2xl mx-auto mb-8">
+            تابع آخر الأحداث والتحديثات الفورية من جميع أقسام الموقع
+          </p>
+          
+          {/* الإحصائيات السريعة */}
+          <div className="mb-6 flex justify-center">
+            <div className="inline-flex flex-col sm:flex-row items-center gap-4 sm:gap-8 bg-black bg-opacity-20 backdrop-blur-md rounded-2xl px-6 sm:px-8 py-4 shadow-xl border border-white border-opacity-20">
+              <div className="text-center">
+                <div className="text-2xl sm:text-3xl font-bold text-white mb-1 drop-shadow-lg">
+                  {stats.totalEvents}
+                </div>
+                <div className="text-xs sm:text-sm text-white">إجمالي الأحداث</div>
+              </div>
+              <div className="hidden sm:block w-px h-12 bg-white bg-opacity-50"></div>
+              <div className="text-center">
+                <div className="text-2xl sm:text-3xl font-bold text-white mb-1 drop-shadow-lg">
+                  {stats.todayEvents}
+                </div>
+                <div className="text-xs sm:text-sm text-white">أحداث اليوم</div>
+              </div>
+              <div className="hidden sm:block w-px h-12 bg-white bg-opacity-50"></div>
+              <div className="text-center">
+                <div className="text-2xl sm:text-3xl font-bold text-white mb-1 drop-shadow-lg">
+                  {stats.activeUsers}
+                </div>
+                <div className="text-xs sm:text-sm text-white">مستخدم نشط</div>
+              </div>
+              <div className="hidden sm:block w-px h-12 bg-white bg-opacity-50"></div>
+              <div className="text-center">
+                <div className="text-2xl sm:text-3xl font-bold text-green-300 mb-1 drop-shadow-lg animate-pulse">
+                  {newEventsCount > 0 ? newEventsCount : 'مباشر'}
+                </div>
+                <div className="text-xs sm:text-sm text-white">
+                  {newEventsCount > 0 ? 'حدث جديد' : 'بث حي'}
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
 
-            {/* الأحداث الجديدة */}
-            {newEventsCount > 0 && (
+      {/* Filter Bar - Sticky */}
+      <section className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-16 z-10 shadow-md">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Filters */}
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide w-full sm:w-auto">
               <button
-                onClick={() => {
-                  setNewEventsCount(0);
-                  fetchTimelineEvents();
-                }}
-                className="relative overflow-hidden px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-2xl shadow-lg transition-all hover:scale-105 hover:shadow-xl"
+                onClick={() => setFilter('all')}
+                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${
+                  filter === 'all'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
               >
-                <div className="flex items-center gap-2">
-                  <Bell className="w-5 h-5 animate-bounce" />
-                  <span className="font-bold text-lg">{newEventsCount}</span>
-                  <span className="text-sm">حدث جديد</span>
-                </div>
-                <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                جميع الأحداث
               </button>
-            )}
-          </div>
-
-          {/* التحكم والفلاتر - مدمج في شريط واحد */}
-          <div className={`p-4 rounded-2xl ${
-            darkMode 
-              ? 'bg-gray-800/50 backdrop-blur-sm border border-gray-700' 
-              : 'bg-white/80 backdrop-blur-sm border border-gray-200 shadow-lg'
-          }`}>
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
-              {/* الفلاتر */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {Object.entries(eventTypes).map(([key, value]) => (
+                              {Object.entries(eventTypes).map(([key, value]) => (
                   <button
                     key={key}
                     onClick={() => setFilter(key)}
-                    className={`group relative px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                    className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all flex items-center gap-2 ${
                       filter === key
-                        ? 'text-white shadow-lg transform scale-105'
-                        : (darkMode 
-                            ? 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50' 
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
+                        ? 'text-white shadow-lg'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                     style={{
                       backgroundColor: filter === key ? value.bgColor : undefined
                     }}
                   >
-                    <span className="relative z-10 flex items-center gap-1">
-                      <span>{value.icon}</span>
-                      <span>{value.label}</span>
-                      {stats.byType && key !== 'all' && stats.byType[key] > 0 && (
-                        <span className={`mr-1 px-1.5 py-0.5 rounded-full text-xs ${
-                          filter === key 
-                            ? 'bg-white/20 text-white' 
-                            : (darkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-600')
-                        }`}>
-                          {stats.byType[key]}
-                        </span>
-                      )}
-                    </span>
+                    <span className="w-4 h-4">{value.icon}</span>
+                    {value.label}
                   </button>
                 ))}
-              </div>
-
-              {/* أزرار التحكم */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => fetchTimelineEvents()}
-                  className={`px-4 py-2 rounded-xl font-medium transition-all hover:scale-105 ${
-                    darkMode 
-                      ? 'bg-gray-700/50 hover:bg-gray-600/50 text-gray-200' 
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  <RefreshCw className="w-4 h-4 inline ml-1" />
-                  تحديث
-                </button>
-                
-                <button
-                  onClick={() => setAutoRefresh(!autoRefresh)}
-                  className={`px-4 py-2 rounded-xl font-medium transition-all ${
-                    autoRefresh 
-                      ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg hover:shadow-xl'
-                      : (darkMode 
-                          ? 'bg-gray-700/50 hover:bg-gray-600/50 text-gray-200' 
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700')
-                  }`}
-                >
-                  <ArrowUp className={`w-4 h-4 inline ml-1 ${autoRefresh ? 'animate-bounce' : ''}`} />
-                  {autoRefresh ? 'مباشر' : 'تفعيل المباشر'}
-                </button>
-              </div>
             </div>
-          </div>
 
-          {/* زر استعراض التسلسل الزمني */}
-          <div className="text-center mt-8">
-            <button
-              onClick={() => {
-                const timelineSection = document.getElementById('timeline-content');
-                timelineSection?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className={`group inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-medium text-white transition-all transform hover:scale-105 shadow-xl hover:shadow-2xl ${
-                darkMode 
-                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700' 
-                  : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
-              }`}
-            >
-              <span className="text-lg">استعراض التسلسل الزمني</span>
-              <ChevronDown className="w-6 h-6 group-hover:translate-y-1 transition-transform" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Sticky Sub Header - مبسط ومحسّن */}
-      <div className={`sticky top-16 z-40 ${
-        darkMode 
-          ? 'bg-gray-800/90 backdrop-blur-md' 
-          : 'bg-white/90 backdrop-blur-md'
-      } border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} shadow-sm`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex items-center justify-between">
+            {/* Sort and Load More */}
             <div className="flex items-center gap-3">
-              <greeting.icon className={`w-5 h-5 ${greeting.color}`} />
-              <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                {greeting.text} • {currentTime.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </div>
-            
-            {/* مخطط دائري صغير للإحصائيات */}
-            <div className="hidden md:flex items-center gap-4">
-              {stats.byType && Object.entries(eventTypes).filter(([key]) => key !== 'all' && stats.byType[key] > 0).map(([key, value]) => (
-                <div key={key} className="flex items-center gap-1">
-                  <div 
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: value.bgColor }}
-                  ></div>
-                  <span className={`text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {stats.byType[key]}
-                  </span>
-                </div>
-              ))}
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="newest">الأحدث أولاً</option>
+                <option value="oldest">الأقدم أولاً</option>
+              </select>
+
+              {hasMore && (
+                                  <button
+                    onClick={loadMore}
+                    disabled={isLoadingMore}
+                    className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isLoadingMore ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      جاري التحميل...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      تحميل المزيد
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Timeline Content */}
-      <div id="timeline-content" className={`max-w-4xl mx-auto px-6 py-12 ${
-        darkMode ? 'bg-gray-900' : 'bg-gradient-to-b from-gray-50 to-white'
-      }`}>
-
+      {/* Main Content */}
+      <section className="max-w-7xl mx-auto px-6 py-8">
         {events.length === 0 ? (
           <div className="text-center py-12">
             <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -599,9 +526,9 @@ export default function MomentByMomentPage() {
                         )}
 
                         {/* شريط المعلومات السفلي - مبسط */}
-                        <div className="flex items-center justify-between pt-3 border-t ${
+                        <div className={`flex items-center justify-between pt-3 border-t ${
                           darkMode ? 'border-gray-700/50' : 'border-gray-100'
-                        }">
+                        }`}>
                           {/* التفاعلات - مدمجة */}
                           {event.engagement && (event.engagement.views > 0 || event.engagement.likes > 0) && (
                             <div className="flex items-center gap-3">
@@ -674,7 +601,51 @@ export default function MomentByMomentPage() {
             )}
           </div>
         )}
-      </div>
+      </section>
+
+      <style jsx>{`
+        /* تأثيرات backdrop blur للمتصفحات المختلفة */
+        .backdrop-blur-md {
+          -webkit-backdrop-filter: blur(12px);
+          backdrop-filter: blur(12px);
+        }
+        
+        /* خلفية سوداء شفافة */
+        .bg-black {
+          background-color: rgb(0, 0, 0);
+        }
+        
+        .bg-opacity-20 {
+          --tw-bg-opacity: 0.2;
+        }
+        
+        .bg-opacity-50 {
+          --tw-bg-opacity: 0.5;
+        }
+        
+        /* حدود بيضاء شفافة */
+        .border-white {
+          border-color: rgb(255, 255, 255);
+        }
+        
+        .border-opacity-20 {
+          --tw-border-opacity: 0.2;
+        }
+        
+        /* ضمان ظهور النصوص البيضاء */
+        .text-white {
+          color: rgb(255, 255, 255);
+        }
+        
+        /* تأثير الظل للنصوص */
+        .drop-shadow-lg {
+          filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.04)) drop-shadow(0 4px 3px rgba(0, 0, 0, 0.1));
+        }
+        
+        .shadow-xl {
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+      `}</style>
     </div>
   );
 } 
