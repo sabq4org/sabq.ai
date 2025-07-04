@@ -29,7 +29,7 @@
     "build:production": "SKIP_EMAIL_VERIFICATION=true next build",
     "fix-build": "node scripts/fix-build-deps.js",
     "check-deps": "node scripts/check-deps.js",
-    "postinstall": "prisma generate --no-engine || echo 'Prisma generate failed, continuing...'",
+    "postinstall": "npx prisma generate --no-engine || echo 'Prisma generate failed, continuing...'",
     "db:migrate:deploy": "echo 'Run your migration tool here'",
     "db:backup": "bash scripts/backup-production.sh",
     "check:production": "node scripts/check-production-safety.js",
