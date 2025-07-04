@@ -310,16 +310,6 @@ export default function SmartDigestBlock({ forceTimeSlot }: SmartDigestBlockProp
                     animation: 'fadeInUp 0.5s ease-out forwards'
                   }}
                 >
-                  {/* شريط علوي ملون حسب نوع المحتوى */}
-                  <div className={`h-1 ${
-                    content.contentType === 'article' ? 'bg-gradient-to-r from-blue-500 to-blue-600' :
-                    content.contentType === 'analysis' ? 'bg-gradient-to-r from-purple-500 to-purple-600' :
-                    content.contentType === 'tip' ? 'bg-gradient-to-r from-green-500 to-green-600' :
-                    content.contentType === 'quote' ? 'bg-gradient-to-r from-amber-500 to-amber-600' :
-                    content.contentType === 'audio' ? 'bg-gradient-to-r from-indigo-500 to-indigo-600' :
-                    'bg-gradient-to-r from-gray-500 to-gray-600'
-                  }`}></div>
-
                   <div className="flex p-4">
                     {/* صورة مصغرة أو أيقونة محسّنة */}
                     {content.imageUrl ? (

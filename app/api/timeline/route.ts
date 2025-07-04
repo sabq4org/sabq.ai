@@ -21,7 +21,7 @@ const EVENT_TYPES = {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const limit = parseInt(searchParams.get('limit') || '20'); // تقليل الحد الافتراضي
     const offset = parseInt(searchParams.get('offset') || '0');
     const filter = searchParams.get('filter') || 'all';
     const realtime = searchParams.get('realtime') === 'true';
@@ -30,45 +30,133 @@ export async function GET(request: NextRequest) {
     const events = [];
     const now = new Date();
     const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const last3Days = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000); // تقليل من 7 أيام إلى 3
     const lastHour = new Date(now.getTime() - 60 * 60 * 1000);
 
-    // 1. المقالات المنشورة حديثاً
-    const recentArticles = await prisma.article.findMany({
-      where: {
-        status: 'published',
-        publishedAt: {
-          gte: realtime ? lastHour : last24Hours
-        }
-      },
-      include: {
-        category: true,
-        author: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true
+    // تشغيل جميع الاستعلامات بشكل متوازي
+    const [
+      recentArticles,
+      recentAnalyses,
+      recentComments,
+      recentCategories,
+      recentAuthors
+    ] = await Promise.all([
+      // 1. المقالات المنشورة حديثاً
+      prisma.article.findMany({
+        where: {
+          status: 'published',
+          publishedAt: {
+            gte: realtime ? last24Hours : last3Days
           }
-        }
-      },
-      orderBy: {
-        publishedAt: 'desc'
-      },
-      take: realtime ? 10 : limit
-    });
+        },
+        include: {
+          category: true,
+          author: {
+            select: {
+              id: true,
+              name: true,
+              avatar: true
+            }
+          }
+        },
+        orderBy: {
+          publishedAt: 'desc'
+        },
+        take: realtime ? 10 : 20 // تقليل العدد
+      }),
 
-    // تحويل المقالات لأحداث
+      // 2. التحليلات العميقة الجديدة
+      realtime ? [] : prisma.deepAnalysis.findMany({
+        where: {
+          analyzedAt: {
+            gte: last3Days
+          }
+        },
+        include: {
+          article: {
+            include: {
+              category: true
+            }
+          }
+        },
+        orderBy: {
+          analyzedAt: 'desc'
+        },
+        take: 10 // تقليل العدد
+      }),
+
+      // 3. التعليقات الجديدة
+      realtime ? [] : prisma.comment.findMany({
+        where: {
+          status: 'approved',
+          createdAt: {
+            gte: last24Hours
+          }
+        },
+        include: {
+          article: {
+            select: {
+              id: true,
+              title: true,
+              category: true
+            }
+          },
+          user: {
+            select: {
+              name: true,
+              avatar: true
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        take: 20 // تقليل العدد
+      }),
+
+      // 4. التصنيفات الجديدة
+      realtime ? [] : prisma.category.findMany({
+        where: {
+          createdAt: {
+            gte: last3Days
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        take: 5
+      }),
+
+      // 5. المؤلفون الجدد
+      realtime ? [] : prisma.user.findMany({
+        where: {
+          role: 'AUTHOR',
+          createdAt: {
+            gte: last3Days
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        take: 5
+      })
+    ]);
+
+    // تحويل المقالات لأحداث (بدون استعلامات إضافية)
     for (const article of recentArticles) {
       const publishedAt = article.publishedAt || article.createdAt;
       const isNew = publishedAt.getTime() > lastHour.getTime();
       
       events.push({
         id: `article-${article.id}`,
-        type: EVENT_TYPES.ARTICLE_PUBLISHED,
+        type: article.breaking ? EVENT_TYPES.ARTICLE_BREAKING : 
+              article.featured ? EVENT_TYPES.ARTICLE_FEATURED : 
+              EVENT_TYPES.ARTICLE_PUBLISHED,
         timestamp: publishedAt.toISOString(),
         title: article.title,
         description: article.excerpt || '',
         category: article.category?.name || 'عام',
-        categoryColor: article.category?.color || '#6B7280',
+        categoryColor: '#6B7280',
         author: article.author?.name || 'الكاتب',
         authorAvatar: article.author?.avatar,
         url: `/article/${article.id}`,
@@ -77,7 +165,7 @@ export async function GET(request: NextRequest) {
           featured: article.featured,
           breaking: article.breaking,
           readingTime: article.readingTime,
-          comments: 0,
+          comments: 0, // تعيين قيمة افتراضية بدلاً من الاستعلام
           shares: 0
         },
         isNew,
@@ -85,26 +173,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 2. التحليلات العميقة الجديدة
-    const recentAnalyses = await prisma.deepAnalysis.findMany({
-      where: {
-        analyzedAt: {
-          gte: realtime ? lastHour : last24Hours
-        }
-      },
-      include: {
-        article: {
-          include: {
-            category: true
-          }
-        }
-      },
-      orderBy: {
-        analyzedAt: 'desc'
-      },
-      take: realtime ? 5 : 20
-    });
-
+    // تحويل التحليلات لأحداث
     for (const analysis of recentAnalyses) {
       events.push({
         id: `analysis-${analysis.id}`,
@@ -125,42 +194,18 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 3. التعليقات الجديدة
-    const recentComments = await prisma.comment.findMany({
-      where: {
-        status: 'approved',
-        createdAt: {
-          gte: realtime ? lastHour : last24Hours
-        }
-      },
-      include: {
-        article: {
-          select: {
-            id: true,
-            title: true,
-            category: true
-          }
-        },
-        user: {
-          select: {
-            name: true,
-            avatar: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: realtime ? 10 : 30
-    });
-
+    // تحويل التعليقات لأحداث
     for (const comment of recentComments) {
+      const content = comment.content.length > 100 
+        ? comment.content.substring(0, 97) + '...' 
+        : comment.content;
+        
       events.push({
         id: `comment-${comment.id}`,
         type: EVENT_TYPES.COMMENT_ADDED,
         timestamp: comment.createdAt.toISOString(),
         title: `تعليق جديد على: ${comment.article.title}`,
-        description: comment.content.substring(0, 100) + '...',
+        description: content,
         category: comment.article.category?.name || 'تعليقات',
         categoryColor: '#10B981',
         author: comment.user?.name || 'مستخدم',
@@ -174,19 +219,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 4. التصنيفات الجديدة
-    const recentCategories = await prisma.category.findMany({
-      where: {
-        createdAt: {
-          gte: last24Hours
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: 5
-    });
-
+    // تحويل التصنيفات لأحداث (بدون عد المقالات)
     for (const category of recentCategories) {
       events.push({
         id: `category-${category.id}`,
@@ -197,29 +230,13 @@ export async function GET(request: NextRequest) {
         category: 'نظام',
         categoryColor: '#6B7280',
         url: `/categories/${category.slug}`,
-        metadata: {
-          icon: category.icon,
-          color: category.color
-        },
+        metadata: {},
         isNew: category.createdAt.getTime() > lastHour.getTime(),
         icon: '🗂️'
       });
     }
 
-    // 5. المؤلفون الجدد
-    const recentAuthors = await prisma.user.findMany({
-      where: {
-        role: 'AUTHOR',
-        createdAt: {
-          gte: last24Hours
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: 5
-    });
-
+    // تحويل المؤلفين لأحداث (بدون عد المقالات)
     for (const author of recentAuthors) {
       events.push({
         id: `author-${author.id}`,
@@ -231,283 +248,12 @@ export async function GET(request: NextRequest) {
         categoryColor: '#F59E0B',
         authorAvatar: author.avatar,
         url: `/author/${author.id}`,
-        metadata: {},
+        metadata: {
+          role: author.role
+        },
         isNew: author.createdAt.getTime() > lastHour.getTime(),
         icon: '✍️'
       });
-    }
-
-    // إضافة بعض الأحداث التجريبية إذا لم توجد بيانات كافية
-    if (events.length < 10) {
-      const now = new Date();
-      const demoEvents = [
-        {
-          id: 'demo-1',
-          type: EVENT_TYPES.ARTICLE_PUBLISHED,
-          timestamp: new Date().toISOString(),
-          title: 'عاجل: تطورات جديدة في مجال الذكاء الاصطناعي',
-          description: 'شركات التقنية الكبرى تتنافس على تطوير نماذج ذكاء اصطناعي أكثر تقدماً',
-          category: 'تقنية',
-          categoryColor: '#3B82F6',
-          author: 'محمد الأحمد',
-          url: '/article/demo-1',
-          metadata: {
-            views: 1250,
-            featured: false,
-            breaking: true,
-            readingTime: 5,
-            comments: 0,
-            shares: 0
-          },
-          isNew: true,
-          icon: '🚨',
-          displayType: 'article',
-          engagement: {
-            views: 1250,
-            likes: 45,
-            comments: 12,
-            shares: 8
-          },
-          timeAgo: 'الآن',
-          date: now.toLocaleDateString('ar-SA')
-        },
-        {
-          id: 'demo-2',
-          type: EVENT_TYPES.ANALYSIS_COMPLETED,
-          timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-          title: 'تحليل عميق: تأثير التحول الرقمي على الاقتصاد السعودي',
-          description: 'دراسة شاملة حول التحولات الاقتصادية في ظل رؤية 2030',
-          category: 'تحليل',
-          categoryColor: '#8B5CF6',
-          author: 'د. سارة العتيبي',
-          url: '/insights/deep/demo-2',
-          metadata: {
-            sentiment: 'إيجابي',
-            readabilityScore: 85,
-            engagementScore: 92
-          },
-          isNew: false,
-          icon: '📊',
-          displayType: 'analysis',
-          engagement: {
-            views: 850,
-            likes: 67,
-            comments: 23,
-            shares: 15
-          },
-          timeAgo: 'منذ 30 دقيقة',
-          date: now.toLocaleDateString('ar-SA')
-        },
-        {
-          id: 'demo-3',
-          type: EVENT_TYPES.COMMENT_ADDED,
-          timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-          title: 'تعليق جديد على: الذكاء الاصطناعي يغير مستقبل التعليم',
-          description: 'تحليل رائع ومفيد، أتمنى المزيد من هذه المقالات المتعمقة...',
-          category: 'تعليقات',
-          categoryColor: '#10B981',
-          author: 'أحمد الشمري',
-          url: '/article/ai-education#comment-123',
-          metadata: {
-            likes: 5
-          },
-          isNew: false,
-          icon: '💬',
-          displayType: 'comment',
-          engagement: {
-            views: 0,
-            likes: 5,
-            comments: 0,
-            shares: 0
-          },
-          timeAgo: 'منذ 45 دقيقة',
-          date: now.toLocaleDateString('ar-SA')
-        },
-        {
-          id: 'demo-4',
-          type: EVENT_TYPES.ARTICLE_FEATURED,
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          title: 'مقال مميز: كيف تستثمر في العملات الرقمية بأمان',
-          description: 'دليل شامل للمبتدئين في عالم الاستثمار بالعملات الرقمية مع نصائح الخبراء',
-          category: 'اقتصاد',
-          categoryColor: '#F59E0B',
-          author: 'خالد السالم',
-          url: '/article/demo-4',
-          metadata: {
-            views: 3450,
-            featured: true,
-            breaking: false,
-            readingTime: 8,
-            comments: 0,
-            shares: 0
-          },
-          isNew: false,
-          icon: '⭐',
-          displayType: 'article',
-          engagement: {
-            views: 3450,
-            likes: 234,
-            comments: 56,
-            shares: 89
-          },
-          timeAgo: 'منذ ساعتين',
-          date: now.toLocaleDateString('ar-SA')
-        },
-        {
-          id: 'demo-5',
-          type: EVENT_TYPES.SYSTEM_UPDATE,
-          timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-          title: 'تحديث النظام: تحسينات في سرعة التحميل',
-          description: 'تم تحسين أداء الموقع بنسبة 40% وتقليل وقت التحميل',
-          category: 'نظام',
-          categoryColor: '#6B7280',
-          url: '',
-          metadata: {},
-          isNew: false,
-          icon: '🛠️',
-          displayType: 'system',
-          engagement: {
-            views: 0,
-            likes: 0,
-            comments: 0,
-            shares: 0
-          },
-          timeAgo: 'منذ 3 ساعات',
-          date: now.toLocaleDateString('ar-SA')
-        },
-        {
-          id: 'demo-6',
-          type: EVENT_TYPES.USER_MILESTONE,
-          timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-          title: 'إنجاز جديد: علي الحازمي حصل على وسام القارئ النشط',
-          description: 'لقراءة أكثر من 100 مقال في شهر واحد',
-          category: 'مجتمع',
-          categoryColor: '#EC4899',
-          author: 'علي الحازمي',
-          authorAvatar: '/default-avatar.png',
-          url: '/profile/ali-alhazmi',
-          metadata: {
-            badge: '🏅',
-            points: 500
-          },
-          isNew: false,
-          icon: '🏆',
-          displayType: 'community',
-          engagement: {
-            views: 0,
-            likes: 0,
-            comments: 0,
-            shares: 0
-          },
-          timeAgo: 'منذ 4 ساعات',
-          date: now.toLocaleDateString('ar-SA')
-        },
-        {
-          id: 'demo-7',
-          type: EVENT_TYPES.ARTICLE_PUBLISHED,
-          timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-          title: 'الرياضة السعودية تحقق إنجازات غير مسبوقة في 2025',
-          description: 'تقرير شامل عن الإنجازات الرياضية للمملكة في مختلف الألعاب',
-          category: 'رياضة',
-          categoryColor: '#10B981',
-          author: 'عبدالله الرياضي',
-          url: '/article/demo-7',
-          metadata: {
-            views: 2100,
-            featured: false,
-            breaking: false,
-            readingTime: 6,
-            comments: 0,
-            shares: 0
-          },
-          isNew: false,
-          icon: '📰',
-          displayType: 'article',
-          engagement: {
-            views: 2100,
-            likes: 89,
-            comments: 34,
-            shares: 45
-          },
-          timeAgo: 'منذ 5 ساعات',
-          date: now.toLocaleDateString('ar-SA')
-        },
-        {
-          id: 'demo-8',
-          type: EVENT_TYPES.COMMENT_ADDED,
-          timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-          title: 'تعليق جديد على: مستقبل السيارات الكهربائية في السعودية',
-          description: 'أتطلع لرؤية المزيد من محطات الشحن في جميع أنحاء المملكة...',
-          category: 'تعليقات',
-          categoryColor: '#10B981',
-          author: 'فاطمة العلي',
-          url: '/article/electric-cars#comment-456',
-          metadata: {
-            likes: 12
-          },
-          isNew: false,
-          icon: '💬',
-          displayType: 'comment',
-          engagement: {
-            views: 0,
-            likes: 12,
-            comments: 0,
-            shares: 0
-          },
-          timeAgo: 'منذ 6 ساعات',
-          date: now.toLocaleDateString('ar-SA')
-        },
-        {
-          id: 'demo-9',
-          type: EVENT_TYPES.CATEGORY_CREATED,
-          timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-          title: 'تصنيف جديد: الذكاء الاصطناعي',
-          description: 'قسم متخصص في أخبار وتطورات الذكاء الاصطناعي',
-          category: 'نظام',
-          categoryColor: '#6B7280',
-          url: '/categories/ai',
-          metadata: {
-            icon: '🤖',
-            color: '#8B5CF6'
-          },
-          isNew: false,
-          icon: '🗂️',
-          displayType: 'system',
-          engagement: {
-            views: 0,
-            likes: 0,
-            comments: 0,
-            shares: 0
-          },
-          timeAgo: 'منذ يوم',
-          date: new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleDateString('ar-SA')
-        },
-        {
-          id: 'demo-10',
-          type: EVENT_TYPES.AUTHOR_JOINED,
-          timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          title: 'انضم كاتب جديد: د. نورا الفهد',
-          description: 'متخصصة في الصحة والطب الوقائي',
-          category: 'فريق العمل',
-          categoryColor: '#F59E0B',
-          authorAvatar: '/default-avatar.png',
-          url: '/author/nora-alfahad',
-          metadata: {},
-          isNew: false,
-          icon: '✍️',
-          displayType: 'community',
-          engagement: {
-            views: 0,
-            likes: 0,
-            comments: 0,
-            shares: 0
-          },
-          timeAgo: 'منذ يومين',
-          date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleDateString('ar-SA')
-        }
-      ];
-      
-      events.push(...demoEvents);
     }
 
     // ترتيب الأحداث حسب الوقت
@@ -519,7 +265,7 @@ export async function GET(request: NextRequest) {
       filteredEvents = events.filter(event => {
         switch (filter) {
           case 'articles':
-            return [EVENT_TYPES.ARTICLE_PUBLISHED, EVENT_TYPES.ARTICLE_UPDATED].includes(event.type);
+            return [EVENT_TYPES.ARTICLE_PUBLISHED, EVENT_TYPES.ARTICLE_UPDATED, EVENT_TYPES.ARTICLE_FEATURED, EVENT_TYPES.ARTICLE_BREAKING].includes(event.type);
           case 'analysis':
             return event.type === EVENT_TYPES.ANALYSIS_COMPLETED;
           case 'comments':
@@ -537,18 +283,63 @@ export async function GET(request: NextRequest) {
     // تطبيق pagination
     const paginatedEvents = filteredEvents.slice(offset, offset + limit);
 
-    // إحصائيات
-    const stats = {
+    // إحصائيات مبسطة (بدون استعلامات إضافية إلا في أول مرة)
+    let stats = {
       total: events.length,
+      totalEvents: filteredEvents.length,
+      todayEvents: events.filter(e => {
+        const eventDate = new Date(e.timestamp);
+        const today = new Date();
+        return eventDate.toDateString() === today.toDateString();
+      }).length,
+      activeUsers: 0,
       newEvents: events.filter(e => e.isNew).length,
+      totalArticles: 0,
+      todayArticles: 0,
+      totalComments: 0,
+      totalViews: 0,
       byType: {
-        articles: events.filter(e => e.type === EVENT_TYPES.ARTICLE_PUBLISHED).length,
+        articles: events.filter(e => [EVENT_TYPES.ARTICLE_PUBLISHED, EVENT_TYPES.ARTICLE_FEATURED, EVENT_TYPES.ARTICLE_BREAKING].includes(e.type)).length,
         analyses: events.filter(e => e.type === EVENT_TYPES.ANALYSIS_COMPLETED).length,
         comments: events.filter(e => e.type === EVENT_TYPES.COMMENT_ADDED).length,
         system: events.filter(e => [EVENT_TYPES.CATEGORY_CREATED, EVENT_TYPES.SYSTEM_UPDATE].includes(e.type)).length,
         community: events.filter(e => [EVENT_TYPES.USER_MILESTONE, EVENT_TYPES.AUTHOR_JOINED].includes(e.type)).length
       }
     };
+
+    // جلب الإحصائيات الكاملة فقط في الطلب الأول (offset = 0)
+    if (offset === 0 && !realtime) {
+      const [
+        totalArticles,
+        todayArticles,
+        totalComments,
+        activeUsers,
+        totalViews
+      ] = await Promise.all([
+        prisma.article.count({ where: { status: 'published' } }),
+        prisma.article.count({ 
+          where: { 
+            status: 'published',
+            publishedAt: { gte: new Date(now.setHours(0, 0, 0, 0)) }
+          } 
+        }),
+        prisma.comment.count({ where: { status: 'approved' } }),
+        prisma.user.count({ where: { isVerified: true } }),
+        prisma.article.aggregate({
+          _sum: { views: true },
+          where: { status: 'published' }
+        })
+      ]);
+
+      stats = {
+        ...stats,
+        activeUsers,
+        totalArticles,
+        todayArticles,
+        totalComments,
+        totalViews: totalViews._sum.views || 0
+      };
+    }
 
     // تنسيق البيانات للعرض
     const formattedEvents = paginatedEvents.map(event => {
@@ -563,10 +354,10 @@ export async function GET(request: NextRequest) {
         timeAgo = `منذ ${diffInMinutes} دقيقة`;
       } else if (diffInMinutes < 1440) {
         const hours = Math.floor(diffInMinutes / 60);
-        timeAgo = `منذ ${hours} ساعة`;
+        timeAgo = hours === 1 ? 'منذ ساعة' : hours === 2 ? 'منذ ساعتين' : `منذ ${hours} ساعات`;
       } else {
         const days = Math.floor(diffInMinutes / 1440);
-        timeAgo = `منذ ${days} يوم`;
+        timeAgo = days === 1 ? 'منذ يوم' : days === 2 ? 'منذ يومين' : `منذ ${days} أيام`;
       }
 
       return {
@@ -624,6 +415,8 @@ function getDisplayType(eventType: string) {
   switch (eventType) {
     case EVENT_TYPES.ARTICLE_PUBLISHED:
     case EVENT_TYPES.ARTICLE_UPDATED:
+    case EVENT_TYPES.ARTICLE_FEATURED:
+    case EVENT_TYPES.ARTICLE_BREAKING:
       return 'article';
     case EVENT_TYPES.ANALYSIS_COMPLETED:
       return 'analysis';

@@ -65,7 +65,7 @@ export default function MomentByMomentPage() {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [autoRefresh, setAutoRefresh] = useState(false);
   const [newEventsCount, setNewEventsCount] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -99,11 +99,11 @@ export default function MomentByMomentPage() {
       Notification.requestPermission();
     }
     
-    // تحديث تلقائي كل 30 ثانية للأحداث الحية
+    // تحديث تلقائي كل 60 ثانية للأحداث الحية
     if (autoRefresh) {
       const interval = setInterval(() => {
         checkForNewEvents();
-      }, 30000);
+      }, 60000);
       
       return () => clearInterval(interval);
     }
@@ -114,7 +114,7 @@ export default function MomentByMomentPage() {
       if (!append) setLoading(true);
       
       const currentCount = append ? events.length : 0;
-      const response = await fetch(`/api/timeline?limit=50&offset=${currentCount}&filter=${filter}&realtime=${autoRefresh}`);
+      const response = await fetch(`/api/timeline?limit=20&offset=${currentCount}&filter=${filter}&realtime=${autoRefresh}`);
       const data = await response.json();
       
       if (data.success && data.events) {
