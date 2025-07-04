@@ -182,18 +182,29 @@ export async function GET(
     // جلب بيانات المؤلف والتصنيف بشكل منفصل
     let author = null;
     let category = null;
+    let authorName = null;
+    
+    // محاولة استخراج اسم المؤلف من metadata أولاً
+    if (dbArticle.metadata && typeof dbArticle.metadata === 'object' && 'author_name' in dbArticle.metadata) {
+      authorName = (dbArticle.metadata as any).author_name;
+    }
     
     if (dbArticle.authorId) {
       author = await prisma.user.findUnique({
         where: { id: dbArticle.authorId },
         select: { id: true, name: true, avatar: true }
       }).catch(() => null);
+      
+      // استخدام اسم المؤلف من قاعدة البيانات إذا لم يكن موجوداً في metadata
+      if (!authorName && author) {
+        authorName = author.name;
+      }
     }
     
     if (dbArticle.categoryId) {
       category = await prisma.category.findUnique({
         where: { id: dbArticle.categoryId },
-        select: { id: true, name: true, color: true }
+        select: { id: true, name: true }
       }).catch(() => null);
     }
 
@@ -210,7 +221,7 @@ export async function GET(
       category_name: category?.name,
       category: category,
       category_display_name: category?.name,
-      category_color: category?.color || '#3B82F6',
+      category_color: '#3B82F6', // لون افتراضي
       status: dbArticle.status,
       featured_image: dbArticle.featuredImage,
       is_breaking: dbArticle.breaking,
@@ -230,7 +241,7 @@ export async function GET(
         comments: commentsCount,
         saves: interactionCounts.saves
       },
-      author_name: author?.name,
+      author_name: authorName || author?.name || null, // استخدام authorName من metadata أو من author relation
       author_avatar: author?.avatar,
       // إضافة حقول إضافية قد تحتاجها صفحة التعديل
       seo_keywords: dbArticle.seoKeywords,
@@ -378,11 +389,19 @@ export async function PUT(
     };
     
     // تحويل البيانات
+    let needsAuthorName = false;
+    let authorNameValue = null;
+    
     for (const [key, value] of Object.entries(body)) {
       const mappedKey = fieldMapping[key] || key;
       
+      // تأجيل معالجة author_name حتى جلب existingArticle
+      if (key === 'author_name' && value) {
+        needsAuthorName = true;
+        authorNameValue = value;
+      }
       // التحقق من مسارات الصور
-      if ((key === 'featured_image' || key === 'social_image') && value) {
+      else if ((key === 'featured_image' || key === 'social_image') && value) {
         const imageUrl = value as string;
         // منع المسارات المحلية - يجب أن تكون الصور من Cloudinary أو خدمة سحابية
         if (imageUrl.startsWith('/uploads/') || imageUrl.startsWith('/public/') || 
@@ -427,6 +446,17 @@ export async function PUT(
         success: false, 
         error: 'المقال غير موجود' 
       }, { status: 404 });
+    }
+    
+    // معالجة author_name في metadata بعد جلب existingArticle
+    if (needsAuthorName && authorNameValue) {
+      if (!updateData.metadata || typeof updateData.metadata !== 'object') {
+        updateData.metadata = {};
+      }
+      updateData.metadata = {
+        ...(typeof existingArticle.metadata === 'object' ? existingArticle.metadata : {}),
+        author_name: authorNameValue
+      };
     }
     
     // تحديث المقال

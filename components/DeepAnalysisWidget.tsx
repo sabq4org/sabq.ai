@@ -1,9 +1,10 @@
 'use client';
 
-import { Clock3, Brain, Share2 } from "lucide-react";
-import { useState, useEffect } from 'react';
+import { Clock3, Brain, Share2, Eye, TrendingUp, Award, BookOpen, ChevronLeft, Heart, BookmarkPlus, ExternalLink, User } from "lucide-react";
+import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import AnalysisTypeIcon from './deep-analysis/AnalysisTypeIcon';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface DeepInsight {
   id: string;
@@ -29,6 +30,10 @@ interface DeepAnalysisWidgetProps {
 
 export default function DeepAnalysisWidget({ insights }: DeepAnalysisWidgetProps) {
   const [readItems, setReadItems] = useState<string[]>([]);
+  const { resolvedTheme, mounted } = useTheme();
+  const darkMode = resolvedTheme === 'dark';
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     // قراءة العناصر المقروءة من localStorage
@@ -86,156 +91,294 @@ export default function DeepAnalysisWidget({ insights }: DeepAnalysisWidgetProps
     switch(category?.toLowerCase()) {
       case 'research':
       case 'أبحاث':
-        return '🧠';
+        return <Brain className="w-4 h-4" />;
       case 'report':
       case 'تقارير':
-        return '📊';
+        return <TrendingUp className="w-4 h-4" />;
       case 'global':
       case 'عالمي':
-        return '🌍';
+        return <Eye className="w-4 h-4" />;
       case 'tech':
       case 'تقنية':
-        return '💻';
+        return <Award className="w-4 h-4" />;
       case 'economy':
       case 'اقتصاد':
-        return '💰';
+        return <TrendingUp className="w-4 h-4" />;
       default:
-        return '📈';
+        return <Brain className="w-4 h-4" />;
     }
   };
 
+  // التعامل مع التمرير
+  const handleScroll = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 320; // عرض البطاقة + المسافة
+      const currentScroll = scrollContainerRef.current.scrollLeft;
+      const targetScroll = direction === 'left' 
+        ? currentScroll - scrollAmount 
+        : currentScroll + scrollAmount;
+      
+      scrollContainerRef.current.scrollTo({
+        left: targetScroll,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // تتبع التمرير الحالي
+  useEffect(() => {
+    const handleScrollUpdate = () => {
+      if (scrollContainerRef.current) {
+        const scrollLeft = scrollContainerRef.current.scrollLeft;
+        const cardWidth = 320; // عرض البطاقة + المسافة
+        const index = Math.round(scrollLeft / cardWidth);
+        setCurrentIndex(index);
+      }
+    };
+
+    const scrollContainer = scrollContainerRef.current;
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScrollUpdate);
+      return () => scrollContainer.removeEventListener('scroll', handleScrollUpdate);
+    }
+  }, []);
+
   return (
-    <div id="deep-analysis-highlight" className="pb-6 md:pb-8 relative overflow-hidden bg-gradient-to-br from-blue-900 via-indigo-800 to-purple-900">
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+    <div id="deep-analysis-highlight" className="py-6 relative overflow-hidden bg-gradient-to-br from-blue-900 via-indigo-800 to-purple-900">
+      <div className="max-w-7xl mx-auto px-4 relative z-10">
         {/* العنوان والوصف */}
-        <div className="text-center mb-12 max-w-4xl mx-auto pt-8">
-          <div className="flex flex-col items-center gap-3">
-            <Brain className="w-12 h-12 text-blue-300" />
-            <h2 className="text-3xl md:text-4xl font-bold text-white">
+        <div className="text-center mb-6 max-w-3xl mx-auto">
+          <div className="flex flex-col items-center gap-2">
+            <Brain className="w-6 h-6 text-blue-300" />
+            <h2 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
               التحليل العميق من سبق
             </h2>
           </div>
-          <p className="text-lg text-gray-100/90 mt-3">
-            رؤى استراتيجية ودراسات معمقة بالذكاء الاصطناعي والخبرة البشرية
+          <p className="text-base sm:text-lg text-white/90 drop-shadow mt-2">
+            رؤى استراتيجية ودراسات معمقة بالذكاء الاصطناعي
           </p>
         </div>
 
-        {/* البطاقات */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-          {insights.map((item) => {
-            const isUnread = !readItems.includes(item.id);
-            const isAI = item.type === 'AI';
-            const isNew = isNewInsight(item.createdAt);
-            
-            return (
-              <div 
-                key={item.id} 
-                className="relative rounded-2xl overflow-hidden group bg-white backdrop-blur-lg border border-gray-200 shadow-lg"
-              >
-                <div className="p-6">
-                  {/* مؤشر جديد - نقطة حمراء صغيرة */}
-                  {isNew && (
-                    <div className="absolute top-4 left-4">
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                      </span>
-                    </div>
-                  )}
-
-                  {/* الشريط العلوي مع الأيقونة الدلالية */}
-                  <div className="flex items-center justify-between mb-5">
-                    <div className="flex items-center gap-3">
-                      {/* أيقونة دلالية */}
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg bg-gradient-to-br from-blue-100 to-purple-100 shadow-sm">
-                        {getInsightIcon(item.category)}
+        {/* البطاقات - صف أفقي قابل للتمرير ومتوسط */}
+        <div className="relative mb-4 flex justify-center">
+          <div ref={scrollContainerRef} className="overflow-x-auto scrollbar-hide max-w-full">
+            <div className="flex gap-4 pb-4 px-4" style={{ 
+              width: 'max-content',
+              minWidth: '100%',
+              justifyContent: insights.length <= 3 ? 'center' : 'flex-start'
+            }}>
+              {insights.slice(0, 6).map((item, index) => {
+                const isUnread = !readItems.includes(item.id);
+                const isAI = item.type === 'AI';
+                const isNew = isNewInsight(item.createdAt);
+                
+                return (
+                  <div 
+                    key={item.id} 
+                    className={`w-80 flex-shrink-0 ${
+                      darkMode 
+                        ? 'bg-gradient-to-br from-gray-800 to-gray-850 hover:from-gray-750 hover:to-gray-800 border-gray-700' 
+                        : 'bg-white hover:shadow-xl border-gray-200'
+                    } rounded-2xl shadow-lg overflow-hidden border transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 group relative`}
+                    style={{
+                      animationDelay: `${index * 100}ms`,
+                      animation: 'fadeInUp 0.5s ease-out forwards'
+                    }}
+                  >
+                    <div className="p-4">
+                      {/* نوع التحليل مع badge محسّن وأيقونة */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                            darkMode 
+                              ? isAI ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'
+                              : isAI ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {isAI ? (
+                              <>
+                                <Brain className="w-3 h-3" />
+                                <span>تحليل ذكي</span>
+                              </>
+                            ) : (
+                              <>
+                                <User className="w-3 h-3" />
+                                <span>تحليل بشري</span>
+                              </>
+                            )}
+                          </span>
+                          {item.category && (
+                            <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                              • {item.category}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      
-                      {/* بادج تحليل عميق - محدث بتدرج ناعم */}
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors duration-300 bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-sm gap-1">
-                        تحليل عميق
-                        {item.analysisType && (
-                          <AnalysisTypeIcon type={item.analysisType} size="small" />
+
+                      {/* العنوان مع تأثير hover - مكبر */}
+                      <h3 className={`text-base font-bold line-clamp-3 mb-3 ${
+                        darkMode ? 'text-white' : 'text-gray-900'
+                      } group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r ${
+                        isAI ? 'group-hover:from-purple-600 group-hover:to-purple-700' : 'group-hover:from-blue-600 group-hover:to-blue-700'
+                      } transition-all duration-300`}>
+                        {item.title}
+                      </h3>
+
+                      {/* التاقات */}
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {item.tags.slice(0, 3).map((tag, idx) => (
+                          <span 
+                            key={idx} 
+                            className={`text-xs px-2 py-0.5 rounded-md ${
+                              darkMode 
+                                ? 'bg-gray-700/50 text-gray-400 border-gray-600' 
+                                : 'bg-gray-100 text-gray-600 border-gray-200'
+                            } border`}
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                        {item.tags.length > 3 && (
+                          <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                            +{item.tags.length - 3}
+                          </span>
                         )}
-                      </span>
-                      
-                      {isAI && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-300 bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm">
-                          AI
-                        </span>
-                      )}
+                      </div>
+
+                      {/* أزرار التفاعل محسّنة */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1">
+                          <a 
+                            href={item.url} 
+                            onClick={() => markAsRead(item.id)}
+                            className={`p-1.5 rounded-full transition-all duration-300 transform hover:scale-110 ${
+                              darkMode 
+                                ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                            } group/link shadow-sm hover:shadow-md`}
+                            title="قراءة المزيد"
+                          >
+                            <ExternalLink className="w-3 h-3 group-hover/link:rotate-12 transition-transform" />
+                          </a>
+
+                          {/* أزرار إضافية للتفاعل */}
+                          <button
+                            onClick={() => handleShare(item)}
+                            className={`p-1.5 rounded-full transition-all duration-300 transform hover:scale-110 opacity-0 group-hover:opacity-100 ${
+                              darkMode 
+                                ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                            } shadow-sm hover:shadow-md`}
+                            title="مشاركة"
+                          >
+                            <Share2 className="w-3 h-3" />
+                          </button>
+
+                          <button
+                            className={`p-1.5 rounded-full transition-all duration-300 transform hover:scale-110 opacity-0 group-hover:opacity-100 ${
+                              darkMode 
+                                ? 'bg-gray-700 hover:bg-red-600 text-gray-300 hover:text-white' 
+                                : 'bg-gray-100 hover:bg-red-500 text-gray-700 hover:text-white'
+                            } shadow-sm hover:shadow-md`}
+                            title="إعجاب"
+                          >
+                            <Heart className="w-3 h-3" />
+                          </button>
+
+                          <button
+                            className={`p-1.5 rounded-full transition-all duration-300 transform hover:scale-110 opacity-0 group-hover:opacity-100 ${
+                              darkMode 
+                                ? 'bg-gray-700 hover:bg-blue-600 text-gray-300 hover:text-white' 
+                                : 'bg-gray-100 hover:bg-blue-500 text-gray-700 hover:text-white'
+                            } shadow-sm hover:shadow-md`}
+                            title="حفظ"
+                          >
+                            <BookmarkPlus className="w-3 h-3" />
+                          </button>
+                        </div>
+
+                        <div className={`flex items-center gap-2 text-xs ${
+                          darkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                          {/* مؤشر مميز للبطاقة الأولى */}
+                          {index === 0 && (
+                            <span className="flex items-center gap-0.5 text-amber-500">
+                              <Award className="w-3 h-3 fill-current" />
+                              <span className="font-bold">مميز</span>
+                            </span>
+                          )}
+                          <div className="flex items-center gap-1">
+                            <Clock3 className="w-2.5 h-2.5" />
+                            <span className="font-medium">{item.readTime} د</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-
-                  {/* العنوان */}
-                  <h3 className="font-bold text-xl leading-tight mb-3 line-clamp-2 text-gray-900">
-                    {item.title}
-                  </h3>
-
-                  {/* الوسوم */}
-                  <div className="flex flex-wrap gap-1.5 mb-5">
-                    {item.tags.slice(0, 3).map((tag, idx) => (
-                      <span 
-                        key={idx} 
-                        className="text-xs px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 border border-gray-200"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* الإحصائيات - مبسطة */}
-                  <div className="flex items-center justify-between text-sm mb-5 text-gray-600">
-                    <span className="flex items-center gap-2">
-                      <Clock3 className="w-4 h-4 text-gray-500" /> 
-                      {item.readTime} دقيقة • {formatDate(item.createdAt)}
-                    </span>
-                  </div>
-
-                  {/* زر القراءة وزر المشاركة */}
-                  <div className="flex items-center justify-between gap-3">
-                    {/* زر المشاركة */}
-                    <button
-                      onClick={() => handleShare(item)}
-                      className="p-1.5 rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 border border-gray-200"
-                      title="مشاركة"
-                    >
-                      <Share2 className="w-3.5 h-3.5" />
-                    </button>
-
-                    {/* زر القراءة */}
-                    <a href={item.url} onClick={() => markAsRead(item.id)} className="flex-shrink-0">
-                      <button className="py-2 px-4 rounded-lg font-medium text-sm transition-all duration-300 flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-sm hover:shadow-md">
-                        <span>اقرأ التحليل</span>
-                        <Brain className="w-3.5 h-3.5" />
-                      </button>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          </div>
+          
+          {/* مؤشرات التمرير - مرئية على الشاشات الكبيرة */}
+          <div className="hidden md:block absolute left-2 top-1/2 -translate-y-1/2">
+            <button 
+              onClick={() => handleScroll('left')}
+              className="p-2 bg-white/10 backdrop-blur-sm rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 hover:scale-110"
+              disabled={currentIndex === 0}
+            >
+              <ChevronLeft className="w-5 h-5 text-white rotate-180" />
+            </button>
+          </div>
+          <div className="hidden md:block absolute right-2 top-1/2 -translate-y-1/2">
+            <button 
+              onClick={() => handleScroll('right')}
+              className="p-2 bg-white/10 backdrop-blur-sm rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 hover:scale-110"
+              disabled={currentIndex >= insights.length - 3}
+            >
+              <ChevronLeft className="w-5 h-5 text-white" />
+            </button>
+          </div>
         </div>
 
-        {/* زر استكشاف المزيد */}
+
+
+        {/* زر استكشاف المزيد - محسّن */}
         <div className="text-center">
-          <a href="/insights/deep" className="inline-block">
-            <button className="px-8 py-3 rounded-xl font-medium text-base transition-all duration-300 transform hover:scale-105 flex items-center gap-2 bg-gradient-to-r from-blue-600/70 to-purple-600/70 hover:from-blue-600 hover:to-purple-700 text-white border border-transparent hover:border-white/40 shadow-xl hover:shadow-2xl">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              استكشف جميع التحليلات العميقة
-            </button>
+          <a 
+            href="/insights/deep" 
+            className="inline-flex items-center gap-2 px-5 py-2 bg-white/20 hover:bg-white/30 text-white font-medium text-sm rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl border border-white/30 backdrop-blur-sm group relative overflow-hidden"
+          >
+            {/* تأثير موجة عند hover */}
+            <span className="absolute inset-0 w-full h-full bg-white/20 scale-0 group-hover:scale-100 rounded-full transition-transform duration-500 ease-out"></span>
+            
+            <BookOpen className="w-4 h-4 relative z-10" />
+            <span className="relative z-10">جميع التحليلات</span>
+            <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform relative z-10" />
           </a>
         </div>
-        
-        {/* نص إضافي */}
-        <div className="text-center mt-6">
-          <p className="text-sm text-blue-200/60">
-            • يتم تحديث تحليلات جديدة يومياً
-          </p>
-        </div>
       </div>
+
+      <style jsx>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        /* إخفاء شريط التمرير */
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 } 

@@ -357,12 +357,17 @@ export default function EditArticlePage() {
         .filter((text: string) => text.trim())
         .join('\n\n');
 
+      // الحصول على اسم المؤلف من القائمة
+      const selectedAuthor = authors.find(a => a.id === formData.author_id);
+      
       const articleData = {
         title: formData.title,
         content_blocks: formData.content_blocks,
         content: textContent || 'محتوى المقال', // fallback نصي للتوافق
         summary: formData.description,
         category_id: formData.category_id,
+        author_id: formData.author_id,
+        author_name: selectedAuthor?.name || undefined, // إضافة اسم المؤلف
         status,
         is_breaking: formData.is_breaking,
         is_featured: formData.is_featured,

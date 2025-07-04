@@ -5,6 +5,8 @@ import { Shield, Plus, Users, Lock, X, Save, Trash2, Edit3, CheckCircle, Chevron
 import { Role, SYSTEM_PERMISSIONS, PERMISSION_CATEGORIES } from '@/types/roles';
 
 export default function RolesPage() {
+  console.log('RolesPage component loaded');
+
   const [darkMode, setDarkMode] = useState(false);
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);

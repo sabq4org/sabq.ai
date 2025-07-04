@@ -380,12 +380,16 @@ export default function CreateArticlePage() {
     setSaving(true);
 
     try {
+      // الحصول على اسم المؤلف من القائمة
+      const selectedAuthor = authors.find(a => a.id === formData.authorId);
+      
       // إعداد البيانات للحفظ (مطابقة لأسماء الحقول فى الـ API)
       const articleData: any = {
         title: formData.title.trim(),
         content: editorRef.current ? editorRef.current.getHTML() : formData.content,
         excerpt: formData.excerpt.trim(),
         author_id: formData.authorId || undefined,
+        author_name: selectedAuthor?.name || undefined, // إضافة اسم المؤلف
         category_id: formData.categoryId || undefined,
         featured_image: formData.featuredImage || undefined,
         status,

@@ -1,123 +1,161 @@
-/* أساليب RTL لمنتدى سبق */
+/* أساليب RTL لمنتدى سبق - محدث بشكل جذري */
+
+/* إعدادات أساسية قوية لـ RTL */
+* {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+/* استثناءات للأرقام والرموز */
+[dir="ltr"],
+.ltr {
+  direction: ltr !important;
+  text-align: left !important;
+}
 
 /* تحسينات RTL عامة */
-[dir="rtl"] .forum-container {
-  text-align: right;
+html[dir="rtl"],
+body[dir="rtl"],
+[dir="rtl"] {
+  direction: rtl !important;
+  text-align: right !important;
 }
 
-/* تعديل اتجاه العناصر المرنة */
+/* إصلاح Flexbox لـ RTL */
+[dir="rtl"] .flex {
+  direction: rtl !important;
+}
+
+[dir="rtl"] .flex-row {
+  flex-direction: row !important;
+}
+
 [dir="rtl"] .flex-row-reverse {
-  flex-direction: row;
+  flex-direction: row-reverse !important;
 }
 
-/* تعديل الأيقونات */
-[dir="rtl"] .icon-left {
-  margin-left: 0;
-  margin-right: 0.5rem;
+/* إصلاح Grid لـ RTL */
+[dir="rtl"] .grid {
+  direction: rtl !important;
 }
 
-[dir="rtl"] .icon-right {
-  margin-right: 0;
-  margin-left: 0.5rem;
+/* تحسين المسافات والهوامش */
+[dir="rtl"] .ml-2 { margin-left: 0.5rem !important; margin-right: 0 !important; }
+[dir="rtl"] .mr-2 { margin-right: 0.5rem !important; margin-left: 0 !important; }
+[dir="rtl"] .pl-4 { padding-left: 1rem !important; padding-right: 0 !important; }
+[dir="rtl"] .pr-4 { padding-right: 1rem !important; padding-left: 0 !important; }
+
+/* تحسين الأيقونات */
+[dir="rtl"] svg {
+  margin-left: 0.5rem !important;
+  margin-right: 0 !important;
+}
+
+[dir="rtl"] button svg:first-child,
+[dir="rtl"] a svg:first-child {
+  margin-left: 0.5rem !important;
+  margin-right: 0 !important;
+}
+
+[dir="rtl"] button svg:last-child,
+[dir="rtl"] a svg:last-child {
+  margin-right: 0.5rem !important;
+  margin-left: 0 !important;
 }
 
 /* تحسين حقول الإدخال */
 [dir="rtl"] input,
-[dir="rtl"] textarea {
-  text-align: right;
-  direction: rtl;
+[dir="rtl"] textarea,
+[dir="rtl"] select {
+  text-align: right !important;
+  direction: rtl !important;
+  padding-right: 2.5rem !important;
+  padding-left: 0.75rem !important;
 }
 
-/* تحسين عرض الإحصائيات */
-[dir="rtl"] .stats-container {
-  direction: ltr;
-  text-align: center;
-}
-
-/* تحسين عرض التواريخ والأرقام */
-[dir="rtl"] .date-time,
-[dir="rtl"] .number-display {
-  direction: ltr;
-  unicode-bidi: embed;
-}
-
-/* تحسين عرض الأوسمة */
-[dir="rtl"] .badge-container {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-/* تحسين قوائم المنتدى */
-[dir="rtl"] .forum-list-item {
-  padding-right: 1rem;
-  padding-left: 0.5rem;
-}
-
-/* تحسين أزرار الإجراءات */
-[dir="rtl"] .action-buttons {
-  margin-left: auto;
-  margin-right: 0;
-}
-
-/* تحسين عرض المؤلف */
-[dir="rtl"] .author-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-/* تحسين الجداول */
-[dir="rtl"] table {
-  text-align: right;
-}
-
-[dir="rtl"] th,
-[dir="rtl"] td {
-  text-align: right;
+/* إصلاح موضع أيقونات البحث */
+[dir="rtl"] .relative svg.absolute {
+  right: 0.75rem !important;
+  left: auto !important;
 }
 
 /* تحسين البطاقات */
-[dir="rtl"] .card-header {
-  text-align: right;
+[dir="rtl"] .card,
+[dir="rtl"] [role="card"] {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+/* تحسين القوائم */
+[dir="rtl"] ul,
+[dir="rtl"] ol {
+  padding-right: 1.5rem !important;
+  padding-left: 0 !important;
+  list-style-position: inside !important;
+}
+
+/* تحسين الأزرار */
+[dir="rtl"] button,
+[dir="rtl"] .btn {
+  text-align: center !important;
+}
+
+/* تحسين عرض الأرقام */
+[dir="rtl"] [dir="ltr"],
+[dir="rtl"] .number,
+[dir="rtl"] .number-display,
+[dir="rtl"] .price,
+[dir="rtl"] .date,
+[dir="rtl"] .time {
+  direction: ltr !important;
+  unicode-bidi: embed !important;
+  display: inline-block !important;
+  text-align: left !important;
+}
+
+/* تحسين الشبكات */
+[dir="rtl"] .grid-cols-1,
+[dir="rtl"] .grid-cols-2,
+[dir="rtl"] .grid-cols-3,
+[dir="rtl"] .grid-cols-4 {
+  direction: rtl !important;
+}
+
+/* تحسين المحاذاة */
+[dir="rtl"] .text-left { text-align: right !important; }
+[dir="rtl"] .text-right { text-align: left !important; }
+[dir="rtl"] .text-center { text-align: center !important; }
+
+/* تحسين الحدود */
+[dir="rtl"] .border-l { border-left: 0 !important; border-right-width: 1px !important; }
+[dir="rtl"] .border-r { border-right: 0 !important; border-left-width: 1px !important; }
+
+/* تحسين التموضع المطلق */
+[dir="rtl"] .left-0 { left: auto !important; right: 0 !important; }
+[dir="rtl"] .right-0 { right: auto !important; left: 0 !important; }
+[dir="rtl"] .left-3 { left: auto !important; right: 0.75rem !important; }
+[dir="rtl"] .right-3 { right: auto !important; left: 0.75rem !important; }
+
+/* تحسين الظلال */
+[dir="rtl"] .shadow-sm,
+[dir="rtl"] .shadow,
+[dir="rtl"] .shadow-md,
+[dir="rtl"] .shadow-lg {
+  box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* تحسين القوائم المنسدلة */
-[dir="rtl"] .dropdown-menu {
-  right: 0;
-  left: auto;
-}
-
-/* تحسين التنبيهات */
-[dir="rtl"] .alert {
-  text-align: right;
-}
-
-/* تحسين التبويبات */
-[dir="rtl"] .tabs-list {
-  justify-content: flex-start;
-}
-
-/* تحسينات خاصة بالموبايل */
-@media (max-width: 768px) {
-  [dir="rtl"] .mobile-menu {
-    right: 0;
-    left: auto;
-  }
-  
-  [dir="rtl"] .mobile-search {
-    text-align: right;
-  }
+[dir="rtl"] .dropdown,
+[dir="rtl"] [role="menu"] {
+  right: 0 !important;
+  left: auto !important;
+  text-align: right !important;
 }
 
 /* تحسين الرسوم المتحركة */
-[dir="rtl"] .slide-in-right {
-  animation: slideInFromLeft 0.3s ease-out;
-}
-
-@keyframes slideInFromLeft {
+@keyframes slideInFromRight {
   from {
-    transform: translateX(-100%);
+    transform: translateX(100%);
     opacity: 0;
   }
   to {
@@ -126,11 +164,55 @@
   }
 }
 
-/* تحسين التمرير الأفقي */
-[dir="rtl"] .horizontal-scroll {
-  direction: rtl;
+[dir="rtl"] .animate-slide-in {
+  animation: slideInFromRight 0.3s ease-out;
 }
 
-[dir="rtl"] .horizontal-scroll > * {
-  direction: ltr;
+/* تحسينات خاصة بالمنتدى */
+[dir="rtl"] .forum-container {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+[dir="rtl"] .topic-item {
+  direction: rtl !important;
+}
+
+[dir="rtl"] .author-info {
+  flex-direction: row !important;
+}
+
+[dir="rtl"] .stats-group {
+  flex-direction: row !important;
+}
+
+/* تحسينات الموبايل */
+@media (max-width: 768px) {
+  [dir="rtl"] .mobile-menu {
+    right: 0 !important;
+    left: auto !important;
+  }
+  
+  [dir="rtl"] .flex-col {
+    align-items: stretch !important;
+  }
+}
+
+/* إصلاحات نهائية قوية */
+body[dir="rtl"] *:not([dir="ltr"]) {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+/* تأكد من أن Container يحترم RTL */
+[dir="rtl"] .container,
+[dir="rtl"] .max-w-7xl,
+[dir="rtl"] .mx-auto {
+  direction: rtl !important;
+}
+
+/* إصلاح أي عناصر عنيدة */
+[dir="rtl"] > * {
+  direction: inherit !important;
+  text-align: inherit !important;
 } 

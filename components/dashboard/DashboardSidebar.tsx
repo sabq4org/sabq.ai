@@ -24,7 +24,8 @@ import {
   Brain,
   Grid3X3,
   Award,
-  Image
+  Image,
+  MessageCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDashboardCounts } from '@/hooks/useDashboardCounts';
@@ -59,6 +60,7 @@ const sidebarItems: SidebarItem[] = [
   { icon: Brain, label: 'التحليل العميق', href: '/dashboard/deep-analysis', badge: 'جديد', countKey: 'deepAnalysis' },
   { icon: Grid3X3, label: 'البلوكات الذكية', href: '/dashboard/smart-blocks', badge: 'جديد', countKey: 'smartBlocks' },
   { icon: Award, label: 'برنامج الولاء', href: '/dashboard/loyalty', countKey: 'loyaltyMembers' },
+  { icon: MessageCircle, label: 'إدارة المنتدى', href: '/dashboard/forum', badge: 'جديد' },
   { icon: Settings, label: 'الإعدادات', href: '/dashboard/settings' },
   { icon: FileText, label: 'المقالات', href: '/dashboard/articles', countKey: 'articles' },
   { icon: Edit3, label: 'التحرير', href: '/dashboard/editor' },

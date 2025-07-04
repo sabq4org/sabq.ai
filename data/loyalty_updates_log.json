@@ -502,5 +502,77 @@
       "article_id": "47c43f20-0565-4bb4-b41e-952e3018e651"
     },
     "timestamp": "2025-07-04T18:37:40.262Z"
+  },
+  {
+    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "4b1b30b4-d89a-4f2c-9a3c-2dafa52cd50c"
+    },
+    "timestamp": "2025-07-04T19:47:15.608Z"
+  },
+  {
+    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "4b1b30b4-d89a-4f2c-9a3c-2dafa52cd50c"
+    },
+    "timestamp": "2025-07-04T19:47:15.625Z"
+  },
+  {
+    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "4b1b30b4-d89a-4f2c-9a3c-2dafa52cd50c"
+    },
+    "timestamp": "2025-07-04T19:50:24.804Z"
+  },
+  {
+    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "4b1b30b4-d89a-4f2c-9a3c-2dafa52cd50c"
+    },
+    "timestamp": "2025-07-04T19:50:24.820Z"
+  },
+  {
+    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "4b1b30b4-d89a-4f2c-9a3c-2dafa52cd50c"
+    },
+    "timestamp": "2025-07-04T19:54:06.290Z"
+  },
+  {
+    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "4b1b30b4-d89a-4f2c-9a3c-2dafa52cd50c"
+    },
+    "timestamp": "2025-07-04T19:54:06.312Z"
+  },
+  {
+    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "4b1b30b4-d89a-4f2c-9a3c-2dafa52cd50c"
+    },
+    "timestamp": "2025-07-04T20:55:01.126Z"
+  },
+  {
+    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "4b1b30b4-d89a-4f2c-9a3c-2dafa52cd50c"
+    },
+    "timestamp": "2025-07-04T20:55:01.146Z"
   }
 ]

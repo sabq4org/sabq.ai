@@ -13,6 +13,9 @@ interface Notification {
 }
 
 export default function TeamPage() {
+  // إضافة رسالة تشخيص
+  console.log('TeamPage component loaded');
+  
   const [darkMode, setDarkMode] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);

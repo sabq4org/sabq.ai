@@ -152,35 +152,46 @@ export async function GET(request: NextRequest) {
 
     // تحويل البيانات للتوافق مع الواجهة
     console.time('🔄 تحويل وتنسيق البيانات')
-    const formattedArticles = articles.map(article => ({
-      id: article.id,
-      title: article.title,
-      slug: article.slug,
-      content: article.content,
-      summary: article.excerpt,
-      author_id: article.authorId,
-      author: (article as any).author ? {
-        id: (article as any).author.id,
-        name: (article as any).author.name,
-        email: (article as any).author.email,
-        avatar: (article as any).author.avatar
-      } : null,
-      category_id: article.categoryId,
-      category_name: article.category?.name || 'غير مصنف',
-      status: article.status,
-      featured_image: article.featuredImage,
-      is_breaking: article.breaking,
-      is_featured: article.featured,
-      views_count: article.views,
-      reading_time: article.readingTime || calculateReadingTime(article.content),
-      created_at: article.createdAt ? article.createdAt.toISOString() : null,
-      updated_at: article.updatedAt ? article.updatedAt.toISOString() : null,
-      published_at: article.publishedAt ? article.publishedAt.toISOString() : null,
-      seo_keywords: article.seoKeywords ? article.seoKeywords.split(',').map((k: string) => k.trim()).filter(Boolean) : [],
-      tags: article.metadata && typeof article.metadata === 'object' && 'tags' in article.metadata ? (article.metadata as any).tags : [],
-      interactions_count: 0,
-      comments_count: 0
-    }))
+    const formattedArticles = articles.map(article => {
+      // محاولة استخراج اسم المؤلف من metadata أولاً، ثم من author relation
+      let authorName = null;
+      if (article.metadata && typeof article.metadata === 'object' && 'author_name' in article.metadata) {
+        authorName = (article.metadata as any).author_name;
+      } else if ((article as any).author) {
+        authorName = (article as any).author.name;
+      }
+      
+      return {
+        id: article.id,
+        title: article.title,
+        slug: article.slug,
+        content: article.content,
+        summary: article.excerpt,
+        author_id: article.authorId,
+        author_name: authorName, // إضافة اسم المؤلف مباشرة
+        author: (article as any).author ? {
+          id: (article as any).author.id,
+          name: (article as any).author.name,
+          email: (article as any).author.email,
+          avatar: (article as any).author.avatar
+        } : null,
+        category_id: article.categoryId,
+        category_name: article.category?.name || 'غير مصنف',
+        status: article.status,
+        featured_image: article.featuredImage,
+        is_breaking: article.breaking,
+        is_featured: article.featured,
+        views_count: article.views,
+        reading_time: article.readingTime || calculateReadingTime(article.content),
+        created_at: article.createdAt ? article.createdAt.toISOString() : null,
+        updated_at: article.updatedAt ? article.updatedAt.toISOString() : null,
+        published_at: article.publishedAt ? article.publishedAt.toISOString() : null,
+        seo_keywords: article.seoKeywords ? article.seoKeywords.split(',').map((k: string) => k.trim()).filter(Boolean) : [],
+        tags: article.metadata && typeof article.metadata === 'object' && 'tags' in article.metadata ? (article.metadata as any).tags : [],
+        interactions_count: 0,
+        comments_count: 0
+      }
+    })
     console.timeEnd('🔄 تحويل وتنسيق البيانات')
 
     // تصفية المحتوى التجريبي في الإنتاج
@@ -232,6 +243,8 @@ export async function POST(request: NextRequest) {
       content,
       excerpt,
       category_id,
+      author_id,
+      author_name,
       status = 'draft',
       featured_image,
       metadata = {}
@@ -258,9 +271,10 @@ export async function POST(request: NextRequest) {
           ...metadata,
           createdAt: new Date().toISOString(),
           isSmartDraft: metadata.isSmartDraft || false,
-          aiEditor: metadata.aiEditor || false
+          aiEditor: metadata.aiEditor || false,
+          author_name: author_name || undefined // حفظ اسم المؤلف في metadata
         },
-        authorId: 'default-author-id', // يمكن تغييرها لاحقاً
+        authorId: author_id || 'default-author-id', // استخدام author_id المرسل أو القيمة الافتراضية
         slug: generateSlug(title),
         views: 0,
         readingTime: Math.ceil(content.split(' ').length / 200) // تقدير وقت القراءة

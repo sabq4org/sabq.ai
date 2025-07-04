@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
-  Menu, ChevronDown, LogIn, User, Sun, Moon, Activity, Clock
+  Menu, ChevronDown, LogIn, User, Sun, Moon, Activity, Clock, MessageCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import UserDropdown from './UserDropdown';
@@ -221,8 +221,9 @@ export default function Header() {
     { label: 'الأخبار', url: '/news', order: 3 },
     { label: 'مقالات الرأي', url: '/opinion', order: 4 },
     { label: 'التصنيفات', url: '/categories', order: 5 },
-    { label: 'التحليلات العميقة', url: '/insights/deep', order: 6 },
-    { label: 'تواصل معنا', url: '/contact', order: 7 }
+    { label: 'المنتدى', url: '/forum', order: 6, icon: MessageCircle },
+    { label: 'التحليلات العميقة', url: '/insights/deep', order: 7 },
+    { label: 'تواصل معنا', url: '/contact', order: 8 }
   ];
 
   return (
@@ -325,6 +326,7 @@ export default function Header() {
                   {item.label === 'لحظة بلحظة' && (
                     <Activity className="w-5 h-5 animate-pulse" />
                   )}
+                  {item.icon && <item.icon className="w-5 h-5" />}
                   <span>{item.label}</span>
                   {item.highlight && (
                     <span className="absolute -top-1 -right-2 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
@@ -425,6 +427,7 @@ export default function Header() {
                   {item.label === 'لحظة بلحظة' && (
                     <Activity className="w-5 h-5 animate-pulse" />
                   )}
+                  {item.icon && <item.icon className="w-5 h-5" />}
                   <span className="flex-1">{item.label}</span>
                   {item.highlight && (
                     <span className="w-2 h-2 bg-red-500 rounded-full animate-ping"></span>

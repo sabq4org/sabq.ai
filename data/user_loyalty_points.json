@@ -1837,8 +1837,8 @@
   },
   "3a02d49c-16ca-48ee-a083-e4a44a03e07f": {
     "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
-    "total_points": 116,
-    "earned_points": 116,
+    "total_points": 124,
+    "earned_points": 124,
     "redeemed_points": 0,
     "history": [
       {
@@ -2696,6 +2696,70 @@
           "article_id": "47c43f20-0565-4bb4-b41e-952e3018e651"
         },
         "timestamp": "2025-07-04T18:37:40.262Z"
+      },
+      {
+        "points": 1,
+        "action": "view على المقال",
+        "details": {
+          "article_id": "4b1b30b4-d89a-4f2c-9a3c-2dafa52cd50c"
+        },
+        "timestamp": "2025-07-04T19:47:15.607Z"
+      },
+      {
+        "points": 1,
+        "action": "view على المقال",
+        "details": {
+          "article_id": "4b1b30b4-d89a-4f2c-9a3c-2dafa52cd50c"
+        },
+        "timestamp": "2025-07-04T19:47:15.624Z"
+      },
+      {
+        "points": 1,
+        "action": "view على المقال",
+        "details": {
+          "article_id": "4b1b30b4-d89a-4f2c-9a3c-2dafa52cd50c"
+        },
+        "timestamp": "2025-07-04T19:50:24.803Z"
+      },
+      {
+        "points": 1,
+        "action": "view على المقال",
+        "details": {
+          "article_id": "4b1b30b4-d89a-4f2c-9a3c-2dafa52cd50c"
+        },
+        "timestamp": "2025-07-04T19:50:24.819Z"
+      },
+      {
+        "points": 1,
+        "action": "view على المقال",
+        "details": {
+          "article_id": "4b1b30b4-d89a-4f2c-9a3c-2dafa52cd50c"
+        },
+        "timestamp": "2025-07-04T19:54:06.290Z"
+      },
+      {
+        "points": 1,
+        "action": "view على المقال",
+        "details": {
+          "article_id": "4b1b30b4-d89a-4f2c-9a3c-2dafa52cd50c"
+        },
+        "timestamp": "2025-07-04T19:54:06.311Z"
+      },
+      {
+        "points": 1,
+        "action": "view على المقال",
+        "details": {
+          "article_id": "4b1b30b4-d89a-4f2c-9a3c-2dafa52cd50c"
+        },
+        "timestamp": "2025-07-04T20:55:01.125Z"
+      },
+      {
+        "points": 1,
+        "action": "view على المقال",
+        "details": {
+          "article_id": "4b1b30b4-d89a-4f2c-9a3c-2dafa52cd50c"
+        },
+        "timestamp": "2025-07-04T20:55:01.146Z"
       }
     ]
   },

@@ -129,5 +129,8 @@ module.exports = {
       },
     },
   },
-  plugins: [require('@tailwindcss/typography')],
+  plugins: [
+    require('tailwindcss-rtl'),
+    require('@tailwindcss/typography')
+  ],
 } 
