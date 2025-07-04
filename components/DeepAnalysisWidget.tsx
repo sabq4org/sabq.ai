@@ -16,7 +16,7 @@ interface DeepInsight {
   views: number;
   aiConfidence: number;
   tags: string[];
-  type: 'AI' | 'تحرير بشري';
+  type: 'AI' | 'تحليل عميق';
   analysisType?: 'manual' | 'ai' | 'mixed';
   url: string;
   isNew?: boolean;
@@ -149,7 +149,9 @@ export default function DeepAnalysisWidget({ insights }: DeepAnalysisWidgetProps
         {/* العنوان والوصف */}
         <div className="text-center mb-6 max-w-3xl mx-auto">
           <div className="flex flex-col items-center gap-2">
-            <Brain className="w-6 h-6 text-blue-300" />
+            <div className="p-3 bg-white/20 rounded-full shadow-lg">
+              <Brain className="w-6 h-6 text-white" />
+            </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
               التحليل العميق من سبق
             </h2>
@@ -196,13 +198,13 @@ export default function DeepAnalysisWidget({ insights }: DeepAnalysisWidgetProps
                           }`}>
                             {isAI ? (
                               <>
-                                <Brain className="w-3 h-3" />
-                                <span>تحليل ذكي</span>
+                                <span className="text-sm">🧠</span>
+                                <span>تحليل AI</span>
                               </>
                             ) : (
                               <>
-                                <User className="w-3 h-3" />
-                                <span>تحليل بشري</span>
+                                <span className="text-sm">📊</span>
+                                <span>تحليل عميق</span>
                               </>
                             )}
                           </span>
@@ -224,24 +226,26 @@ export default function DeepAnalysisWidget({ insights }: DeepAnalysisWidgetProps
                       </h3>
 
                       {/* التاقات */}
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {item.tags.slice(0, 3).map((tag, idx) => (
-                          <span 
-                            key={idx} 
-                            className={`text-xs px-2 py-0.5 rounded-md ${
-                              darkMode 
-                                ? 'bg-gray-700/50 text-gray-400 border-gray-600' 
-                                : 'bg-gray-100 text-gray-600 border-gray-200'
-                            } border`}
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                        {item.tags.length > 3 && (
-                          <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                            +{item.tags.length - 3}
-                          </span>
-                        )}
+                      <div className="flex gap-1 mb-3 overflow-x-auto scrollbar-hide">
+                        <div className="flex gap-1 flex-nowrap">
+                          {item.tags.slice(0, 3).map((tag, idx) => (
+                            <span 
+                              key={idx} 
+                              className={`text-xs px-2 py-0.5 rounded-md whitespace-nowrap ${
+                                darkMode 
+                                  ? 'bg-gray-700/50 text-gray-400 border-gray-600' 
+                                  : 'bg-gray-100 text-gray-600 border-gray-200'
+                              } border`}
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                          {item.tags.length > 3 && (
+                            <span className={`text-xs whitespace-nowrap ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                              +{item.tags.length - 3}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       {/* أزرار التفاعل محسّنة */}
