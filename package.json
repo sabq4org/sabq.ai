@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:staging": "NODE_ENV=development next dev",
-    "prebuild": "echo 'Generating Prisma Client...' && npx prisma generate && echo 'Checking files...' && ls -la contexts/DarkModeContext.tsx lib/date-utils.ts lib/utils.ts components/ArticleJsonLd.tsx components/Footer.tsx",
+    "prebuild": "echo 'Generating Prisma Client...' && npx prisma generate",
     "build": "next build",
     "build:vercel": "npx prisma generate --no-engine && next build",
     "build:optimized": "node scripts/vercel-build-optimization.js && prisma generate --no-engine && next build",
