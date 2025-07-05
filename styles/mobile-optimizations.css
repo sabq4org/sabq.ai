@@ -862,4 +862,104 @@
 .dark .skeleton {
   background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
   background-size: 200% 100%;
+}
+
+/* Deep Analysis Card Improvements */
+.deep-analysis-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.deep-analysis-card .card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.deep-analysis-card .card-summary {
+  flex-grow: 1;
+}
+
+.deep-analysis-card .card-button {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  padding-bottom: 1rem;
+}
+
+/* Enhanced button styles for deep analysis */
+.analysis-button {
+  width: fit-content;
+  max-width: 180px;
+  margin: 0 auto;
+  background-color: #f1f5f9;
+  color: #1e293b;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.analysis-button:hover {
+  background-color: #dbeafe;
+  color: #1e3a8a;
+  border-color: #bfdbfe;
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.analysis-button:active {
+  transform: scale(0.98);
+}
+
+/* Dark mode button styles */
+.dark .analysis-button {
+  background-color: #f1f5f9;
+  color: #1e293b;
+}
+
+.dark .analysis-button:hover {
+  background-color: #dbeafe;
+  color: #1e3a8a;
+  border-color: #bfdbfe;
+}
+
+/* AI-specific button styles */
+.analysis-button.ai-button:hover {
+  background-color: #f3e8ff;
+  color: #6b21a8;
+  border-color: #d8b4fe;
+}
+
+/* Responsive improvements for deep analysis cards */
+@media (max-width: 640px) {
+  .deep-analysis-card {
+    padding: 1rem;
+  }
+  
+  .deep-analysis-card .card-title {
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+  
+  .deep-analysis-card .card-meta {
+    gap: 0.5rem;
+  }
+  
+  .analysis-button {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+  }
+}
+
+/* Prevent button overflow on mobile */
+@media (max-width: 375px) {
+  .analysis-button {
+    max-width: 160px;
+    font-size: 0.8rem;
+  }
+  
+  .analysis-button span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 } 
