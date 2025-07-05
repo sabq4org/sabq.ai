@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { getCurrentUser, logActions } from '@/lib/log-activity';
 import { useTheme } from '@/contexts/ThemeContext';
+import { DashboardMobileLayout } from '@/components/mobile/MobileLayout';
 
 export default function DashboardLayout({
   children,
@@ -42,6 +43,7 @@ export default function DashboardLayout({
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   const handleLogout = async () => {
     // الحصول على معلومات المستخدم الحالي
@@ -74,17 +76,26 @@ export default function DashboardLayout({
     };
   }, []);
 
-  // إغلاق الـ sidebar عند تغيير حجم الشاشة
+  // إغلاق الـ sidebar عند تغيير حجم الشاشة وفحص نوع الجهاز
   useEffect(() => {
-    const handleResize = () => {
-      if (typeof window !== "undefined" && window.innerWidth >= 1024) {
-        setSidebarOpen(false);
+    const checkDevice = () => {
+      if (typeof window !== "undefined") {
+        const userAgent = navigator.userAgent;
+        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+        const isSmallScreen = window.innerWidth <= 768;
+        setIsMobile(isMobileDevice || isSmallScreen);
+        
+        if (window.innerWidth >= 1024) {
+          setSidebarOpen(false);
+        }
       }
     };
 
+    checkDevice();
+    
     if (typeof window !== "undefined") {
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
+      window.addEventListener('resize', checkDevice);
+      return () => window.removeEventListener('resize', checkDevice);
     }
   }, []);
 
@@ -92,6 +103,15 @@ export default function DashboardLayout({
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
+
+  // تطبيق التخطيط المحسن للموبايل
+  if (isMobile) {
+    return (
+      <DashboardMobileLayout>
+        {children}
+      </DashboardMobileLayout>
+    );
+  }
 
   return (
     <div 
