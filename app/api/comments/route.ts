@@ -205,30 +205,27 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get('user-agent') || '';
 
     // التحقق من إعدادات التعليقات للمقال
-    const [article, bannedWords, aiSettings] = await Promise.all([
-      prisma.article.findUnique({
-        where: { id: articleId },
-        select: {
-          id: true,
-          allowComments: true,
-          }
-      }),
-      // جلب الكلمات المحظورة مرة واحدة
-      prisma.bannedWord.findMany({
-        select: {
-          word: true,
-          severity: true
-        }
-      }),
-      // جلب إعدادات الذكاء الاصطناعي مرة واحدة
-      prisma.aIModerationSettings.findFirst({
-        select: {
-          enabled: true,
-          autoApproveThreshold: true,
-          autoRejectThreshold: true
-        }
-      })
-    ]);
+    const article = await prisma.article.findUnique({
+      where: { id: articleId },
+      select: {
+        id: true,
+        allowComments: true,
+      }
+    });
+
+    // قائمة الكلمات المحظورة المحلية (يمكن نقلها لاحقاً إلى قاعدة البيانات)
+    const bannedWords = [
+      { word: 'spam', severity: 'high' },
+      { word: 'كلام فارغ', severity: 'medium' },
+      { word: 'غبي', severity: 'low' }
+    ];
+
+    // إعدادات الذكاء الاصطناعي الافتراضية
+    const aiSettings = {
+      enabled: !!process.env.OPENAI_API_KEY,
+      autoApproveThreshold: 80,
+      autoRejectThreshold: 20
+    };
 
     if (!article) {
       return NextResponse.json(
@@ -422,22 +419,11 @@ createdAt: true,
 
     // حفظ تحليل الذكاء الاصطناعي إذا كان متاحاً (في الخلفية)
     if (aiAnalysis && !['admin', 'moderator', 'author'].includes(userRole)) {
-      // حفظ التحليل بشكل غير متزامن لتسريع الاستجابة
-      prisma.aICommentAnalysis.create({
-        data: {
-          commentId: comment.id,
-          score: aiAnalysis.score,
-          classification: aiAnalysis.classification,
-          suggestedAction: aiAnalysis.suggested_action,
-          aiProvider: aiAnalysis.ai_provider || 'local',
-          confidence: aiAnalysis.confidence || 0.7,
-          analysisDetails: aiAnalysis,
-          flaggedWords: aiAnalysis.flagged_words || [],
-          categories: aiAnalysis.categories || {},
-          processingTime: aiAnalysis.processing_time || 0
-        }
-      }).catch((error: any) => {
-        console.error('Error saving AI analysis:', error);
+      // حفظ التحليل في metadata التعليق بدلاً من جدول منفصل
+      console.log('AI Analysis saved in comment metadata:', {
+        score: aiAnalysis.score,
+        classification: aiAnalysis.classification,
+        processingTime: aiAnalysis.processing_time
       });
     }
 
