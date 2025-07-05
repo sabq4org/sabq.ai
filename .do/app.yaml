@@ -3,7 +3,7 @@ region: fra
 services:
 - environment_slug: node-js
   github:
-    branch: clean-main
+    branch: main
     deploy_on_push: true
     repo: sabq4org/sabq-ai-cms
   http_port: 3000
