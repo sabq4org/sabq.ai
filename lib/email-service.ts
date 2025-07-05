@@ -20,9 +20,9 @@ class EmailService {
           user: emailConfig.smtp.auth.user,
           pass: emailConfig.smtp.auth.pass,
         },
-        connectionTimeout: emailConfig.settings.connectionTimeout,
-        greetingTimeout: emailConfig.settings.connectionTimeout,
-        socketTimeout: emailConfig.settings.connectionTimeout,
+        connectionTimeout: 60000, // 60 seconds
+        greetingTimeout: 30000, // 30 seconds
+        socketTimeout: 60000, // 60 seconds
       });
 
       // التحقق من الاتصال
@@ -42,15 +42,18 @@ class EmailService {
       return false;
     }
 
+    const maxRetries = 3;
+    const retryDelay = 5000; // 5 seconds
+
     try {
       await this.transporter.sendMail(mailOptions);
       return true;
     } catch (error) {
       console.error(`❌ خطأ في إرسال البريد (محاولة ${retryCount + 1}):`, error);
       
-      if (retryCount < emailConfig.settings.retryAttempts - 1) {
-        console.log(`🔄 إعادة المحاولة بعد ${emailConfig.settings.retryDelay / 1000} ثانية...`);
-        await new Promise(resolve => setTimeout(resolve, emailConfig.settings.retryDelay));
+      if (retryCount < maxRetries - 1) {
+        console.log(`🔄 إعادة المحاولة بعد ${retryDelay / 1000} ثانية...`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
         return this.sendMailWithRetry(mailOptions, retryCount + 1);
       }
       
@@ -61,7 +64,7 @@ class EmailService {
   // إرسال بريد التحقق
   async sendVerificationEmail(to: string, name: string, code: string): Promise<boolean> {
     const mailOptions = {
-      from: `"${emailConfig.defaults.from.name}" <${emailConfig.defaults.from.email}>`,
+      from: `"${emailConfig.from.name}" <${emailConfig.from.email}>`,
       to,
       subject: 'تأكيد بريدك الإلكتروني - صحيفة سبق',
       html: this.getVerificationEmailTemplate(name, code),
@@ -77,7 +80,7 @@ class EmailService {
   // إرسال بريد الترحيب
   async sendWelcomeEmail(to: string, name: string): Promise<boolean> {
     const mailOptions = {
-      from: `"${emailConfig.defaults.from.name}" <${emailConfig.defaults.from.email}>`,
+      from: `"${emailConfig.from.name}" <${emailConfig.from.email}>`,
       to,
       subject: 'أهلاً بك في صحيفة سبق 🎉',
       html: this.getWelcomeEmailTemplate(name),
@@ -95,7 +98,7 @@ class EmailService {
     const resetLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://jur3a.ai'}/reset-password?token=${resetToken}`;
     
     const mailOptions = {
-      from: `"${emailConfig.defaults.from.name}" <${emailConfig.defaults.from.email}>`,
+      from: `"${emailConfig.from.name}" <${emailConfig.from.email}>`,
       to,
       subject: 'استرجاع كلمة المرور - صحيفة سبق',
       html: this.getPasswordResetTemplate(name, resetLink),
@@ -111,7 +114,7 @@ class EmailService {
   // إرسال رد على رسالة من الزوار
   async sendContactReply(to: string, name: string, subject: string, message: string): Promise<boolean> {
     const mailOptions = {
-      from: `"${emailConfig.defaults.from.name}" <${emailConfig.defaults.from.email}>`,
+      from: `"${emailConfig.from.name}" <${emailConfig.from.email}>`,
       to,
       subject: `رد: ${subject}`,
       html: this.getContactReplyTemplate(name, message),
@@ -132,7 +135,7 @@ class EmailService {
     message: string;
   }): Promise<boolean> {
     const mailOptions = {
-      from: `"${emailConfig.defaults.from.name}" <${emailConfig.defaults.from.email}>`,
+      from: `"${emailConfig.from.name}" <${emailConfig.from.email}>`,
       to: adminEmail,
       subject: `رسالة جديدة من ${contactDetails.name}`,
       html: this.getNewContactNotificationTemplate(contactDetails),
