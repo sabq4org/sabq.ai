@@ -2,6 +2,8 @@
 import path from 'path';
 
 const nextConfig = {
+  // إعدادات الإنتاج المطلوبة لـ DigitalOcean
+  output: 'standalone',
   reactStrictMode: true,
   serverExternalPackages: ['tailwind-merge', '@prisma/client'],
   
@@ -86,7 +88,7 @@ const nextConfig = {
     return config;
   },
   
-  // إعدادات تجريبية لحل مشاكل React 19
+  // إعدادات تجريبية محسنة للإنتاج
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
