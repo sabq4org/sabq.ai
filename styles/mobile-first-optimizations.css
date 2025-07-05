@@ -1,0 +1,679 @@
+/* 📱 تحسينات شاملة للموبايل - مبدأ Mobile-First */
+
+/* ===============================
+   🎯 1. إعدادات أساسية للموبايل
+   =============================== */
+
+/* منع التكبير عند التركيز على المدخلات */
+* {
+  box-sizing: border-box;
+}
+
+input, select, textarea {
+  font-size: 16px !important; /* منع التكبير في iOS */
+}
+
+/* تحسين العرض للنصوص العربية */
+body {
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  direction: rtl;
+  text-align: right;
+}
+
+/* ===============================
+   📱 2. تحسين الهيدر للموبايل
+   =============================== */
+
+@media (max-width: 768px) {
+  /* الهيدر الثابت */
+  header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+    height: auto !important;
+    min-height: 64px !important;
+    padding: 0.5rem 1rem !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+  
+  /* الشريط العلوي - إخفاء في الموبايل */
+  header .border-b {
+    display: none !important;
+  }
+  
+  /* الشعار والأدوات */
+  header .py-4 {
+    padding: 0.75rem 0 !important;
+  }
+  
+  /* تقليل حجم الشعار */
+  header .w-12 {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+  }
+  
+  header .text-2xl {
+    font-size: 1.25rem !important;
+  }
+  
+  header .text-xs {
+    font-size: 0.625rem !important;
+  }
+  
+  /* إخفاء النص الفرعي في الموبايل */
+  header p.text-xs {
+    display: none !important;
+  }
+  
+  /* تحسين الأدوات */
+  header .gap-4 {
+    gap: 0.5rem !important;
+  }
+  
+  /* إخفاء زر تسجيل الدخول في الموبايل */
+  header .hidden.sm\\:flex {
+    display: none !important;
+  }
+  
+  /* تحسين زر القائمة */
+  header .lg\\:hidden {
+    display: flex !important;
+  }
+  
+  /* القائمة المنسدلة للموبايل */
+  header nav.lg\\:hidden {
+    position: fixed !important;
+    top: 64px !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: white !important;
+    border-top: 1px solid #e5e7eb !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    z-index: 999 !important;
+    max-height: calc(100vh - 64px) !important;
+    overflow-y: auto !important;
+  }
+  
+  .dark header nav.lg\\:hidden {
+    background: #1f2937 !important;
+    border-top-color: #374151 !important;
+  }
+  
+  /* تحسين عناصر القائمة */
+  header nav.lg\\:hidden ul {
+    padding: 1rem !important;
+  }
+  
+  header nav.lg\\:hidden li {
+    margin-bottom: 0.5rem !important;
+  }
+  
+  header nav.lg\\:hidden a {
+    padding: 0.75rem 1rem !important;
+    border-radius: 0.5rem !important;
+    font-size: 1rem !important;
+  }
+}
+
+/* ===============================
+   📰 3. تحسين بطاقات الأخبار
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تخطيط الشبكة للموبايل */
+  .grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  /* بطاقة الأخبار */
+  .group {
+    border-radius: 0.75rem !important;
+    overflow: hidden !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  /* صورة المقال */
+  .group .relative {
+    height: 200px !important;
+  }
+  
+  /* العنوان */
+  .group h3 {
+    font-size: 1.125rem !important;
+    line-height: 1.4 !important;
+    margin-bottom: 0.75rem !important;
+    padding: 0 1rem !important;
+  }
+  
+  /* الوصف */
+  .group p {
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+    padding: 0 1rem 1rem 1rem !important;
+  }
+  
+  /* معلومات المقال */
+  .group .flex {
+    padding: 0 1rem 1rem 1rem !important;
+    font-size: 0.75rem !important;
+  }
+  
+  /* أزرار التفاعل */
+  .group .absolute.top-4.left-4 {
+    top: 0.75rem !important;
+    left: 0.75rem !important;
+  }
+  
+  .group .absolute.top-4.right-4 {
+    top: 0.75rem !important;
+    right: 0.75rem !important;
+  }
+  
+  .group .absolute.bottom-4.right-4 {
+    bottom: 0.75rem !important;
+    right: 0.75rem !important;
+  }
+  
+  /* إظهار أزرار التفاعل دائماً في الموبايل */
+  .group .opacity-0 {
+    opacity: 1 !important;
+  }
+  
+  /* تحسين الأزرار */
+  .group button {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+  
+  .group button svg {
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+}
+
+/* ===============================
+   📊 4. تحسين البطاقات الإحصائية
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تخطيط الشبكة */
+  .stats-mobile-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+  
+  /* البطاقة الإحصائية */
+  .stats-card {
+    padding: 1rem !important;
+    border-radius: 0.75rem !important;
+    text-align: center !important;
+  }
+  
+  /* الأيقونة */
+  .stats-card .icon-wrapper {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    margin: 0 auto 0.5rem auto !important;
+  }
+  
+  .stats-card .icon {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+  }
+  
+  /* الرقم */
+  .stats-card .text-2xl {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 0.25rem !important;
+  }
+  
+  /* النص */
+  .stats-card .text-sm {
+    font-size: 0.75rem !important;
+    line-height: 1.2 !important;
+  }
+  
+  /* إخفاء النص الفرعي */
+  .stats-card .subtitle {
+    display: none !important;
+  }
+}
+
+/* ===============================
+   🎛️ 5. تحسين النماذج والمدخلات
+   =============================== */
+
+@media (max-width: 768px) {
+  /* الحاوية */
+  .form-container {
+    padding: 1rem !important;
+    border-radius: 0.75rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  /* مجموعة الحقول */
+  .form-group {
+    margin-bottom: 1rem !important;
+  }
+  
+  /* التسمية */
+  .form-label {
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    margin-bottom: 0.5rem !important;
+    display: block !important;
+  }
+  
+  /* المدخلات */
+  .form-input {
+    width: 100% !important;
+    padding: 0.875rem !important;
+    border-radius: 0.5rem !important;
+    font-size: 1rem !important;
+    border: 1px solid #d1d5db !important;
+    background: white !important;
+  }
+  
+  .form-input:focus {
+    outline: none !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+  }
+  
+  /* الأزرار */
+  .btn-primary {
+    width: 100% !important;
+    padding: 1rem !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    border-radius: 0.5rem !important;
+    background: #3b82f6 !important;
+    color: white !important;
+    border: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    min-height: 44px !important;
+  }
+  
+  .btn-primary:active {
+    transform: scale(0.98) !important;
+    background: #2563eb !important;
+  }
+  
+  .btn-secondary {
+    width: 100% !important;
+    padding: 1rem !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    border-radius: 0.5rem !important;
+    background: white !important;
+    color: #374151 !important;
+    border: 1px solid #d1d5db !important;
+    min-height: 44px !important;
+  }
+  
+  .btn-secondary:active {
+    transform: scale(0.98) !important;
+    background: #f9fafb !important;
+  }
+}
+
+/* ===============================
+   📋 6. تحسين الجداول والقوائم
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تحويل الجداول إلى بطاقات */
+  .table-responsive {
+    display: block !important;
+  }
+  
+  .table-responsive table {
+    display: none !important;
+  }
+  
+  /* البطاقة المتنقلة */
+  .mobile-card {
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 0.75rem !important;
+    padding: 1rem !important;
+    margin-bottom: 0.75rem !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .dark .mobile-card {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+  }
+  
+  /* صف التفاصيل */
+  .detail-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    padding: 0.25rem 0 !important;
+    font-size: 0.875rem !important;
+  }
+  
+  .detail-row .label {
+    font-weight: 500 !important;
+    color: #6b7280 !important;
+  }
+  
+  .detail-row .value {
+    font-weight: 600 !important;
+    color: #111827 !important;
+  }
+  
+  .dark .detail-row .value {
+    color: #f9fafb !important;
+  }
+}
+
+/* ===============================
+   🎨 7. تحسين الألوان والتباين
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تحسين التباين للقراءة */
+  .text-gray-600 {
+    color: #4b5563 !important;
+  }
+  
+  .text-gray-500 {
+    color: #6b7280 !important;
+  }
+  
+  .dark .text-gray-400 {
+    color: #d1d5db !important;
+  }
+  
+  .dark .text-gray-500 {
+    color: #9ca3af !important;
+  }
+  
+  /* تحسين الألوان الأساسية */
+  .text-blue-600 {
+    color: #2563eb !important;
+  }
+  
+  .bg-blue-600 {
+    background-color: #2563eb !important;
+  }
+  
+  .border-blue-300 {
+    border-color: #93c5fd !important;
+  }
+}
+
+/* ===============================
+   ⚡ 8. تحسينات الأداء
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تقليل التأثيرات للأداء */
+  * {
+    transition-duration: 0.2s !important;
+  }
+  
+  /* تحسين التمرير */
+  .scroll-container {
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: smooth !important;
+  }
+  
+  /* إخفاء شريط التمرير */
+  .hide-scrollbar {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  /* تحسين الرسوم المتحركة */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  
+  /* تحسين الخطوط */
+  body {
+    font-display: swap !important;
+  }
+  
+  /* تحسين الصور */
+  img {
+    loading: lazy !important;
+  }
+}
+
+/* ===============================
+   📱 9. تحسينات خاصة بالشاشات الصغيرة
+   =============================== */
+
+/* iPhone SE وما شابه (375px) */
+@media (max-width: 375px) {
+  .container {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+  
+  .group h3 {
+    font-size: 1rem !important;
+  }
+  
+  .btn-primary {
+    padding: 0.875rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  .stats-mobile-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* iPhone 13 وما شابه (390px) */
+@media (min-width: 376px) and (max-width: 430px) {
+  .stats-mobile-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Galaxy S21 وما شابه (360px) */
+@media (max-width: 360px) {
+  .text-sm {
+    font-size: 0.8rem !important;
+  }
+  
+  .group {
+    padding: 0.75rem !important;
+  }
+}
+
+/* ===============================
+   🌙 10. تحسين الوضع المظلم للموبايل
+   =============================== */
+
+@media (max-width: 768px) {
+  .dark {
+    --mobile-bg: #111827;
+    --mobile-card: #1f2937;
+    --mobile-border: #374151;
+    --mobile-text: #f9fafb;
+    --mobile-text-secondary: #d1d5db;
+  }
+  
+  .dark body {
+    background-color: var(--mobile-bg) !important;
+  }
+  
+  .dark .group,
+  .dark .mobile-card,
+  .dark .form-container {
+    background-color: var(--mobile-card) !important;
+    border-color: var(--mobile-border) !important;
+  }
+  
+  .dark header {
+    background-color: rgba(31, 41, 55, 0.9) !important;
+    border-bottom: 1px solid var(--mobile-border) !important;
+  }
+}
+
+/* ===============================
+   🎮 11. تحسين التفاعل باللمس
+   =============================== */
+
+@media (hover: none) and (pointer: coarse) {
+  /* إزالة hover effects */
+  .hover\\:bg-gray-50:hover {
+    background-color: transparent !important;
+  }
+  
+  .hover\\:text-blue-600:hover {
+    color: inherit !important;
+  }
+  
+  /* استخدام active state */
+  button:active,
+  a:active {
+    transform: scale(0.98) !important;
+    opacity: 0.8 !important;
+  }
+  
+  /* تحسين ردود الأفعال */
+  .tap-highlight {
+    -webkit-tap-highlight-color: rgba(59, 130, 246, 0.1) !important;
+  }
+  
+  /* تحسين أزرار اللمس */
+  button, a {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+}
+
+/* ===============================
+   🔧 12. إصلاحات خاصة
+   =============================== */
+
+@media (max-width: 768px) {
+  /* إصلاح مشكلة viewport في iOS */
+  body {
+    -webkit-text-size-adjust: 100% !important;
+    -ms-text-size-adjust: 100% !important;
+  }
+  
+  /* إصلاح مشكلة الـ safe area في iPhone */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top) !important;
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+  
+  /* إصلاح مشكلة الكيبورد */
+  .keyboard-adjust {
+    transition: transform 0.3s ease !important;
+  }
+  
+  /* منع zoom عند focus على input */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  
+  /* إصلاح مشكلة التمرير الأفقي */
+  body {
+    overflow-x: hidden !important;
+  }
+  
+  /* إصلاح مشكلة العرض */
+  .container {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+}
+
+/* ===============================
+   📊 13. تحسينات نهائية للتجربة
+   =============================== */
+
+@media (max-width: 768px) {
+  /* منع التحديد العشوائي للنص */
+  .no-select {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+  }
+  
+  /* تحسين العرض للنصوص الطويلة */
+  .text-ellipsis {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  
+  .text-clamp-2 {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+  
+  .text-clamp-3 {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 3 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+  
+  /* تحسين المسافات النهائية */
+  .mb-safe {
+    margin-bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
+  }
+  
+  .pb-safe {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
+  }
+  
+  /* تحسين التباعد */
+  .space-y-4 > * + * {
+    margin-top: 1rem !important;
+  }
+  
+  .space-y-6 > * + * {
+    margin-top: 1.5rem !important;
+  }
+  
+  /* تحسين الهوامش */
+  .p-6 {
+    padding: 1rem !important;
+  }
+  
+  .px-6 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+  
+  .py-6 {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+} 

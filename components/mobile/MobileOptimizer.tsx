@@ -1,304 +1,361 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Wifi, WifiOff, Battery, Signal } from 'lucide-react';
+import { Smartphone, Wifi, WifiOff, Battery, Signal } from 'lucide-react';
 
-interface NetworkStatus {
-  online: boolean;
-  effectiveType?: string;
-  downlink?: number;
-  rtt?: number;
+interface MobileOptimizerProps {
+  children: React.ReactNode;
 }
 
-interface DeviceInfo {
-  isMobile: boolean;
-  isTablet: boolean;
-  isIOS: boolean;
-  isAndroid: boolean;
-  screenWidth: number;
-  screenHeight: number;
-  devicePixelRatio: number;
-}
-
-export default function MobileOptimizer() {
-  const [networkStatus, setNetworkStatus] = useState<NetworkStatus>({ online: true });
-  const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
+export default function MobileOptimizer({ children }: MobileOptimizerProps) {
+  const [isMobile, setIsMobile] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
+  const [networkType, setNetworkType] = useState<string>('');
 
   useEffect(() => {
-    // تحديد معلومات الجهاز
-    const detectDevice = () => {
+    // فحص نوع الجهاز
+    const checkDevice = () => {
       const userAgent = navigator.userAgent;
-      const screenWidth = window.innerWidth;
-      const screenHeight = window.innerHeight;
-      
-      setDeviceInfo({
-        isMobile: screenWidth <= 768,
-        isTablet: screenWidth > 768 && screenWidth <= 1024,
-        isIOS: /iPad|iPhone|iPod/.test(userAgent),
-        isAndroid: /Android/.test(userAgent),
-        screenWidth,
-        screenHeight,
-        devicePixelRatio: window.devicePixelRatio || 1
-      });
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+      setIsMobile(isMobileDevice);
     };
 
-    // مراقبة حالة الشبكة
-    const updateNetworkStatus = () => {
-      const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+    // فحص حالة الشبكة
+    const checkNetworkStatus = () => {
+      setIsOnline(navigator.onLine);
       
-      setNetworkStatus({
-        online: navigator.onLine,
-        effectiveType: connection?.effectiveType,
-        downlink: connection?.downlink,
-        rtt: connection?.rtt
-      });
+      if ('connection' in navigator) {
+        const connection = (navigator as any).connection;
+        setNetworkType(connection.effectiveType || 'unknown');
+      }
     };
 
-    // مراقبة البطارية (إذا كانت متاحة)
-    const updateBatteryStatus = async () => {
-      try {
-        if ('getBattery' in navigator) {
+    // فحص مستوى البطارية
+    const checkBattery = async () => {
+      if ('getBattery' in navigator) {
+        try {
           const battery = await (navigator as any).getBattery();
           setBatteryLevel(Math.round(battery.level * 100));
           
           battery.addEventListener('levelchange', () => {
             setBatteryLevel(Math.round(battery.level * 100));
           });
+        } catch (error) {
+          console.log('Battery API not supported');
         }
-      } catch (error) {
-        console.log('Battery API not supported');
       }
     };
 
-    detectDevice();
-    updateNetworkStatus();
-    updateBatteryStatus();
-
-    // إضافة مستمعي الأحداث
-    window.addEventListener('online', updateNetworkStatus);
-    window.addEventListener('offline', updateNetworkStatus);
-    window.addEventListener('resize', detectDevice);
-
-    // إظهار المؤشر عند انقطاع الاتصال
-    const handleOffline = () => setIsVisible(true);
-    const handleOnline = () => {
-      setIsVisible(true);
-      setTimeout(() => setIsVisible(false), 3000);
-    };
-
-    window.addEventListener('offline', handleOffline);
-    window.addEventListener('online', handleOnline);
-
-    return () => {
-      window.removeEventListener('online', updateNetworkStatus);
-      window.removeEventListener('offline', updateNetworkStatus);
-      window.removeEventListener('resize', detectDevice);
-      window.removeEventListener('offline', handleOffline);
-      window.removeEventListener('online', handleOnline);
-    };
-  }, []);
-
-  // تحسين الصور للأجهزة المحمولة
-  useEffect(() => {
-    if (!deviceInfo?.isMobile) return;
-
-    const optimizeImages = () => {
-      const images = document.querySelectorAll('img[data-loaded="false"], img:not([data-loaded])');
-      
-      images.forEach((img) => {
-        const imageElement = img as HTMLImageElement;
-        
-        // إضافة lazy loading
-        if (!imageElement.loading) {
-          imageElement.loading = 'lazy';
+    // تطبيق تحسينات الموبايل
+    const applyMobileOptimizations = () => {
+      // إضافة CSS للموبايل
+      const mobileStyles = `
+        /* تحسينات الموبايل الأساسية */
+        @media (max-width: 768px) {
+          /* تحسين التمرير */
+          * {
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+          }
+          
+          /* تحسين النصوص */
+          body {
+            font-size: 16px;
+            line-height: 1.6;
+            -webkit-text-size-adjust: 100%;
+          }
+          
+          /* تحسين الأزرار */
+          button, a {
+            min-height: 44px;
+            min-width: 44px;
+            -webkit-tap-highlight-color: rgba(59, 130, 246, 0.1);
+          }
+          
+          /* تحسين المدخلات */
+          input, select, textarea {
+            font-size: 16px;
+            padding: 12px;
+            border-radius: 8px;
+          }
+          
+          /* تحسين البطاقات */
+          .card, .group {
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          }
+          
+          /* تحسين الشبكة */
+          .grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+          }
+          
+          /* تحسين الهوامش */
+          .container {
+            padding-left: 16px;
+            padding-right: 16px;
+          }
+          
+          /* تحسين العناوين */
+          h1 { font-size: 24px; }
+          h2 { font-size: 20px; }
+          h3 { font-size: 18px; }
+          
+          /* تحسين النصوص */
+          p { font-size: 16px; }
+          .text-sm { font-size: 14px; }
+          .text-xs { font-size: 12px; }
         }
         
-        // تحسين الجودة حسب الشبكة
-        if (networkStatus.effectiveType === 'slow-2g' || networkStatus.effectiveType === '2g') {
-          // استخدام صور منخفضة الجودة للشبكات البطيئة
-          const src = imageElement.src;
-          if (src.includes('cloudinary.com')) {
-            imageElement.src = src.replace(/q_auto/, 'q_30');
+        /* تحسينات للشاشات الصغيرة جداً */
+        @media (max-width: 375px) {
+          .container {
+            padding-left: 12px;
+            padding-right: 12px;
+          }
+          
+          h1 { font-size: 20px; }
+          h2 { font-size: 18px; }
+          h3 { font-size: 16px; }
+        }
+        
+        /* تحسينات للوضع المظلم */
+        @media (prefers-color-scheme: dark) {
+          .mobile-dark {
+            background-color: #111827;
+            color: #f9fafb;
           }
         }
         
-        // إضافة معالج التحميل
-        imageElement.addEventListener('load', () => {
-          imageElement.setAttribute('data-loaded', 'true');
-        });
-        
-        imageElement.addEventListener('error', () => {
-          imageElement.setAttribute('data-loaded', 'false');
-          // استخدام صورة احتياطية
-          imageElement.src = '/images/placeholder-article.jpg';
-        });
-      });
+        /* تحسينات للأداء */
+        @media (prefers-reduced-motion: reduce) {
+          * {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
+      `;
+
+      const styleElement = document.createElement('style');
+      styleElement.textContent = mobileStyles;
+      document.head.appendChild(styleElement);
     };
 
-    // تشغيل التحسين بعد تحميل الصفحة
-    const timer = setTimeout(optimizeImages, 1000);
-    
-    // مراقبة الصور الجديدة
-    const observer = new MutationObserver(optimizeImages);
-    observer.observe(document.body, { childList: true, subtree: true });
+    // تنفيذ الفحوصات
+    checkDevice();
+    checkNetworkStatus();
+    checkBattery();
+    applyMobileOptimizations();
+
+    // مراقبة تغييرات الشبكة
+    window.addEventListener('online', () => setIsOnline(true));
+    window.addEventListener('offline', () => setIsOnline(false));
+
+    // مراقبة تغيير حجم الشاشة
+    const handleResize = () => {
+      checkDevice();
+    };
+
+    window.addEventListener('resize', handleResize);
 
     return () => {
-      clearTimeout(timer);
-      observer.disconnect();
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('online', () => setIsOnline(true));
+      window.removeEventListener('offline', () => setIsOnline(false));
     };
-  }, [deviceInfo, networkStatus]);
+  }, []);
 
-  // تحسين التمرير للموبايل
-  useEffect(() => {
-    if (!deviceInfo?.isMobile) return;
+  // مؤشر حالة الشبكة
+  const NetworkIndicator = () => {
+    if (!isMobile) return null;
 
-    let ticking = false;
-    
-    const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          // إخفاء عناصر غير مرئية لتحسين الأداء
-          const elements = document.querySelectorAll('.animate-element');
-          elements.forEach((element) => {
-            const rect = element.getBoundingClientRect();
-            const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
-            
-            if (isVisible) {
-              element.classList.add('in-viewport');
-            } else {
-              element.classList.remove('in-viewport');
-            }
-          });
-          
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [deviceInfo]);
-
-  // تحسين اللمس للأجهزة المحمولة
-  useEffect(() => {
-    if (!deviceInfo?.isMobile) return;
-
-    // إضافة تأثيرات اللمس
-    const addTouchEffects = () => {
-      const touchElements = document.querySelectorAll('button, a, .tap-highlight');
-      
-      touchElements.forEach((element) => {
-        element.addEventListener('touchstart', () => {
-          element.classList.add('touch-active');
-        }, { passive: true });
-        
-        element.addEventListener('touchend', () => {
-          setTimeout(() => {
-            element.classList.remove('touch-active');
-          }, 150);
-        }, { passive: true });
-      });
-    };
-
-    addTouchEffects();
-    
-    // منع الـ zoom عند النقر المزدوج
-    let lastTouchEnd = 0;
-    document.addEventListener('touchend', (event) => {
-      const now = (new Date()).getTime();
-      if (now - lastTouchEnd <= 300) {
-        event.preventDefault();
-      }
-      lastTouchEnd = now;
-    }, { passive: false });
-
-  }, [deviceInfo]);
-
-  if (!deviceInfo?.isMobile || !isVisible) return null;
-
-  return (
-    <div className="network-indicator fixed top-16 left-1/2 transform -translate-x-1/2 z-[9999] transition-all duration-300">
-      <div className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-lg backdrop-blur-sm ${
-        networkStatus.online 
+    return (
+      <div className={`fixed top-4 left-4 z-50 flex items-center gap-2 px-3 py-2 rounded-full text-xs font-medium transition-all duration-300 ${
+        isOnline 
           ? 'bg-green-500 text-white' 
           : 'bg-red-500 text-white'
       }`}>
-        {networkStatus.online ? (
+        {isOnline ? (
           <>
-            <Wifi className="w-4 h-4" />
-            <span className="text-sm font-medium">متصل</span>
-            {networkStatus.effectiveType && (
-              <span className="text-xs opacity-90">
-                {networkStatus.effectiveType.toUpperCase()}
-              </span>
-            )}
+            <Wifi className="w-3 h-3" />
+            <span>{networkType}</span>
           </>
         ) : (
           <>
-            <WifiOff className="w-4 h-4" />
-            <span className="text-sm font-medium">غير متصل</span>
+            <WifiOff className="w-3 h-3" />
+            <span>غير متصل</span>
           </>
         )}
-        
-        {/* مؤشر البطارية */}
-        {batteryLevel !== null && batteryLevel <= 20 && (
-          <div className="flex items-center gap-1 ml-2 pl-2 border-l border-white/30">
-            <Battery className="w-3 h-3" />
-            <span className="text-xs">{batteryLevel}%</span>
-          </div>
-        )}
-        
-        {/* مؤشر قوة الإشارة */}
-        {networkStatus.online && (
-          <div className="flex items-center gap-1 ml-2 pl-2 border-l border-white/30">
-            <Signal className="w-3 h-3" />
-            {networkStatus.downlink && (
-              <span className="text-xs">
-                {networkStatus.downlink.toFixed(1)} Mbps
-              </span>
-            )}
-          </div>
-        )}
       </div>
-    </div>
+    );
+  };
+
+  // مؤشر البطارية
+  const BatteryIndicator = () => {
+    if (!isMobile || batteryLevel === null) return null;
+
+    const getBatteryColor = (level: number) => {
+      if (level > 50) return 'text-green-500';
+      if (level > 20) return 'text-yellow-500';
+      return 'text-red-500';
+    };
+
+    const getBatteryIcon = (level: number) => {
+      if (level > 80) return 'battery-full';
+      if (level > 60) return 'battery-high';
+      if (level > 40) return 'battery-medium';
+      if (level > 20) return 'battery-low';
+      return 'battery-empty';
+    };
+
+    return (
+      <div className={`fixed top-4 right-4 z-50 flex items-center gap-1 px-2 py-1 rounded-full bg-black/20 backdrop-blur-sm text-xs font-medium ${getBatteryColor(batteryLevel)}`}>
+        <Battery className="w-3 h-3" />
+        <span>{batteryLevel}%</span>
+      </div>
+    );
+  };
+
+  // تحسينات إضافية للموبايل
+  const MobileEnhancements = () => {
+    if (!isMobile) return null;
+
+    return (
+      <>
+        {/* إضافة safe area للـ iPhone */}
+        <div className="safe-area-top" />
+        
+        {/* تحسين التمرير */}
+        <style jsx global>{`
+          body {
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+          }
+          
+          /* تحسين أزرار اللمس */
+          button, a {
+            -webkit-tap-highlight-color: rgba(59, 130, 246, 0.1);
+          }
+          
+          /* منع التكبير في المدخلات */
+          input, select, textarea {
+            font-size: 16px !important;
+          }
+          
+          /* تحسين العرض للنصوص العربية */
+          body {
+            direction: rtl;
+            text-align: right;
+          }
+        `}</style>
+      </>
+    );
+  };
+
+  return (
+    <>
+      {children}
+      <NetworkIndicator />
+      <BatteryIndicator />
+      <MobileEnhancements />
+    </>
   );
 }
 
-// CSS إضافي للتأثيرات
-const additionalStyles = `
-  .touch-active {
-    transform: scale(0.98) !important;
-    opacity: 0.8 !important;
-  }
-  
-  .in-viewport {
-    will-change: transform, opacity;
-  }
-  
-  .animate-element:not(.in-viewport) {
-    will-change: auto;
-  }
-  
-  @media (max-width: 768px) {
-    .network-indicator {
-      font-size: 14px;
-    }
-    
-    .touch-active {
-      transition: all 0.1s ease !important;
-    }
-  }
-`;
+// مكون لتحسين الأداء على الموبايل
+export function MobilePerformanceOptimizer() {
+  useEffect(() => {
+    // تحسين تحميل الصور
+    const optimizeImages = () => {
+      const images = document.querySelectorAll('img');
+      images.forEach(img => {
+        img.loading = 'lazy';
+        img.decoding = 'async';
+      });
+    };
 
-// إضافة الأنماط إلى الصفحة
-if (typeof document !== 'undefined') {
-  const styleElement = document.createElement('style');
-  styleElement.textContent = additionalStyles;
-  document.head.appendChild(styleElement);
+    // تحسين الخطوط
+    const optimizeFonts = () => {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'font';
+      link.href = '/fonts/arabic-font.woff2';
+      link.type = 'font/woff2';
+      link.crossOrigin = 'anonymous';
+      document.head.appendChild(link);
+    };
+
+    // تحسين التمرير
+    const optimizeScrolling = () => {
+      (document.body.style as any).webkitOverflowScrolling = 'touch';
+      document.body.style.scrollBehavior = 'smooth';
+    };
+
+    optimizeImages();
+    optimizeFonts();
+    optimizeScrolling();
+  }, []);
+
+  return null;
+}
+
+// مكون لتحسين التفاعل باللمس
+export function TouchInteractionOptimizer() {
+  useEffect(() => {
+    // تحسين أزرار اللمس
+    const optimizeTouchTargets = () => {
+      const touchElements = document.querySelectorAll('button, a, input, select, textarea');
+      touchElements.forEach(element => {
+        const htmlElement = element as HTMLElement;
+        htmlElement.style.minHeight = '44px';
+        htmlElement.style.minWidth = '44px';
+        (htmlElement.style as any).webkitTapHighlightColor = 'rgba(59, 130, 246, 0.1)';
+      });
+    };
+
+    // تحسين ردود الأفعال
+    const optimizeTouchFeedback = () => {
+      document.addEventListener('touchstart', () => {}, { passive: true });
+      document.addEventListener('touchmove', () => {}, { passive: true });
+    };
+
+    optimizeTouchTargets();
+    optimizeTouchFeedback();
+  }, []);
+
+  return null;
+}
+
+// مكون لتحسين العرض
+export function DisplayOptimizer() {
+  useEffect(() => {
+    // تحسين العرض للنصوص العربية
+    const optimizeArabicText = () => {
+      document.body.style.direction = 'rtl';
+      document.body.style.textAlign = 'right';
+      document.body.style.fontFamily = "'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+    };
+
+    // تحسين التباين
+    const optimizeContrast = () => {
+      const style = document.createElement('style');
+      style.textContent = `
+        @media (max-width: 768px) {
+          .text-gray-600 { color: #4b5563 !important; }
+          .text-gray-500 { color: #6b7280 !important; }
+          .dark .text-gray-400 { color: #d1d5db !important; }
+        }
+      `;
+      document.head.appendChild(style);
+    };
+
+    optimizeArabicText();
+    optimizeContrast();
+  }, []);
+
+  return null;
 } 
