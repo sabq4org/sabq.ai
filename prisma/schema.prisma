@@ -262,32 +262,25 @@ model UserPreference {
 }
 
 model Comment {
-  id                String               @id @default(uuid())
-  articleId         String               @map("article_id")
-  userId            String?              @map("user_id")
-  parentId          String?              @map("parent_id")
-  content           String               @db.Text
-  status            String               @default("pending")
-  likes             Int                  @default(0)
-  aiScore           Int?                 @map("ai_score")
-  aiClassification  String?              @map("ai_classification")
-  aiAnalyzedAt      DateTime?            @map("ai_analyzed_at")
-  metadata          Json?
-  createdAt         DateTime             @default(now()) @map("created_at")
-  updatedAt         DateTime             @updatedAt @map("updated_at")
-  article           Article              @relation(fields: [articleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  user              User?                @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  parent            Comment?             @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  replies           Comment[]            @relation("CommentReplies")
-  aiAnalysis        AICommentAnalysis?
-  moderationLogs    AIModerationLog[]
+  id        String    @id @default(uuid())
+  articleId String    @map("article_id")
+  userId    String?   @map("user_id")
+  parentId  String?   @map("parent_id")
+  content   String    @db.Text
+  status    String    @default("pending")
+  likes     Int       @default(0)
+  metadata  Json?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  article   Article   @relation(fields: [articleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies   Comment[] @relation("CommentReplies")
 
   @@index([articleId])
   @@index([userId])
   @@index([parentId])
   @@index([status])
-  @@index([aiScore])
-  @@index([aiClassification])
   @@map("comments")
 }
 
@@ -654,72 +647,6 @@ enum forum_topics_status {
   pending
   hidden
   deleted
-}
-
-model AICommentAnalysis {
-  id                String   @id @default(uuid())
-  commentId         String   @unique @map("comment_id")
-  score             Int
-  classification    String   @db.VarChar(50)
-  suggestedAction   String   @map("suggested_action") @db.VarChar(20)
-  aiProvider        String?  @map("ai_provider") @db.VarChar(50)
-  confidence        Decimal? @db.Decimal(5, 2)
-  analysisDetails   Json?    @map("analysis_details")
-  flaggedWords      Json?    @map("flagged_words")
-  categories        Json?
-  processingTime    Int?     @map("processing_time")
-  createdAt         DateTime @default(now()) @map("created_at")
-  comment           Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@index([commentId])
-  @@index([classification])
-  @@index([score])
-  @@index([createdAt])
-  @@map("ai_comment_analysis")
-}
-
-model AIModerationSettings {
-  id                   String   @id @default(uuid())
-  autoApproveThreshold Int      @default(80) @map("auto_approve_threshold")
-  autoRejectThreshold  Int      @default(20) @map("auto_reject_threshold")
-  enabled              Boolean  @default(true)
-  aiProvider           String   @default("openai") @map("ai_provider") @db.VarChar(50)
-  apiKeyEncrypted      String?  @map("api_key_encrypted") @db.Text
-  checkSpam            Boolean  @default(true) @map("check_spam")
-  checkToxicity        Boolean  @default(true) @map("check_toxicity")
-  checkProfanity       Boolean  @default(true) @map("check_profanity")
-  checkThreats         Boolean  @default(true) @map("check_threats")
-  checkIdentityAttack  Boolean  @default(true) @map("check_identity_attack")
-  customRules          Json?    @map("custom_rules")
-  updatedAt            DateTime @default(now()) @updatedAt @map("updated_at")
-  createdAt            DateTime @default(now()) @map("created_at")
-
-  @@map("ai_moderation_settings")
-}
-
-model AIModerationLog {
-  id              String   @id @default(uuid())
-  commentId       String   @map("comment_id")
-  aiDecision      String   @map("ai_decision") @db.VarChar(20)
-  humanDecision   String?  @map("human_decision") @db.VarChar(20)
-  overridden      Boolean  @default(false)
-  moderatorId     String?  @map("moderator_id")
-  overrideReason  String?  @map("override_reason") @db.Text
-  createdAt       DateTime @default(now()) @map("created_at")
-  comment         Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@index([commentId])
-  @@index([overridden])
-  @@map("ai_moderation_logs")
-}
-
-model BannedWord {
-  id        String   @id @default(uuid())
-  word      String   @unique
-  severity  String   @db.VarChar(20)
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@map("banned_words")
 }
 
 enum SubscriberStatus {
