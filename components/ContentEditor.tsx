@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useState } from 'react';
 import { 
@@ -28,7 +27,6 @@ export default function ContentEditor({
 
   // دوال AI الجديدة
   const generateCategorySuggestion = async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setFormData((prev: any) => ({ ...prev, aiLoading: { ...prev.aiLoading, category: true } }));
     try {
       // محاكاة استدعاء AI لتحليل المحتوى واقتراح التصنيف
@@ -52,20 +50,17 @@ export default function ContentEditor({
         suggestedCategoryName = 'الرياضة';
       }
       
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setFormData((prev: any) => ({ 
         ...prev, 
         category_id: suggestedCategoryId,
         ai_category_suggestion: suggestedCategoryName
       }));
     } finally {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setFormData((prev: any) => ({ ...prev, aiLoading: { ...prev.aiLoading, category: false } }));
     }
   };
 
   const generateAISummary = async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setFormData((prev: any) => ({ ...prev, aiLoading: { ...prev.aiLoading, summary: true } }));
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -81,10 +76,8 @@ export default function ContentEditor({
         ? `ملخص تلقائي: ${contentText.substring(0, 150)}...`
         : 'يحتاج المقال إلى محتوى أكثر لتوليد ملخص دقيق';
       
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setFormData((prev: any) => ({ ...prev, ai_summary: summary }));
     } finally {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setFormData((prev: any) => ({ ...prev, aiLoading: { ...prev.aiLoading, summary: false } }));
     }
   };
@@ -98,7 +91,6 @@ export default function ContentEditor({
       order: (formData.content_blocks || []).length
     };
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setFormData((prev: any) => ({
       ...prev,
       content_blocks: [...(prev.content_blocks || []), newBlock]
@@ -121,7 +113,6 @@ export default function ContentEditor({
   };
 
   const updateBlock = (blockId: string, content: any) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setFormData((prev: any) => ({
       ...prev,
       content_blocks: (prev.content_blocks || []).map((b: any) => 
@@ -143,12 +134,10 @@ export default function ContentEditor({
     // إعادة ترقيم البلوكات
     blocks.forEach((block: any, i: number) => block.order = i);
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setFormData((prev: any) => ({ ...prev, content_blocks: blocks }));
   };
 
   const deleteBlock = (blockId: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setFormData((prev: any) => ({
       ...prev,
       content_blocks: (prev.content_blocks || []).filter((b: any) => b.id !== blockId)
