@@ -19,10 +19,10 @@ echo "2️⃣ المتغيرات البيئية المطلوبة:"
 echo "-----------------------------------"
 cat << 'EOF'
 DATABASE_URL="استخدم connection string من DigitalOcean مع private-"
-NEXT_PUBLIC_SITE_URL="https://sabq-ai.com"
-NEXT_PUBLIC_API_URL="https://sabq-ai.com/api"
+NEXT_PUBLIC_SITE_URL="https://jur3a.ai"
+NEXT_PUBLIC_API_URL="https://jur3a.ai/api"
 NODE_ENV="production"
-NEXTAUTH_URL="https://sabq-ai.com"
+NEXTAUTH_URL="https://jur3a.ai"
 NEXTAUTH_SECRET="<generate-secure-secret>"
 JWT_SECRET="<generate-secure-secret>"
 EOF
