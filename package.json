@@ -9,8 +9,8 @@
   "scripts": {
     "dev": "next dev",
     "dev:staging": "NODE_ENV=development next dev",
-    "prebuild": "echo 'Checking files...' && ls -la contexts/DarkModeContext.tsx lib/date-utils.ts lib/utils.ts components/ArticleJsonLd.tsx components/Footer.tsx",
-    "build": "npx prisma generate && next build",
+    "prebuild": "echo 'Generating Prisma Client...' && npx prisma generate && echo 'Checking files...' && ls -la contexts/DarkModeContext.tsx lib/date-utils.ts lib/utils.ts components/ArticleJsonLd.tsx components/Footer.tsx",
+    "build": "next build",
     "build:vercel": "npx prisma generate --no-engine && next build",
     "build:optimized": "node scripts/vercel-build-optimization.js && prisma generate --no-engine && next build",
     "build:do": "node scripts/digitalocean-build.js && prisma generate || node scripts/fix-prisma-generation.js && next build",
