@@ -656,7 +656,6 @@ enum forum_topics_status {
   deleted
 }
 
-<<<<<<< Updated upstream
 model AICommentAnalysis {
   id                String   @id @default(uuid())
   commentId         String   @unique @map("comment_id")
@@ -721,7 +720,8 @@ model BannedWord {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("banned_words")
-=======
+}
+
 enum SubscriberStatus {
   active
   inactive
@@ -752,5 +752,4 @@ enum EmailLogStatus {
   clicked
   unsubscribed
   failed
->>>>>>> Stashed changes
 }
