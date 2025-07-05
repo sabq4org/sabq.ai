@@ -12,7 +12,8 @@ import {
   Heart,
   Share2,
   Calendar,
-  ArrowLeft
+  ArrowLeft,
+  ExternalLink
 } from 'lucide-react';
 import { useDarkModeContext } from '@/contexts/DarkModeContext';
 import AnalysisTypeIcon from './AnalysisTypeIcon';
@@ -88,113 +89,146 @@ export default function DeepAnalysisCard({ analysis, viewMode = 'grid' }: DeepAn
     console.log(`${action} clicked for analysis ${analysis.id}`);
   };
 
+  // تحديد الرابط الصحيح
+  const analysisUrl = `/insights/deep/${analysis.slug || analysis.id}`;
+
   return (
-    <Link
-      href={`/insights/deep/${analysis.slug || analysis.id}`}
-      className={`block group ${viewMode === 'list' ? 'w-full' : ''}`}
-    >
-      <div className={`
-        relative overflow-hidden rounded-xl transition-all duration-300 
-        ${darkMode 
-          ? 'bg-gray-800 border border-gray-700' 
-          : 'bg-white shadow-sm border border-gray-200'
-        } 
-        ${viewMode === 'list' ? 'flex' : ''}
-      `}>
-        {/* صورة مميزة */}
-        <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-72 flex-shrink-0' : 'h-48'}`}>
+    <div className={`
+      relative overflow-hidden rounded-xl transition-all duration-300 group
+      ${darkMode 
+        ? 'bg-gray-800 border border-gray-700 hover:border-gray-600' 
+        : 'bg-white shadow-sm border border-gray-200 hover:shadow-lg'
+      } 
+      ${viewMode === 'list' ? 'flex' : ''}
+      hover:transform hover:scale-105
+    `}>
+      {/* صورة مميزة */}
+      <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-72 flex-shrink-0' : 'h-48'}`}>
+        <Link href={analysisUrl}>
           <img 
             src={analysis.featuredImage || generatePlaceholderImage(analysis.title)} 
             alt={analysis.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 cursor-pointer"
           />
-          
-          {/* شارة التحليل العميق */}
-          <div className="absolute top-3 right-3">
-            <div className="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5">
-              <Brain className="w-3.5 h-3.5" />
-              تحليل عميق
-            </div>
-          </div>
-
-          {/* نسبة الجودة */}
-          <div className="absolute bottom-3 left-3">
-            <div className={`
-              ${analysis.qualityScore >= 80 ? 'bg-green-600' : analysis.qualityScore >= 60 ? 'bg-yellow-600' : 'bg-red-600'}
-              text-white px-2.5 py-1 rounded text-xs font-medium flex items-center gap-1
-            `}>
-              <BarChart3 className="w-3.5 h-3.5" />
-              {analysis.qualityScore}%
-            </div>
+        </Link>
+        
+        {/* شارة التحليل العميق */}
+        <div className="absolute top-3 right-3">
+          <div className="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5">
+            <Brain className="w-3.5 h-3.5" />
+            تحليل عميق
           </div>
         </div>
 
-        {/* محتوى البطاقة */}
-        <div className={`p-5 ${viewMode === 'list' ? 'flex-1' : ''}`}>
-          {/* التصنيفات */}
-          <div className="flex flex-wrap gap-2 mb-3">
-            {analysis.categories.slice(0, 2).map((category, index) => (
-              <span 
-                key={index}
-                className={`
-                  text-xs px-2.5 py-1 rounded font-medium
-                  ${darkMode 
-                    ? 'bg-gray-700 text-gray-300' 
-                    : 'bg-gray-100 text-gray-700'
-                  }
-                `}
-              >
-                {typeof category === 'string' ? category : ((category as any).name_ar || (category as any).name || 'عام')}
-              </span>
-            ))}
+        {/* نسبة الجودة */}
+        <div className="absolute bottom-3 left-3">
+          <div className={`
+            ${analysis.qualityScore >= 80 ? 'bg-green-600' : analysis.qualityScore >= 60 ? 'bg-yellow-600' : 'bg-red-600'}
+            text-white px-2.5 py-1 rounded text-xs font-medium flex items-center gap-1
+          `}>
+            <BarChart3 className="w-3.5 h-3.5" />
+            {analysis.qualityScore}%
           </div>
+        </div>
 
-          {/* العنوان */}
+        {/* زر عرض سريع */}
+        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <Link 
+            href={analysisUrl}
+            className="bg-white/90 backdrop-blur-sm text-gray-800 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 hover:bg-white transition-colors"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            عرض
+          </Link>
+        </div>
+      </div>
+
+      {/* محتوى البطاقة */}
+      <div className={`p-5 ${viewMode === 'list' ? 'flex-1' : ''}`}>
+        {/* التصنيفات */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {analysis.categories.slice(0, 2).map((category, index) => (
+            <span 
+              key={index}
+              className={`
+                text-xs px-2.5 py-1 rounded font-medium
+                ${darkMode 
+                  ? 'bg-gray-700 text-gray-300' 
+                  : 'bg-gray-100 text-gray-700'
+                }
+              `}
+            >
+              {typeof category === 'string' ? category : ((category as any).name_ar || (category as any).name || 'عام')}
+            </span>
+          ))}
+        </div>
+
+        {/* العنوان */}
+        <Link href={analysisUrl}>
           <h3 className={`
-            text-lg font-bold line-clamp-2 mb-3 group-hover:text-purple-600 transition-colors
+            text-lg font-bold line-clamp-2 mb-3 group-hover:text-purple-600 transition-colors cursor-pointer
             ${darkMode ? 'text-white' : 'text-gray-900'}
           `}>
             {analysis.title}
           </h3>
+        </Link>
 
-          {/* الملخص */}
-          <p className={`
-            text-sm line-clamp-2 mb-4
-            ${darkMode ? 'text-gray-400' : 'text-gray-600'}
-          `}>
-            {analysis.summary}
-          </p>
+        {/* الملخص */}
+        <p className={`
+          text-sm line-clamp-2 mb-4
+          ${darkMode ? 'text-gray-400' : 'text-gray-600'}
+        `}>
+          {analysis.summary}
+        </p>
 
-          {/* معلومات أسفل البطاقة */}
-          <div className={`
-            flex items-center justify-between text-xs pt-3 border-t
-            ${darkMode ? 'border-gray-700 text-gray-400' : 'border-gray-200 text-gray-500'}
-          `}>
-            <div className="flex items-center gap-3">
+        {/* معلومات أسفل البطاقة */}
+        <div className={`
+          flex items-center justify-between text-xs pt-3 border-t
+          ${darkMode ? 'border-gray-700 text-gray-400' : 'border-gray-200 text-gray-500'}
+        `}>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5" />
+              {formatDate(analysis.publishedAt || analysis.createdAt)}
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5" />
+              {analysis.readingTime} دقائق
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              <Eye className="w-3.5 h-3.5" />
+              {analysis.views.toLocaleString('ar-SA')}
+            </span>
+            {analysis.likes > 0 && (
               <span className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" />
-                {formatDate(analysis.publishedAt || analysis.createdAt)}
+                <Heart className="w-3.5 h-3.5" />
+                {analysis.likes}
               </span>
-              <span className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" />
-                {analysis.readingTime} دقائق
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1">
-                <Eye className="w-3.5 h-3.5" />
-                {analysis.views.toLocaleString('ar-SA')}
-              </span>
-              {analysis.likes > 0 && (
-                <span className="flex items-center gap-1">
-                  <Heart className="w-3.5 h-3.5" />
-                  {analysis.likes}
-                </span>
-              )}
-            </div>
+            )}
           </div>
         </div>
+
+        {/* زر عرض التفاصيل */}
+        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <Link 
+            href={analysisUrl}
+            className={`
+              w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
+              ${darkMode 
+                ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                : 'bg-purple-600 hover:bg-purple-700 text-white'
+              }
+              hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98]
+            `}
+          >
+            <Brain className="w-4 h-4" />
+            <span>عرض التحليل الكامل</span>
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+        </div>
       </div>
-    </Link>
+    </div>
   );
 } 

@@ -249,7 +249,7 @@ export default function DeepAnalysisWidget({ insights }: DeepAnalysisWidgetProps
                       </div>
 
                       {/* أزرار التفاعل محسّنة */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-1">
                           <a 
                             href={item.url} 
@@ -315,6 +315,30 @@ export default function DeepAnalysisWidget({ insights }: DeepAnalysisWidgetProps
                             <span className="font-medium">{item.readTime} د</span>
                           </div>
                         </div>
+                      </div>
+
+                      {/* زر عرض التحليل الكامل */}
+                      <div className="mt-3">
+                        <a 
+                          href={item.url} 
+                          onClick={() => markAsRead(item.id)}
+                          className={`
+                            w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all
+                            ${isAI 
+                              ? darkMode 
+                                ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                                : 'bg-purple-600 hover:bg-purple-700 text-white'
+                              : darkMode 
+                                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            }
+                            hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98]
+                          `}
+                        >
+                          <Brain className="w-4 h-4" />
+                          <span>عرض التحليل الكامل</span>
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
                       </div>
                     </div>
                   </div>
