@@ -1,0 +1,516 @@
+/* ⚡ تحسينات الأداء للموبايل */
+
+/* ===============================
+   🚀 1. تحسين الرسوم والتأثيرات
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تقليل استخدام will-change */
+  * {
+    will-change: auto !important;
+  }
+  
+  /* استخدام will-change فقط للعناصر المتحركة */
+  .animate-element,
+  .transition-transform,
+  .transition-opacity {
+    will-change: transform, opacity !important;
+  }
+  
+  /* إزالة will-change بعد انتهاء الحركة */
+  .animate-element:not(:hover):not(:focus):not(.active) {
+    will-change: auto !important;
+  }
+  
+  /* تحسين الظلال للأداء */
+  .shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+  }
+  
+  .shadow {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .shadow-lg {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  /* تقليل التدرجات المعقدة */
+  .gradient-simple {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  }
+  
+  /* تحسين border-radius */
+  .rounded-xl {
+    border-radius: 0.75rem !important;
+  }
+  
+  .rounded-2xl {
+    border-radius: 1rem !important;
+  }
+}
+
+/* ===============================
+   🖼️ 2. تحسين الصور والوسائط
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تحسين تحميل الصور */
+  img {
+    loading: lazy !important;
+    decoding: async !important;
+  }
+  
+  /* تحسين أحجام الصور */
+  .image-optimize {
+    image-rendering: -webkit-optimize-contrast !important;
+    image-rendering: crisp-edges !important;
+  }
+  
+  /* منع تحميل الصور الكبيرة غير المرئية */
+  img[src*="w_1920"],
+  img[src*="w_1200"] {
+    content-visibility: auto !important;
+    contain-intrinsic-size: 400px 200px !important;
+  }
+  
+  /* تحسين الخلفيات */
+  .bg-image {
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: scroll !important; /* منع fixed للأداء */
+  }
+  
+  /* استخدام WebP عند الإمكان */
+  .webp img {
+    content: url(data:image/webp;base64,UklGRh4AAABXRUJQVlA4TBEAAAAvAAAAAAfQ//73v/+BiOh/AAA=) !important;
+  }
+}
+
+/* ===============================
+   📱 3. تحسين التمرير والحركة
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تحسين التمرير */
+  * {
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
+  }
+  
+  /* تحسين التمرير الأفقي */
+  .scroll-x {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  
+  .scroll-x::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  /* تحسين التمرير العمودي */
+  .scroll-y {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  /* منع الارتداد المفرط */
+  body {
+    overscroll-behavior-y: contain !important;
+  }
+  
+  /* تحسين الحركات */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+  
+  /* تحسين الانتقالات */
+  .transition-fast {
+    transition-duration: 0.1s !important;
+    transition-timing-function: ease-out !important;
+  }
+  
+  .transition-medium {
+    transition-duration: 0.2s !important;
+    transition-timing-function: ease-in-out !important;
+  }
+  
+  .transition-slow {
+    transition-duration: 0.3s !important;
+    transition-timing-function: ease-in !important;
+  }
+}
+
+/* ===============================
+   🧠 4. تحسين الذاكرة والمعالجة
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تحسين contain للعناصر المستقلة */
+  .card,
+  .article-card,
+  .stats-card {
+    contain: layout style paint !important;
+  }
+  
+  /* تحسين content-visibility */
+  .lazy-content {
+    content-visibility: auto !important;
+    contain-intrinsic-size: 0 400px !important;
+  }
+  
+  /* تحسين transform3d للتسريع الأجهزة */
+  .hardware-accelerate {
+    transform: translate3d(0, 0, 0) !important;
+    backface-visibility: hidden !important;
+    perspective: 1000px !important;
+  }
+  
+  /* تقليل repaint و reflow */
+  .no-repaint {
+    transform: translateZ(0) !important;
+    -webkit-transform: translateZ(0) !important;
+  }
+  
+  /* تحسين الطبقات */
+  .layer-promote {
+    transform: translateZ(0) !important;
+    will-change: transform !important;
+  }
+}
+
+/* ===============================
+   🎯 5. تحسين الخطوط والنصوص
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تحسين عرض الخطوط */
+  body {
+    text-rendering: optimizeSpeed !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    font-display: swap !important;
+  }
+  
+  /* تحسين font-display */
+  @font-face {
+    font-display: swap !important;
+  }
+  
+  /* تقليل font-weight variations */
+  .font-light {
+    font-weight: 300 !important;
+  }
+  
+  .font-normal {
+    font-weight: 400 !important;
+  }
+  
+  .font-medium {
+    font-weight: 500 !important;
+  }
+  
+  .font-semibold {
+    font-weight: 600 !important;
+  }
+  
+  .font-bold {
+    font-weight: 700 !important;
+  }
+  
+  /* تحسين line-height للأداء */
+  p, span, div {
+    line-height: 1.6 !important;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    line-height: 1.3 !important;
+  }
+}
+
+/* ===============================
+   🔧 6. تحسين CSS Grid و Flexbox
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تحسين Grid للموبايل */
+  .grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  .grid-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  /* تحسين Flexbox */
+  .flex {
+    display: flex !important;
+  }
+  
+  .flex-col {
+    flex-direction: column !important;
+  }
+  
+  .flex-wrap {
+    flex-wrap: wrap !important;
+  }
+  
+  .justify-center {
+    justify-content: center !important;
+  }
+  
+  .items-center {
+    align-items: center !important;
+  }
+  
+  /* تحسين gap */
+  .gap-1 {
+    gap: 0.25rem !important;
+  }
+  
+  .gap-2 {
+    gap: 0.5rem !important;
+  }
+  
+  .gap-4 {
+    gap: 1rem !important;
+  }
+  
+  .gap-6 {
+    gap: 1.5rem !important;
+  }
+}
+
+/* ===============================
+   📊 7. تحسين الجداول والقوائم
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تحسين الجداول الكبيرة */
+  .table-virtual {
+    contain: strict !important;
+    height: 400px !important;
+    overflow: auto !important;
+  }
+  
+  /* تحسين القوائم الطويلة */
+  .list-virtual {
+    contain: content !important;
+    overflow: auto !important;
+    height: 300px !important;
+  }
+  
+  /* تحسين عرض البيانات */
+  .data-table {
+    display: block !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+  }
+  
+  .data-table table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  
+  /* تحسين البطاقات */
+  .card-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+  
+  .card-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+}
+
+/* ===============================
+   🌐 8. تحسين الشبكة والتحميل
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تحسين تحميل المحتوى */
+  .lazy-load {
+    opacity: 0 !important;
+    transform: translateY(20px) !important;
+    transition: opacity 0.3s ease, transform 0.3s ease !important;
+  }
+  
+  .lazy-load.loaded {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+  }
+  
+  /* تحسين الصور التدريجية */
+  .progressive-image {
+    background-size: cover !important;
+    background-position: center !important;
+    filter: blur(5px) !important;
+    transition: filter 0.3s !important;
+  }
+  
+  .progressive-image.loaded {
+    filter: blur(0) !important;
+  }
+  
+  /* تحسين التحميل التدريجي */
+  .skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%) !important;
+    background-size: 200% 100% !important;
+    animation: skeleton-loading 1.5s infinite !important;
+  }
+  
+  @keyframes skeleton-loading {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+  
+  .dark .skeleton {
+    background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%) !important;
+    background-size: 200% 100% !important;
+  }
+}
+
+/* ===============================
+   🔋 9. تحسين استهلاك البطارية
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تقليل الحركات المستمرة */
+  .animate-pulse {
+    animation-duration: 2s !important;
+  }
+  
+  .animate-spin {
+    animation-duration: 1s !important;
+  }
+  
+  .animate-bounce {
+    animation-duration: 1s !important;
+  }
+  
+  /* تقليل التحديثات المستمرة */
+  .auto-refresh {
+    animation-play-state: paused !important;
+  }
+  
+  /* تحسين للبطارية المنخفضة */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-pulse,
+    .animate-spin,
+    .animate-bounce {
+      animation: none !important;
+    }
+  }
+  
+  /* إيقاف الحركات عند عدم التفاعل */
+  .page-idle .animate-pulse {
+    animation-play-state: paused !important;
+  }
+}
+
+/* ===============================
+   🎨 10. تحسين الألوان والمظاهر
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تحسين الألوان للعين */
+  :root {
+    --mobile-primary: #3b82f6;
+    --mobile-secondary: #6b7280;
+    --mobile-success: #10b981;
+    --mobile-warning: #f59e0b;
+    --mobile-error: #ef4444;
+    --mobile-bg: #ffffff;
+    --mobile-surface: #f8fafc;
+    --mobile-border: #e5e7eb;
+  }
+  
+  .dark {
+    --mobile-primary: #60a5fa;
+    --mobile-secondary: #9ca3af;
+    --mobile-success: #34d399;
+    --mobile-warning: #fbbf24;
+    --mobile-error: #f87171;
+    --mobile-bg: #111827;
+    --mobile-surface: #1f2937;
+    --mobile-border: #374151;
+  }
+  
+  /* استخدام الألوان المحسنة */
+  .bg-primary {
+    background-color: var(--mobile-primary) !important;
+  }
+  
+  .text-primary {
+    color: var(--mobile-primary) !important;
+  }
+  
+  .bg-surface {
+    background-color: var(--mobile-surface) !important;
+  }
+  
+  .border-default {
+    border-color: var(--mobile-border) !important;
+  }
+}
+
+/* ===============================
+   ⚡ 11. تحسينات نهائية للأداء
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تحسين الذاكرة */
+  .memory-efficient {
+    contain: layout style paint !important;
+    content-visibility: auto !important;
+  }
+  
+  /* تحسين المعالج */
+  .cpu-efficient {
+    will-change: auto !important;
+    transform: translateZ(0) !important;
+  }
+  
+  /* تحسين الشبكة */
+  .network-efficient {
+    loading: lazy !important;
+    decoding: async !important;
+  }
+  
+  /* تحسين البطارية */
+  .battery-efficient {
+    animation-play-state: paused !important;
+    transition-duration: 0.1s !important;
+  }
+  
+  /* تحسين شامل */
+  .performance-optimized {
+    contain: layout style paint !important;
+    content-visibility: auto !important;
+    will-change: auto !important;
+    transform: translateZ(0) !important;
+    -webkit-overflow-scrolling: touch !important;
+    text-rendering: optimizeSpeed !important;
+  }
+} 

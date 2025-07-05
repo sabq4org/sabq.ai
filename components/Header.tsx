@@ -227,8 +227,8 @@ export default function Header() {
   ];
 
   return (
-    <header className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-black/50 sticky top-0 z-50 transition-colors duration-300 h-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-full">
+    <header className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-black/50 sticky top-0 z-50 transition-colors duration-300 h-16 safe-area-top">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
         <div className="flex items-center justify-between h-full">
           {/* Mobile Layout */}
           <div className="flex lg:hidden items-center justify-between w-full">
@@ -411,8 +411,8 @@ export default function Header() {
         </div>
 
         {showMobileMenu && (
-          <div className="lg:hidden py-4 border-t border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 absolute top-full left-0 right-0 shadow-lg">
-            <nav className="flex flex-col gap-2 px-6">
+          <div className="lg:hidden py-4 border-t border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 absolute top-full left-0 right-0 shadow-lg mobile-menu">
+            <nav className="flex flex-col gap-2 px-6 max-h-[70vh] overflow-y-auto hide-scrollbar">
               {navigationItems.map((item) => (
                 <Link
                   key={item.url}
