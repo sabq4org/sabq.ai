@@ -1736,7 +1736,7 @@ function NewspaperHomePage(): React.ReactElement {
 
       {/* عرض جميع البلوكات الذكية */}
       {getOrderedBlocks().some(block => blocksConfig[block.key]?.enabled) && (
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           {getOrderedBlocks().map(block => (
             <div key={block.key} className="mb-6">
               {block.component}
@@ -1746,12 +1746,12 @@ function NewspaperHomePage(): React.ReactElement {
       )}
 
       {/* Smart Blocks - Below Header - أول بلوك أسفل الهيدر مباشرة */}
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <SmartSlot position="below_header" />
       </div>
 
       {/* Smart Blocks - Top Banner (للتوافق مع النظام القديم) */}
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <SmartSlot position="topBanner" />
       </div>
 
@@ -1764,7 +1764,7 @@ function NewspaperHomePage(): React.ReactElement {
       )}
 
       {/* Smart Blocks - Below Deep Analysis */}
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <SmartSlot position="below_deep_analysis" />
       </div>
 
@@ -1772,7 +1772,7 @@ function NewspaperHomePage(): React.ReactElement {
       {/* <SmartSlot position="afterHighlights" /> */}
 
       {/* Elegant Separator */}
-      <div className="max-w-7xl mx-auto px-6 mb-6 mt-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 mb-6 mt-6">
         <div className="flex items-center justify-center">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
           <div className={`px-6 py-2 rounded-full ${darkMode ? 'bg-gray-800 text-gray-400 dark:text-gray-500' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
@@ -1787,27 +1787,27 @@ function NewspaperHomePage(): React.ReactElement {
       </div>
 
       {/* شريط التنقل بالتصنيفات */}
-      <section className="max-w-7xl mx-auto px-6 mb-8">
-        <div className={`rounded-3xl p-8 transition-all duration-500 shadow-lg dark:shadow-gray-900/50 ${darkMode ? 'bg-blue-900/10 border border-blue-800/30' : 'bg-blue-50 dark:bg-blue-900/20/50 border border-blue-200/50'}`} style={{ 
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 mb-8">
+        <div className={`rounded-3xl p-4 sm:p-6 lg:p-8 transition-all duration-500 shadow-lg dark:shadow-gray-900/50 ${darkMode ? 'bg-blue-900/10 border border-blue-800/30' : 'bg-blue-50 dark:bg-blue-900/20/50 border border-blue-200/50'}`} style={{ 
           backdropFilter: 'blur(10px)',
           background: darkMode 
             ? 'linear-gradient(135deg, rgba(30, 64, 175, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)' 
             : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(191, 219, 254, 0.3) 100%)'
         }}>
-          <div className="text-center mb-8">
+          <div className="text-center mb-6 sm:mb-8">
             {/* أيقونة كبيرة وواضحة */}
             <div className="mb-4">
-              <div className={`w-20 h-20 mx-auto rounded-2xl flex items-center justify-center shadow-xl ${
+              <div className={`w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-2xl flex items-center justify-center shadow-xl ${
                 darkMode 
                   ? 'bg-gradient-to-br from-blue-600 to-blue-800' 
                   : 'bg-gradient-to-br from-blue-500 to-blue-700'
               }`}>
-                <Tag className="w-10 h-10 text-white" />
+                <Tag className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
               </div>
             </div>
             
             {/* العنوان */}
-            <h2 className={`text-2xl font-bold mb-3 transition-colors duration-300 ${
+            <h2 className={`text-xl sm:text-2xl font-bold mb-3 transition-colors duration-300 ${
               darkMode ? 'text-white' : 'text-gray-800 dark:text-gray-100'
             }`}>
               {isLoggedIn ? 'استكشف بحسب اهتماماتك' : 'استكشف بحسب التصنيفات'}
@@ -1842,28 +1842,28 @@ function NewspaperHomePage(): React.ReactElement {
             </div>
           ) : categories.length > 0 ? (
             <>
-              <div className="flex flex-wrap items-center justify-center gap-3">
+              <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
                 {categories.map((category: any) => (
                   <button
                     key={category.id}
                     onClick={() => handleCategoryClick(category.id)}
-                    className={`group px-6 py-3 rounded-xl font-medium text-sm transition-all duration-300 transform hover:scale-105 relative ${ selectedCategory === category.id ? darkMode ? 'bg-blue-600 text-white border-2 border-blue-500 shadow-lg dark:shadow-gray-900/50' : 'bg-blue-500 text-white border-2 border-blue-400 shadow-lg dark:shadow-gray-900/50' : darkMode ? 'bg-blue-800/20 hover:bg-blue-700/30 text-blue-100 hover:text-blue-50 border border-blue-700/30 hover:border-blue-600/50' : 'bg-white dark:bg-gray-800/80 hover:bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-blue-600 border border-blue-200/50 hover:border-blue-300 shadow-sm dark:shadow-gray-900/50 hover:shadow-lg dark:shadow-gray-900/50 backdrop-blur-sm' }`}
+                    className={`group px-3 py-2 sm:px-4 md:px-6 sm:py-3 rounded-xl font-medium text-xs sm:text-sm transition-all duration-300 transform hover:scale-105 relative ${ selectedCategory === category.id ? darkMode ? 'bg-blue-600 text-white border-2 border-blue-500 shadow-lg dark:shadow-gray-900/50' : 'bg-blue-500 text-white border-2 border-blue-400 shadow-lg dark:shadow-gray-900/50' : darkMode ? 'bg-blue-800/20 hover:bg-blue-700/30 text-blue-100 hover:text-blue-50 border border-blue-700/30 hover:border-blue-600/50' : 'bg-white dark:bg-gray-800/80 hover:bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-blue-600 border border-blue-200/50 hover:border-blue-300 shadow-sm dark:shadow-gray-900/50 hover:shadow-lg dark:shadow-gray-900/50 backdrop-blur-sm' }`}
                   >
                     {/* شارة "مخصص" للتصنيفات المخصصة */}
                     {isLoggedIn && category.is_personalized && (
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800 animate-pulse"></div>
+                      <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800 animate-pulse"></div>
                     )}
                     
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2">
                       {(() => {
                         const IconComponent = categoryIcons[category.name_ar] || categoryIcons['default'];
                         return category.icon ? (
-                          <span className="text-lg group-hover:scale-110 transition-transform duration-300">{category.icon}</span>
+                          <span className="text-sm sm:text-lg group-hover:scale-110 transition-transform duration-300">{category.icon}</span>
                         ) : (
-                          <IconComponent className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
+                          <IconComponent className="w-3 h-3 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform duration-300" />
                         );
                       })()}
-                      <span>{category.name_ar || category.name}</span>
+                      <span className="whitespace-nowrap">{category.name_ar || category.name}</span>
                       <span className={`text-xs ${ selectedCategory === category.id ? 'text-white/90' : darkMode ? 'text-blue-200 opacity-60' : 'text-gray-500 dark:text-gray-400 dark:text-gray-500 opacity-60' }`}>
                         ({category.articles_count || 0})
                       </span>
@@ -1897,12 +1897,12 @@ function NewspaperHomePage(): React.ReactElement {
                   ) : categoryArticles.length > 0 ? (
                     <>
                       {/* Grid Layout for Cards */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                         {categoryArticles.map((article: any) => (
                           <Link key={article.id} href={`/article/${article.id}`} className="group">
                             <article className={`h-full rounded-3xl overflow-hidden shadow-xl dark:shadow-gray-900/50 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700'}`}>
                               {/* صورة المقال */}
-                              <div className="relative h-48 overflow-hidden">
+                              <div className="relative h-40 sm:h-48 overflow-hidden">
                                 {article.featured_image ? (
                                   <img
                                     src={article.featured_image}
@@ -1911,7 +1911,7 @@ function NewspaperHomePage(): React.ReactElement {
                                   />
                                 ) : (
                                   <div className={`w-full h-full flex items-center justify-center ${darkMode ? 'bg-gray-700' : 'bg-gray-100 dark:bg-gray-800'}`}>
-                                    <BookOpen className={`w-16 h-16 ${darkMode ? 'text-gray-600 dark:text-gray-400 dark:text-gray-500' : 'text-gray-300'}`} />
+                                    <BookOpen className={`w-12 h-12 sm:w-16 sm:h-16 ${darkMode ? 'text-gray-600 dark:text-gray-400 dark:text-gray-500' : 'text-gray-300'}`} />
                                   </div>
                                 )}
                                 
@@ -1919,18 +1919,18 @@ function NewspaperHomePage(): React.ReactElement {
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                 
                                 {/* Category Badge */}
-                                <div className="absolute top-3 right-3">
-                                  <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${darkMode ? 'bg-blue-900/80 text-blue-200 backdrop-blur-sm' : 'bg-blue-500/90 text-white backdrop-blur-sm'}`}>
-                                    <Tag className="w-3 h-3" />
+                                <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
+                                  <span className={`inline-flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs font-bold ${darkMode ? 'bg-blue-900/80 text-blue-200 backdrop-blur-sm' : 'bg-blue-500/90 text-white backdrop-blur-sm'}`}>
+                                    <Tag className="w-2 h-2 sm:w-3 sm:h-3" />
                                     {categories.find(c => c.id === selectedCategory)?.name_ar}
                                   </span>
                                 </div>
                               </div>
 
                               {/* محتوى البطاقة */}
-                              <div className="p-5">
+                              <div className="p-4 sm:p-5">
                                 {/* العنوان */}
-                                <h4 className={`font-bold text-lg mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors ${darkMode ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                                <h4 className={`font-bold text-base sm:text-lg mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors ${darkMode ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
                                   {article.title}
                                 </h4>
 
@@ -1942,11 +1942,11 @@ function NewspaperHomePage(): React.ReactElement {
                                 )}
 
                                 {/* التفاصيل السفلية */}
-                                <div className={`flex items-center justify-between pt-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-100 dark:border-gray-700'}`}>
+                                <div className={`flex items-center justify-between pt-3 sm:pt-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-100 dark:border-gray-700'}`}>
                                   {/* المعلومات */}
                                   <div className="flex flex-col gap-1">
                                     {/* التاريخ والوقت */}
-                                    <div className="flex items-center gap-3 text-xs">
+                                    <div className="flex items-center gap-2 sm:gap-3 text-xs">
                                       <span className={`flex items-center gap-1 ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400 dark:text-gray-500'}`}>
                                         <Calendar className="w-3 h-3" />
                                         {new Date(article.created_at).toLocaleDateString('en-US', {
@@ -1964,7 +1964,7 @@ function NewspaperHomePage(): React.ReactElement {
                                     </div>
                                     
                                     {/* الكاتب والمشاهدات */}
-                                    <div className="flex items-center gap-3 text-xs">
+                                    <div className="flex items-center gap-2 sm:gap-3 text-xs">
                                       {article.author_name && (
                                         <span className={`flex items-center gap-1 ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400 dark:text-gray-500'}`}>
                                           <User className="w-3 h-3" />
@@ -2018,7 +2018,7 @@ function NewspaperHomePage(): React.ReactElement {
       </section>
       
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* Enhanced News Section */}
         <section className="mb-20">
           <div className="text-center mb-12">
@@ -2161,11 +2161,11 @@ function NewspaperHomePage(): React.ReactElement {
               {/* عرض المقالات */}
               {(showPersonalized && personalizedArticles.length > 0) ? (
                 // عرض المقالات المخصصة للمستخدمين المسجلين
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
                   {personalizedArticles.slice(0, 12).map((news) => (
                     <div key={news.id} className="relative">
                       {/* شارة "مخصص لك" */}
-                      <div className="absolute top-3 left-3 z-10">
+                      <div className="absolute top-2 left-2 z-10">
                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold backdrop-blur-sm ${
                           darkMode 
                             ? 'bg-purple-900/80 text-purple-200' 
@@ -2181,7 +2181,7 @@ function NewspaperHomePage(): React.ReactElement {
                 </div>
               ) : articles.length > 0 ? (
                 // عرض آخر المقالات للزوار أو المستخدمين بدون تفضيلات
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
                   {articles.slice(0, 12).map((news) => (
                     <NewsCard key={news.id} news={news} />
                   ))}
@@ -2450,22 +2450,22 @@ function NewspaperHomePage(): React.ReactElement {
             </div>
 
             {/* شريط الإحصائيات */}
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className={`text-center p-6 rounded-2xl ${darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg`}>
-                <div className="text-3xl font-bold text-orange-500 mb-2">15K+</div>
-                <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>تصويت اليوم</div>
+            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+              <div className={`text-center p-4 md:p-6 rounded-2xl ${darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg`}>
+                <div className="text-2xl md:text-3xl font-bold text-orange-500 mb-2">15K+</div>
+                <div className={`text-xs md:text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>تصويت اليوم</div>
               </div>
-              <div className={`text-center p-6 rounded-2xl ${darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg`}>
-                <div className="text-3xl font-bold text-purple-500 mb-2">8.2K</div>
-                <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>مشارك نشط</div>
+              <div className={`text-center p-4 md:p-6 rounded-2xl ${darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg`}>
+                <div className="text-2xl md:text-3xl font-bold text-purple-500 mb-2">8.2K</div>
+                <div className={`text-xs md:text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>مشارك نشط</div>
               </div>
-              <div className={`text-center p-6 rounded-2xl ${darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg`}>
-                <div className="text-3xl font-bold text-green-500 mb-2">2.1K</div>
-                <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>تعليق جديد</div>
+              <div className={`text-center p-4 md:p-6 rounded-2xl ${darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg`}>
+                <div className="text-2xl md:text-3xl font-bold text-green-500 mb-2">2.1K</div>
+                <div className={`text-xs md:text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>تعليق جديد</div>
               </div>
-              <div className={`text-center p-6 rounded-2xl ${darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg`}>
-                <div className="text-3xl font-bold text-blue-500 mb-2">94%</div>
-                <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>معدل التفاعل</div>
+              <div className={`text-center p-4 md:p-6 rounded-2xl ${darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg`}>
+                <div className="text-2xl md:text-3xl font-bold text-blue-500 mb-2">94%</div>
+                <div className={`text-xs md:text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>معدل التفاعل</div>
               </div>
             </div>
           </div>
@@ -2473,154 +2473,81 @@ function NewspaperHomePage(): React.ReactElement {
       </main>
 
       {/* Smart Blocks - Below Personalized Content */}
-      <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
         <SmartSlot position="below_personalized" />
       </div>
 
       {/* Smart Blocks - Above Footer */}
-      <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <SmartSlot position="above_footer" />
       </div>
 
-      {/* Smart Blocks - Before Footer (للتوافق مع النظام القديم) */}
-      <div className="max-w-7xl mx-auto px-6 py-4">
-        <SmartSlot position="beforeFooter" />
-      </div>
-
-      {/* ويدجت الذكاء الشخصي العائمة - تم إخفاؤه */}
-      {/* {!isCheckingAuth && userTracker && isLoggedIn && showUserWidget && (
-        <UserIntelligenceWidget />
-      )} */}
-
-      {/* Footer Dashboard */}
-      <FooterDashboard />
-
-      {/* Enhanced Footer */}
-      <footer className={`${darkMode ? 'bg-gray-900' : 'bg-gray-50 dark:bg-gray-900'}`}>
-
-        {/* Border */}
-        <div className="h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent"></div>
-        
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="text-center">
-            {/* Logo Section */}
-            <div className="mb-8">
-              <div className="inline-flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${darkMode ? 'bg-gradient-to-br from-blue-600 to-purple-700' : 'bg-gradient-to-br from-blue-500 to-purple-600'}`}>
-                  <span className="text-white font-bold text-xl">س</span>
-                </div>
-                <div className="text-left">
-                  <h3 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800 dark:text-gray-100'}`}>
-                    سبق
-                  </h3>
-                  <p className={`text-sm ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
-                    صحيفة المستقبل الذكية
-                  </p>
-                </div>
+      {/* Footer Section */}
+      <footer className={`mt-20 py-12 border-t ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800'}`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+          {/* Logo Section */}
+          <div className="mb-8">
+            <div className="inline-flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${darkMode ? 'bg-gradient-to-br from-blue-600 to-purple-700' : 'bg-gradient-to-br from-blue-500 to-purple-600'}`}>
+                <span className="text-white font-bold text-xl">س</span>
+              </div>
+              <div className="text-left">
+                <h3 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800 dark:text-gray-100'}`}>
+                  سبق
+                </h3>
+                <p className={`text-sm ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
+                  صحيفة المستقبل الذكية
+                </p>
               </div>
             </div>
+          </div>
 
-            {/* Stats */}
-            <div className="flex items-center justify-center gap-8 mb-8">
-              <div className={`text-center px-4 py-3 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-gray-50 dark:bg-gray-900'} border ${darkMode ? 'border-gray-700' : 'border-gray-200 dark:border-gray-700'}`}>
-                <div className="text-2xl font-bold text-blue-600 mb-1">1.2M+</div>
-                <div className={`text-xs ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>قارئ نشط</div>
-              </div>
-              <div className={`text-center px-4 py-3 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-gray-50 dark:bg-gray-900'} border ${darkMode ? 'border-gray-700' : 'border-gray-200 dark:border-gray-700'}`}>
-                <div className="text-2xl font-bold text-green-600 mb-1">50K+</div>
-                <div className={`text-xs ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>مقال يومياً</div>
-              </div>
-              <div className={`text-center px-4 py-3 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-gray-50 dark:bg-gray-900'} border ${darkMode ? 'border-gray-700' : 'border-gray-200 dark:border-gray-700'}`}>
-                <div className="text-2xl font-bold text-purple-600 mb-1">AI</div>
-                <div className={`text-xs ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>ذكاء اصطناعي</div>
-              </div>
+          {/* Stats */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mb-8">
+            <div className={`text-center px-4 py-3 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-gray-50 dark:bg-gray-900'} border ${darkMode ? 'border-gray-700' : 'border-gray-200 dark:border-gray-700'}`}>
+              <div className="text-xl sm:text-2xl font-bold text-blue-600 mb-1">1.2M+</div>
+              <div className={`text-xs ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>قارئ نشط</div>
             </div>
-
-            {/* Links */}
-            <div className="flex items-center justify-center gap-6 mb-8">
-              <a href="#" className={`text-sm hover:text-blue-500 transition-colors ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
-                سياسة الخصوصية
-              </a>
-              <a href="#" className={`text-sm hover:text-blue-500 transition-colors ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
-                شروط الاستخدام
-              </a>
-              <a href="#" className={`text-sm hover:text-blue-500 transition-colors ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
-                تواصل معنا
-              </a>
-              <a href="#" className={`text-sm hover:text-blue-500 transition-colors ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
-                عن سبق
-              </a>
+            <div className={`text-center px-4 py-3 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-gray-50 dark:bg-gray-900'} border ${darkMode ? 'border-gray-700' : 'border-gray-200 dark:border-gray-700'}`}>
+              <div className="text-xl sm:text-2xl font-bold text-green-600 mb-1">50K+</div>
+              <div className={`text-xs ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>مقال يومياً</div>
             </div>
+            <div className={`text-center px-4 py-3 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-gray-50 dark:bg-gray-900'} border ${darkMode ? 'border-gray-700' : 'border-gray-200 dark:border-gray-700'}`}>
+              <div className="text-xl sm:text-2xl font-bold text-purple-600 mb-1">AI</div>
+              <div className={`text-xs ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>ذكاء اصطناعي</div>
+            </div>
+          </div>
 
-            {/* Copyright */}
-            <div className="flex items-center justify-center gap-2">
-              <p className={`text-sm ${darkMode ? 'text-gray-500 dark:text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
-                © 2025 صحيفة سبق – جميع الحقوق محفوظة
-              </p>
-              <div className="flex items-center gap-1">
-                <span className="text-red-500">❤️</span>
-                <span className={`text-xs ${darkMode ? 'text-gray-500 dark:text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
-                  صُنع بحب في المملكة العربية السعودية
-                </span>
-              </div>
+          {/* Links */}
+          <div className="flex items-center justify-center gap-6 mb-8">
+            <a href="#" className={`text-sm hover:text-blue-500 transition-colors ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
+              سياسة الخصوصية
+            </a>
+            <a href="#" className={`text-sm hover:text-blue-500 transition-colors ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
+              شروط الاستخدام
+            </a>
+            <a href="#" className={`text-sm hover:text-blue-500 transition-colors ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
+              تواصل معنا
+            </a>
+            <a href="#" className={`text-sm hover:text-blue-500 transition-colors ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
+              عن سبق
+            </a>
+          </div>
+
+          {/* Copyright */}
+          <div className="flex items-center justify-center gap-2">
+            <p className={`text-sm ${darkMode ? 'text-gray-500 dark:text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
+              © 2025 صحيفة سبق – جميع الحقوق محفوظة
+            </p>
+            <div className="flex items-center gap-1">
+              <span className="text-red-500">❤️</span>
+              <span className={`text-xs ${darkMode ? 'text-gray-500 dark:text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
+                صُنع بحب في المملكة العربية السعودية
+              </span>
             </div>
           </div>
         </div>
       </footer>
-
-      {/* CSS */}
-      <style jsx>{`
-        .animate-fade-in {
-          animation: fadeIn 0.5s ease-in-out;
-        }
-        
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-slide-down {
-          animation: slideDown 0.5s ease-out;
-        }
-        
-        @keyframes slideDown {
-          from { 
-            opacity: 0; 
-            transform: translate(-50%, -20px);
-          }
-          to { 
-            opacity: 1; 
-            transform: translate(-50%, 0);
-          }
-        }
-        
-        .animate-pulse {
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: .5; }
-        }
-        
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-          width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-          background: ${darkMode ? '#1f2937' : '#f1f5f9'};
-        }
-        
-        ::-webkit-scrollbar-thumb {
-          background: ${darkMode ? '#4f46e5' : '#3b82f6'};
-          border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-          background: ${darkMode ? '#4338ca' : '#2563eb'};
-        }
-      `}</style>
     </div>
   );
 }

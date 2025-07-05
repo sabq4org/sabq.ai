@@ -565,4 +565,301 @@
   .pb-safe {
     padding-bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
   }
+}
+
+/* Mobile Optimizations for SABQ AI CMS */
+
+/* Global Mobile Fixes */
+* {
+  box-sizing: border-box;
+}
+
+/* Container improvements */
+.container-mobile {
+  max-width: 100%;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-mobile {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+/* Stats boxes horizontal layout on mobile */
+.stats-mobile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .stats-mobile-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+/* Improved touch targets for mobile */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Better text sizing for mobile */
+.text-mobile-sm {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+@media (min-width: 640px) {
+  .text-mobile-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+}
+
+.text-mobile-base {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .text-mobile-base {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+}
+
+.text-mobile-lg {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .text-mobile-lg {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
+}
+
+/* Responsive spacing */
+.space-mobile-2 > * + * {
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .space-mobile-2 > * + * {
+    margin-top: 0.75rem;
+  }
+}
+
+.space-mobile-4 > * + * {
+  margin-top: 1rem;
+}
+
+@media (min-width: 640px) {
+  .space-mobile-4 > * + * {
+    margin-top: 1.5rem;
+  }
+}
+
+/* Card improvements for mobile */
+.card-mobile {
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+@media (min-width: 640px) {
+  .card-mobile {
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+}
+
+/* Button improvements */
+.btn-mobile {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+}
+
+@media (min-width: 640px) {
+  .btn-mobile {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+    border-radius: 1rem;
+  }
+}
+
+/* Grid improvements for mobile */
+.grid-mobile-1 {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .grid-mobile-1 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-mobile-1 {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .grid-mobile-1 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Safe area support for iPhone notch */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-left {
+  padding-left: env(safe-area-inset-left);
+}
+
+.safe-area-right {
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Improved scrolling on mobile */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Better image loading */
+.img-mobile {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  loading: lazy;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Dark mode improvements */
+@media (prefers-color-scheme: dark) {
+  .auto-dark {
+    color-scheme: dark;
+  }
+}
+
+/* Focus improvements for keyboard navigation */
+.focus-mobile:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Typography improvements for Arabic */
+.arabic-text {
+  font-family: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  direction: rtl;
+  text-align: right;
+}
+
+/* Performance optimizations */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* Prevent horizontal scroll */
+.prevent-horizontal-scroll {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Better line heights for Arabic text */
+.line-height-relaxed {
+  line-height: 1.625;
+}
+
+.line-height-loose {
+  line-height: 2;
+}
+
+/* Mobile-specific utilities */
+@media (max-width: 639px) {
+  .mobile-hidden {
+    display: none;
+  }
+  
+  .mobile-full-width {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+  }
+  
+  .mobile-text-center {
+    text-align: center;
+  }
+  
+  .mobile-flex-col {
+    flex-direction: column;
+  }
+  
+  .mobile-space-y-2 > * + * {
+    margin-top: 0.5rem;
+  }
+  
+  .mobile-space-y-4 > * + * {
+    margin-top: 1rem;
+  }
+}
+
+/* Tablet and up */
+@media (min-width: 640px) {
+  .sm-hidden {
+    display: none;
+  }
+}
+
+/* Loading states */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.dark .skeleton {
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+  background-size: 200% 100%;
 } 
