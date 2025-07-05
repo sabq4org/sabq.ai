@@ -3,7 +3,23 @@ import { PrismaClient } from '../lib/generated/prisma'
 const prisma = new PrismaClient()
 
 async function main() {
+  // 🔒 فحص البيئة الإنتاجية - منع تشغيل Seed في الإنتاج
+  const isProduction = process.env.NODE_ENV === 'production' || 
+                      process.env.VERCEL_ENV === 'production' ||
+                      process.env.RAILWAY_ENVIRONMENT === 'production' ||
+                      process.env.DATABASE_URL?.includes('prod') ||
+                      process.env.DATABASE_URL?.includes('production')
+
+  if (isProduction) {
+    console.error('🚫 خطأ: لا يمكن تشغيل seed script في البيئة الإنتاجية!')
+    console.error('   هذا السكريبت مخصص لبيئة التطوير والاختبار فقط.')
+    console.error('   Environment:', process.env.NODE_ENV)
+    console.error('   Vercel Env:', process.env.VERCEL_ENV)
+    process.exit(1)
+  }
+
   console.log('🌱 بدء عملية Seeding...')
+  console.log('🔧 البيئة:', process.env.NODE_ENV || 'development')
   
   // التصنيفات الأساسية
   const categories = [
