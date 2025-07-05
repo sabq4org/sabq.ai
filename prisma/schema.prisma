@@ -45,6 +45,10 @@ model Category {
   description  String?    @db.Text
   displayOrder Int        @default(0) @map("display_order")
   isActive     Boolean    @default(true) @map("is_active")
+  color        String?    @db.VarChar(50)
+  icon         String?    @db.VarChar(50)
+  metadata     Json?
+  nameEn       String?    @map("name_en")
   parentId     String?    @map("parent_id")
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
@@ -502,6 +506,84 @@ model forum_votes {
   @@index([user_id], map: "idx_user")
 }
 
+model Subscriber {
+  id          String           @id @default(uuid())
+  email       String           @unique
+  name        String?          @db.VarChar(255)
+  status      SubscriberStatus @default(active)
+  preferences Json?
+  metadata    Json?
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+  emailLogs   EmailLog[]
+}
+
+model EmailTemplate {
+  id          String     @id @default(uuid())
+  name        String     @db.VarChar(255)
+  subject     String     @db.VarChar(500)
+  htmlContent String     @map("html_content") @db.LongText
+  textContent String?    @map("text_content") @db.Text
+  metadata    Json?
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  emailJobs   EmailJob[]
+}
+
+model EmailJob {
+  id           String         @id @default(uuid())
+  templateId   String?        @map("template_id")
+  scheduledAt  DateTime?      @map("scheduled_at")
+  startedAt    DateTime?      @map("started_at")
+  completedAt  DateTime?      @map("completed_at")
+  status       EmailJobStatus @default(queued)
+  targetFilter Json?          @map("target_filter")
+  metadata     Json?
+  stats        Json?
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+  template     EmailTemplate? @relation(fields: [templateId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  emailLogs    EmailLog[]
+
+  @@index([status, scheduledAt])
+}
+
+model EmailLog {
+  id             String         @id @default(uuid())
+  jobId          String?        @map("job_id")
+  subscriberId   String         @map("subscriber_id")
+  providerMsgId  String?        @map("provider_msg_id")
+  messageId      String?        @map("message_id")
+  status         EmailLogStatus @default(pending)
+  error          String?        @db.Text
+  openedAt       DateTime?      @map("opened_at")
+  clickedAt      DateTime?      @map("clicked_at")
+  unsubscribedAt DateTime?      @map("unsubscribed_at")
+  meta           Json?
+  eventAt        DateTime       @default(now()) @map("event_at")
+  job            EmailJob?      @relation(fields: [jobId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subscriber     Subscriber     @relation(fields: [subscriberId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([subscriberId])
+  @@index([status])
+}
+
+model EmailProviderConfig {
+  id             String            @id @default(uuid())
+  type           EmailProviderType @default(smtp)
+  senderName     String            @map("sender_name") @db.VarChar(255)
+  senderEmail    String            @map("sender_email") @db.VarChar(255)
+  apiKey         String?           @map("api_key") @db.Text
+  host           String?           @db.VarChar(255)
+  port           Int?
+  username       String?           @db.VarChar(255)
+  password       String?           @db.Text
+  footerHtml     String?           @map("footer_html") @db.Text
+  unsubscribeUrl String?           @map("unsubscribe_url") @db.VarChar(500)
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+}
+
 enum InteractionType {
   like
   save
@@ -574,6 +656,7 @@ enum forum_topics_status {
   deleted
 }
 
+<<<<<<< Updated upstream
 model AICommentAnalysis {
   id                String   @id @default(uuid())
   commentId         String   @unique @map("comment_id")
@@ -638,4 +721,36 @@ model BannedWord {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("banned_words")
+=======
+enum SubscriberStatus {
+  active
+  inactive
+  unsubscribed
+}
+
+enum EmailProviderType {
+  smtp
+  sendgrid
+  mailgun
+  ses
+}
+
+enum EmailJobStatus {
+  queued
+  sending
+  completed
+  cancelled
+  failed
+}
+
+enum EmailLogStatus {
+  pending
+  sent
+  delivered
+  bounced
+  opened
+  clicked
+  unsubscribed
+  failed
+>>>>>>> Stashed changes
 }

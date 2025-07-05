@@ -1183,21 +1183,85 @@ export default function CreateArticlePage() {
 
         {/* العمود الجانبي */}
         <div className="space-y-6">
-          {/* معلومات النشر */}
-          <Card>
-            <CardHeader>
-              <CardTitle>معلومات النشر</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          {/* بطاقة الجودة المحسنة */}
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl p-6 border border-green-200">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-green-600" />
+              جودة المقال
+            </h3>
+            <div className="space-y-4">
               <div>
-                <Label htmlFor="author">المراسل / الكاتب *</Label>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-gray-700">نسبة الاكتمال</span>
+                  <span className="text-2xl font-bold text-green-600">
+                    {(() => {
+                      let score = 0;
+                      if (formData.title) score += 25;
+                      if (formData.excerpt) score += 25;
+                      if (formData.categoryId) score += 25;
+                      if (formData.authorId) score += 25;
+                      return score;
+                    })()}%
+                  </span>
+                </div>
+                <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      (() => {
+                        let score = 0;
+                        if (formData.title) score += 25;
+                        if (formData.excerpt) score += 25;
+                        if (formData.categoryId) score += 25;
+                        if (formData.authorId) score += 25;
+                        return score >= 80 ? 'bg-gradient-to-r from-green-500 to-emerald-600' :
+                               score >= 60 ? 'bg-gradient-to-r from-yellow-500 to-orange-600' :
+                               'bg-gradient-to-r from-red-500 to-pink-600';
+                      })()
+                    }`}
+                    style={{ width: `${(() => {
+                      let score = 0;
+                      if (formData.title) score += 25;
+                      if (formData.excerpt) score += 25;
+                      if (formData.categoryId) score += 25;
+                      if (formData.authorId) score += 25;
+                      return score;
+                    })()}%` }}
+                  />
+                </div>
+              </div>
+              <div className="text-sm text-gray-600">
+                {(() => {
+                  let score = 0;
+                  if (formData.title) score += 25;
+                  if (formData.excerpt) score += 25;
+                  if (formData.categoryId) score += 25;
+                  if (formData.authorId) score += 25;
+                  return score >= 80 ? '🎉 ممتاز! المقال جاهز للنشر' :
+                         score >= 60 ? '👍 جيد، يمكن تحسينه أكثر' :
+                         '💡 يحتاج لمزيد من التطوير';
+                })()}
+              </div>
+            </div>
+          </div>
+
+          {/* بطاقة إعدادات المقال */}
+          <div className="bg-white rounded-3xl shadow-xl p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <User className="w-5 h-5 text-blue-600" />
+              إعدادات المقال
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  المراسل/الكاتب <span className="text-red-500">*</span>
+                </label>
                 <select
-                  id="author"
                   value={formData.authorId}
                   onChange={(e) => setFormData(prev => ({ ...prev, authorId: e.target.value }))}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full p-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
                 >
-                  <option value="">اختر المراسل</option>
+                  <option value="">اختر المراسل...</option>
                   {authors.map(author => (
                     <option key={author.id} value={author.id}>
                       {author.name}
@@ -1207,14 +1271,16 @@ export default function CreateArticlePage() {
               </div>
 
               <div>
-                <Label htmlFor="category">التصنيف *</Label>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  التصنيف <span className="text-red-500">*</span>
+                </label>
                 <select
-                  id="category"
                   value={formData.categoryId}
                   onChange={(e) => setFormData(prev => ({ ...prev, categoryId: e.target.value }))}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full p-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
                 >
-                  <option value="">اختر التصنيف</option>
+                  <option value="">اختر التصنيف...</option>
                   {categories.map(category => (
                     <option key={category.id} value={category.id}>
                       {category.name}
@@ -1224,124 +1290,183 @@ export default function CreateArticlePage() {
               </div>
 
               <div>
-                <Label>نوع الخبر</Label>
-                <div className="space-y-2 mt-2">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="local"
-                      checked={formData.type === 'local'}
-                      onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
-                      className="ml-2"
-                    />
-                    محلي
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="international"
-                      checked={formData.type === 'international'}
-                      onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
-                      className="ml-2"
-                    />
-                    دولي
-                  </label>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">نوع المقال</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, type: 'local' }))}
+                    className={`p-3 rounded-xl border-2 transition-all text-sm font-medium ${
+                      formData.type === 'local'
+                        ? 'bg-blue-50 border-blue-500 text-blue-700'
+                        : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    🏠 محلي
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, type: 'international' }))}
+                    className={`p-3 rounded-xl border-2 transition-all text-sm font-medium ${
+                      formData.type === 'international'
+                        ? 'bg-blue-50 border-blue-500 text-blue-700'
+                        : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    🌍 دولي
+                  </button>
                 </div>
               </div>
+            </div>
+          </div>
 
-              <div className="space-y-2">
-                <label className="flex items-center">
+          {/* بطاقة خيارات العرض */}
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-6 border border-purple-200">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Zap className="w-5 h-5 text-purple-600" />
+              خيارات العرض
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="flex items-center gap-3 p-3 rounded-xl border-2 border-transparent hover:border-red-200 hover:bg-red-50 transition-all cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.isBreaking}
                     onChange={(e) => setFormData(prev => ({ ...prev, isBreaking: e.target.checked }))}
-                    className="ml-2"
+                    className="w-5 h-5 text-red-600 rounded focus:ring-red-500"
                   />
-                  خبر عاجل
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">خبر عاجل</div>
+                    <div className="text-sm text-gray-600">سيظهر شريط أحمر مع الخبر</div>
+                  </div>
+                  <div className="text-2xl">🚨</div>
                 </label>
-                {formData.isBreaking && (
-                  <Alert className="bg-red-50 border-red-200">
-                    <AlertCircle className="h-4 w-4 text-red-600" />
-                    <AlertDescription className="text-red-800">
-                      سيظهر شريط أحمر مع الخبر
-                    </AlertDescription>
-                  </Alert>
-                )}
+              </div>
 
-                <label className="flex items-center">
+              <div>
+                <label className="flex items-center gap-3 p-3 rounded-xl border-2 border-transparent hover:border-blue-200 hover:bg-blue-50 transition-all cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.isFeatured}
                     onChange={(e) => setFormData(prev => ({ ...prev, isFeatured: e.target.checked }))}
-                    className="ml-2"
+                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
                   />
-                  خبر رئيسي
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">مقال مميز</div>
+                    <div className="text-sm text-gray-600">سيظهر في قسم الأخبار البارزة</div>
+                  </div>
+                  <div className="text-2xl">⭐</div>
                 </label>
-                {formData.isFeatured && (
-                  <Alert className="bg-blue-50 border-blue-200">
-                    <AlertCircle className="h-4 w-4 text-blue-600" />
-                    <AlertDescription className="text-blue-800">
-                      سيظهر هذا المقال في قسم الأخبار البارزة
-                    </AlertDescription>
-                  </Alert>
-                )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* توقيت النشر */}
-          <Card>
-            <CardHeader>
-              <CardTitle>توقيت النشر</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          {/* بطاقة توقيت النشر */}
+          <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-3xl p-6 border border-orange-200">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-orange-600" />
+              توقيت النشر
+            </h3>
+            <div className="space-y-4">
               <div className="space-y-2">
-                <label className="flex items-center">
+                <label className="flex items-center gap-3 p-3 rounded-xl border-2 border-transparent hover:border-green-200 hover:bg-green-50 transition-all cursor-pointer">
                   <input
                     type="radio"
                     value="now"
                     checked={formData.publishType === 'now'}
                     onChange={(e) => setFormData(prev => ({ ...prev, publishType: e.target.value }))}
-                    className="ml-2"
+                    className="w-5 h-5 text-green-600 focus:ring-green-500"
                   />
-                  نشر الآن
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">نشر الآن</div>
+                    <div className="text-sm text-gray-600">نشر فوري عند الحفظ</div>
+                  </div>
+                  <div className="text-2xl">🚀</div>
                 </label>
-                <label className="flex items-center">
+
+                <label className="flex items-center gap-3 p-3 rounded-xl border-2 border-transparent hover:border-blue-200 hover:bg-blue-50 transition-all cursor-pointer">
                   <input
                     type="radio"
                     value="scheduled"
                     checked={formData.publishType === 'scheduled'}
                     onChange={(e) => setFormData(prev => ({ ...prev, publishType: e.target.value }))}
-                    className="ml-2"
+                    className="w-5 h-5 text-blue-600 focus:ring-blue-500"
                   />
-                  جدولة النشر
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    value="draft"
-                    checked={formData.publishType === 'draft'}
-                    onChange={(e) => setFormData(prev => ({ ...prev, publishType: e.target.value }))}
-                    className="ml-2"
-                  />
-                  حفظ كمسودة
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">جدولة النشر</div>
+                    <div className="text-sm text-gray-600">تحديد وقت محدد للنشر</div>
+                  </div>
+                  <div className="text-2xl">⏰</div>
                 </label>
               </div>
 
               {formData.publishType === 'scheduled' && (
-                <div>
-                  <Label htmlFor="scheduled-date">تاريخ ووقت النشر</Label>
-                  <Input
-                    id="scheduled-date"
+                <div className="bg-white rounded-2xl p-4 border border-gray-200">
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    تاريخ ووقت النشر
+                  </label>
+                  <input
                     type="datetime-local"
                     value={formData.scheduledDate}
                     onChange={(e) => setFormData(prev => ({ ...prev, scheduledDate: e.target.value }))}
                     min={new Date().toISOString().slice(0, 16)}
+                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+
+          {/* بطاقة الصورة البارزة */}
+          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl p-6 border border-indigo-200">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-indigo-600" />
+              الصورة البارزة
+            </h3>
+            <div className="space-y-4">
+              {formData.featuredImage ? (
+                <div className="relative">
+                  <img 
+                    src={formData.featuredImage} 
+                    alt="الصورة البارزة"
+                    className="w-full h-32 object-cover rounded-2xl"
+                  />
+                  <button
+                    onClick={() => setFormData(prev => ({ ...prev, featuredImage: '' }))}
+                    className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center">
+                  <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm text-gray-600">لا توجد صورة بارزة</p>
+                </div>
+              )}
+              
+              <label className="block">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFeaturedImageUpload}
+                  className="hidden"
+                />
+                <div className="w-full p-3 bg-indigo-100 text-indigo-700 rounded-xl text-center font-medium cursor-pointer hover:bg-indigo-200 transition-colors">
+                  {uploadingImage ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      جاري الرفع...
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2">
+                      <Upload className="w-4 h-4" />
+                      {formData.featuredImage ? 'استبدال الصورة' : 'رفع صورة'}
+                    </div>
+                  )}
+                </div>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -802,6 +802,37 @@ export default function DashboardLayout({
                       جديد
                     </div>
                   </Link>
+
+                  <Link href="/dashboard/email/analytics" 
+                    onClick={() => setSidebarOpen(false)}
+                    className={`group flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-2 lg:py-3 rounded-xl transition-all duration-300 hover:shadow-md hover:translate-x-1 ${
+                    darkMode 
+                      ? 'text-gray-300 hover:bg-gradient-to-r hover:from-red-900/30 hover:to-orange-900/30 hover:text-red-300' 
+                      : 'text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-orange-50 hover:text-red-700'
+                  }`}>
+                    <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                      darkMode 
+                        ? 'bg-red-900/40 group-hover:bg-red-500 group-hover:text-white' 
+                        : 'bg-red-100 group-hover:bg-red-500 group-hover:text-white'
+                    }`}>
+                      <Mail className="w-4 h-4 lg:w-5 lg:h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-sm lg:text-base font-medium">القائمة البريدية</span>
+                      <p className={`text-xs hidden lg:block transition-colors duration-300 ${
+                        darkMode 
+                          ? 'text-gray-400 group-hover:text-red-300' 
+                          : 'text-gray-500 group-hover:text-red-600'
+                      }`}>إدارة الرسائل البريدية</p>
+                    </div>
+                    <div className={`px-2 py-1 rounded-full text-xs font-bold transition-all ${
+                      darkMode 
+                        ? 'bg-red-900/40 text-red-300 group-hover:bg-red-500 group-hover:text-white' 
+                        : 'bg-red-100 text-red-700 group-hover:bg-red-500 group-hover:text-white'
+                    }`}>
+                      جديد
+                    </div>
+                  </Link>
                 </div>
               </div>
 

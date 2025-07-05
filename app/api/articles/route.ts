@@ -3,6 +3,9 @@ import { promises as fs } from 'fs'
 import path from 'path'
 import { prisma } from '@/lib/prisma'
 import { filterTestContent, rejectTestContent } from '@/lib/data-protection'
+import jwt from 'jsonwebtoken'
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production';
 
 // دالة مساعدة لإضافة CORS headers
 function addCorsHeaders(response: NextResponse): NextResponse {
@@ -323,9 +326,81 @@ function calculateReadingTime(content: string): number {
   return Math.ceil(wordsCount / 200)
 }
 
-// DELETE: حذف مقالات (حذف ناعم)
+// دالة للتحقق من صلاحيات المستخدم
+async function checkUserPermissions(request: NextRequest): Promise<{ valid: boolean, user?: any, error?: string }> {
+  try {
+    // محاولة الحصول على التوكن من الكوكيز أو من Authorization header
+    let token = request.cookies.get('auth-token')?.value;
+    
+    if (!token) {
+      const authHeader = request.headers.get('authorization');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      }
+    }
+    
+    if (!token) {
+      return { valid: false, error: 'لم يتم العثور على معلومات المصادقة' };
+    }
+
+    // التحقق من صحة التوكن
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (error) {
+      return { valid: false, error: 'جلسة غير صالحة' };
+    }
+
+    // البحث عن المستخدم في قاعدة البيانات
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        isAdmin: true,
+        isVerified: true
+      }
+    });
+
+    if (!user) {
+      return { valid: false, error: 'المستخدم غير موجود' };
+    }
+
+    // التحقق من أن المستخدم مفعل
+    if (!user.isVerified) {
+      return { valid: false, error: 'المستخدم غير مفعل' };
+    }
+
+    // التحقق من صلاحيات الحذف
+    const canDelete = user.isAdmin || 
+                     user.role === 'admin' || 
+                     user.role === 'editor' || 
+                     user.role === 'super_admin';
+
+    if (!canDelete) {
+      return { valid: false, error: 'ليس لديك صلاحية حذف المقالات' };
+    }
+
+    return { valid: true, user };
+  } catch (error) {
+    return { valid: false, error: 'خطأ في التحقق من الصلاحيات' };
+  }
+}
+
+// DELETE: حذف مقالات (حذف ناعم) - محمي بالمصادقة
 export async function DELETE(request: NextRequest) {
   try {
+    // التحقق من صلاحيات المستخدم
+    const authCheck = await checkUserPermissions(request);
+    if (!authCheck.valid) {
+      return NextResponse.json({
+        success: false,
+        error: authCheck.error || 'غير مصرح بالوصول'
+      }, { status: 401 });
+    }
+
     const body = await request.json()
     const ids = body.ids || []
 
@@ -336,20 +411,49 @@ export async function DELETE(request: NextRequest) {
       }, { status: 400 })
     }
 
+    // تسجيل عملية الحذف للمراجعة
+    console.log(`🗑️ محاولة حذف ${ids.length} مقال من قبل المستخدم:`, {
+      userId: authCheck.user?.id,
+      userEmail: authCheck.user?.email,
+      userRole: authCheck.user?.role,
+      articleIds: ids,
+      timestamp: new Date().toISOString()
+    });
+
     // تحديث حالة المقالات إلى "محذوف" في قاعدة البيانات البعيدة
     const result = await prisma.article.updateMany({
       where: {
         id: { in: ids }
       },
       data: {
-        status: 'deleted'
+        status: 'deleted',
+        updatedAt: new Date()
       }
     })
+
+    // تسجيل النشاط في سجل الأنشطة
+    await prisma.activityLog.create({
+      data: {
+        userId: authCheck.user.id,
+        action: 'articles_deleted',
+        entityType: 'article',
+        entityId: ids.join(','),
+        oldValue: { status: 'published' },
+        newValue: { status: 'deleted', count: result.count }
+      }
+    });
+
+    console.log(`✅ تم حذف ${result.count} مقال بنجاح من قبل:`, authCheck.user?.email);
 
     return NextResponse.json({
       success: true,
       affected: result.count,
-      message: `تم حذف ${result.count} مقال(ات) بنجاح`
+      message: `تم حذف ${result.count} مقال(ات) بنجاح`,
+      deletedBy: {
+        userId: authCheck.user.id,
+        userEmail: authCheck.user.email,
+        userRole: authCheck.user.role
+      }
     })
   } catch (error) {
     console.error('خطأ في حذف المقالات:', error)

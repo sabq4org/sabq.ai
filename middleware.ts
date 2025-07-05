@@ -75,6 +75,29 @@ export function middleware(request: NextRequest) {
   const url = request.nextUrl;
   const pathname = url.pathname;
   
+  // حماية إضافية لـ API حذف المقالات
+  if (pathname === '/api/articles' && request.method === 'DELETE') {
+    const authToken = request.cookies.get('auth-token')?.value || 
+                     request.headers.get('authorization')?.replace('Bearer ', '');
+    
+    if (!authToken) {
+      console.log('🚫 محاولة حذف مقالات بدون مصادقة - تم الرفض');
+      return NextResponse.json(
+        { success: false, error: 'مصادقة مطلوبة لحذف المقالات' },
+        { status: 401 }
+      );
+    }
+  }
+
+  // حماية صفحات لوحة التحكم
+  if (pathname.startsWith('/dashboard')) {
+    const authToken = request.cookies.get('auth-token')?.value;
+    
+    if (!authToken) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+  }
+  
   // تسجيل المسار للتشخيص
   console.log('Middleware processing:', pathname);
   

@@ -1,191 +1,359 @@
 import nodemailer from 'nodemailer';
-import { emailConfig } from '@/config/email.config';
+import { prisma } from '@/lib/prisma';
+import { SendEmailCommand, SESClient } from '@aws-sdk/client-ses';
 
-// إنشاء transporter لإرسال البريد
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: emailConfig.smtp.host,
-    port: emailConfig.smtp.port,
-    secure: emailConfig.smtp.secure,
+// أنواع مزودي البريد
+type EmailProvider = 'smtp' | 'sendgrid' | 'mailgun' | 'ses';
+
+interface EmailConfig {
+  provider: EmailProvider;
+  from: {
+    name: string;
+    email: string;
+  };
+  smtp?: {
+    host: string;
+    port: number;
+    secure: boolean;
     auth: {
-      user: emailConfig.smtp.auth.user,
-      pass: emailConfig.smtp.auth.pass
-    },
-    tls: {
-      rejectUnauthorized: false
-    }
-  });
-};
-
-// قالب بريد التحقق
-const getVerificationEmailTemplate = (name: string, verificationLink: string) => {
-  return {
-    subject: 'تأكيد بريدك الإلكتروني - صحيفة سبق',
-    html: `
-      <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa; padding: 20px;">
-        <div style="background-color: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #2563eb; font-size: 28px; margin: 0;">صحيفة سبق الإلكترونية</h1>
-          </div>
-          
-          <h2 style="color: #1f2937; font-size: 22px; margin-bottom: 20px;">مرحباً ${name}!</h2>
-          
-          <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-            شكراً لتسجيلك في صحيفة سبق الإلكترونية. لإكمال عملية التسجيل، يرجى تأكيد بريدك الإلكتروني بالضغط على الزر أدناه:
-          </p>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${verificationLink}" style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold;">
-              تأكيد البريد الإلكتروني
-            </a>
-          </div>
-          
-          <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
-            أو يمكنك نسخ الرابط التالي ولصقه في المتصفح:
-          </p>
-          
-          <div style="background-color: #f3f4f6; padding: 10px; border-radius: 5px; word-break: break-all; margin-bottom: 20px;">
-            <code style="color: #4b5563; font-size: 12px;">${verificationLink}</code>
-          </div>
-          
-          <p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
-            هذا الرابط صالح لمدة 24 ساعة. إذا لم تقم بإنشاء هذا الحساب، يمكنك تجاهل هذا البريد.
-          </p>
-          
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-          
-          <p style="color: #9ca3af; font-size: 12px; text-align: center;">
-            © 2024 صحيفة سبق الإلكترونية. جميع الحقوق محفوظة.
-          </p>
-        </div>
-      </div>
-    `
+      user: string;
+      pass: string;
+    };
   };
-};
-
-// قالب بريد الترحيب
-const getWelcomeEmailTemplate = (name: string) => {
-  return {
-    subject: 'مرحباً بك في صحيفة سبق - احصل على 50 نقطة ترحيبية!',
-    html: `
-      <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa; padding: 20px;">
-        <div style="background-color: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #2563eb; font-size: 28px; margin: 0;">صحيفة سبق الإلكترونية</h1>
-          </div>
-          
-          <h2 style="color: #1f2937; font-size: 22px; margin-bottom: 20px;">🎉 مرحباً بك ${name}!</h2>
-          
-          <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-            تم تفعيل حسابك بنجاح! نحن سعداء بانضمامك إلى مجتمع صحيفة سبق.
-          </p>
-          
-          <div style="background-color: #eff6ff; border-right: 4px solid #2563eb; padding: 20px; margin: 20px 0; border-radius: 5px;">
-            <h3 style="color: #1e40af; font-size: 18px; margin: 0 0 10px 0;">🎁 هدية الترحيب</h3>
-            <p style="color: #3730a3; font-size: 24px; font-weight: bold; margin: 0;">50 نقطة ولاء</p>
-            <p style="color: #6b7280; font-size: 14px; margin: 10px 0 0 0;">
-              لقد حصلت على 50 نقطة ترحيبية! استخدمها للحصول على مزايا حصرية.
-            </p>
-          </div>
-          
-          <h3 style="color: #1f2937; font-size: 18px; margin: 30px 0 20px 0;">ماذا يمكنك فعله الآن؟</h3>
-          
-          <ul style="color: #4b5563; font-size: 16px; line-height: 1.8; padding-right: 20px;">
-            <li>اختر اهتماماتك للحصول على محتوى مخصص</li>
-            <li>اقرأ المقالات واكسب نقاط ولاء إضافية</li>
-            <li>شارك المحتوى مع أصدقائك واحصل على مكافآت</li>
-            <li>تابع آخر الأخبار والتحليلات الحصرية</li>
-          </ul>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="http://localhost:3000/welcome/preferences" style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold;">
-              اختر اهتماماتك الآن
-            </a>
-          </div>
-          
-          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h4 style="color: #1f2937; font-size: 16px; margin: 0 0 10px 0;">نظام النقاط:</h4>
-            <ul style="color: #6b7280; font-size: 14px; line-height: 1.6; padding-right: 20px; margin: 0;">
-              <li>قراءة مقال: 5 نقاط</li>
-              <li>التعليق: 10 نقاط</li>
-              <li>المشاركة: 15 نقطة</li>
-              <li>دعوة صديق: 25 نقطة</li>
-            </ul>
-          </div>
-          
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-          
-          <p style="color: #6b7280; font-size: 14px; text-align: center; line-height: 1.6;">
-            إذا كان لديك أي استفسار، لا تتردد في التواصل معنا على<br>
-            <a href="mailto:support@sabq.ai" style="color: #2563eb; text-decoration: none;">support@sabq.ai</a>
-          </p>
-          
-          <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 20px;">
-            © 2024 صحيفة سبق الإلكترونية. جميع الحقوق محفوظة.
-          </p>
-        </div>
-      </div>
-    `
+  sendgrid?: {
+    apiKey: string;
   };
-};
+  mailgun?: {
+    apiKey: string;
+    domain: string;
+  };
+  ses?: {
+    region: string;
+    accessKeyId: string;
+    secretAccessKey: string;
+  };
+}
 
-// إرسال بريد التحقق
-export const sendVerificationEmail = async (email: string, name: string, verificationToken: string) => {
-  try {
-    const transporter = createTransporter();
-    const verificationLink = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/verify?token=${verificationToken}`;
-    const template = getVerificationEmailTemplate(name, verificationLink);
-    
-    const info = await transporter.sendMail({
-      from: `"${emailConfig.defaults.from.name}" <${emailConfig.defaults.from.email}>`,
-      to: email,
-      subject: template.subject,
-      html: template.html
-    });
-    
-    console.log('Verification email sent:', info.messageId);
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error('Error sending verification email:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+interface EmailOptions {
+  to: string | string[];
+  subject: string;
+  html: string;
+  text?: string;
+  headers?: Record<string, string>;
+  attachments?: Array<{
+    filename: string;
+    content: Buffer | string;
+  }>;
+}
+
+export class EmailService {
+  private config: EmailConfig;
+  private transporter: nodemailer.Transporter | null = null;
+
+  constructor() {
+    // تحميل الإعدادات من متغيرات البيئة
+    this.config = this.loadConfig();
+    this.initializeTransporter();
   }
-};
 
-// إرسال بريد الترحيب
-export const sendWelcomeEmail = async (email: string, name: string) => {
-  try {
-    const transporter = createTransporter();
-    const template = getWelcomeEmailTemplate(name);
+  private loadConfig(): EmailConfig {
+    const provider = (process.env.EMAIL_PROVIDER || 'smtp') as EmailProvider;
     
-    const info = await transporter.sendMail({
-      from: `"${emailConfig.defaults.from.name}" <${emailConfig.defaults.from.email}>`,
-      to: email,
-      subject: template.subject,
-      html: template.html
-    });
-    
-    console.log('Welcome email sent:', info.messageId);
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error('Error sending welcome email:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-  }
-};
+    const config: EmailConfig = {
+      provider,
+      from: {
+        name: process.env.EMAIL_FROM_NAME || 'سبق',
+        email: process.env.EMAIL_FROM_ADDRESS || 'noreply@sabq.org'
+      }
+    };
 
-// اختبار اتصال SMTP
-export const testSMTPConnection = async () => {
-  try {
-    const transporter = createTransporter();
-    const verified = await transporter.verify();
-    
-    if (verified) {
-      console.log('SMTP connection verified successfully');
-      return { success: true, message: 'SMTP connection is working' };
-    } else {
-      return { success: false, message: 'SMTP connection verification failed' };
+    switch (provider) {
+      case 'smtp':
+        config.smtp = {
+          host: process.env.SMTP_HOST || 'localhost',
+          port: parseInt(process.env.SMTP_PORT || '587'),
+          secure: process.env.SMTP_SECURE === 'true',
+          auth: {
+            user: process.env.SMTP_USER || '',
+            pass: process.env.SMTP_PASS || ''
+          }
+        };
+        break;
+      
+      case 'sendgrid':
+        config.sendgrid = {
+          apiKey: process.env.SENDGRID_API_KEY || ''
+        };
+        break;
+      
+      case 'mailgun':
+        config.mailgun = {
+          apiKey: process.env.MAILGUN_API_KEY || '',
+          domain: process.env.MAILGUN_DOMAIN || ''
+        };
+        break;
+      
+      case 'ses':
+        config.ses = {
+          region: process.env.AWS_REGION || 'us-east-1',
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || ''
+        };
+        break;
     }
-  } catch (error) {
-    console.error('SMTP connection test failed:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+
+    return config;
   }
-}; 
+
+  private async initializeTransporter() {
+    try {
+      switch (this.config.provider) {
+        case 'smtp':
+          this.transporter = nodemailer.createTransport({
+            host: this.config.smtp!.host,
+            port: this.config.smtp!.port,
+            secure: this.config.smtp!.secure,
+            auth: this.config.smtp!.auth
+          });
+          break;
+        
+        case 'sendgrid':
+          // يمكن استخدام nodemailer-sendgrid
+          this.transporter = nodemailer.createTransport({
+            service: 'SendGrid',
+            auth: {
+              user: 'apikey',
+              pass: this.config.sendgrid!.apiKey
+            }
+          });
+          break;
+        
+        case 'mailgun':
+          this.transporter = await this.createMailgunTransporter(this.config.mailgun!);
+          break;
+        
+        case 'ses':
+          // يمكن استخدام @aws-sdk/client-ses
+          const aws = require('@aws-sdk/client-ses');
+          const ses = new aws.SES({
+            region: this.config.ses!.region,
+            credentials: {
+              accessKeyId: this.config.ses!.accessKeyId,
+              secretAccessKey: this.config.ses!.secretAccessKey
+            }
+          });
+          
+          this.transporter = nodemailer.createTransport({
+            SES: { ses, aws }
+          });
+          break;
+      }
+
+      // اختبار الاتصال
+      if (this.transporter) {
+        await this.transporter.verify();
+        console.log('✅ Email service initialized successfully');
+      }
+    } catch (error) {
+      console.error('❌ Failed to initialize email service:', error);
+    }
+  }
+
+  private async createMailgunTransporter(config: NonNullable<EmailConfig['mailgun']>): Promise<nodemailer.Transporter> {
+    // استخدام SMTP مباشرة بدلاً من mailgun-transport
+    return nodemailer.createTransport({
+      host: 'smtp.mailgun.org',
+      port: 587,
+      secure: false,
+      auth: {
+        user: `postmaster@${config.domain}`,
+        pass: config.apiKey!
+      }
+    });
+  }
+
+  // إرسال بريد إلكتروني واحد
+  async sendEmail(options: EmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!this.transporter) {
+      return { success: false, error: 'Email service not initialized' };
+    }
+
+    try {
+      const mailOptions = {
+        from: `${this.config.from.name} <${this.config.from.email}>`,
+        to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
+        subject: options.subject,
+        html: options.html,
+        text: options.text,
+        headers: options.headers,
+        attachments: options.attachments
+      };
+
+      const info = await this.transporter.sendMail(mailOptions);
+      
+      return {
+        success: true,
+        messageId: info.messageId
+      };
+    } catch (error: any) {
+      console.error('Email send error:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  // إرسال بريد إلكتروني مع قالب
+  async sendTemplatedEmail(
+    templateId: string,
+    to: string | string[],
+    variables: Record<string, any> = {}
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    try {
+      // جلب القالب
+      const template = await prisma.emailTemplate.findUnique({
+        where: { id: templateId }
+      });
+
+      if (!template) {
+        return { success: false, error: 'Template not found' };
+      }
+
+      // استبدال المتغيرات
+      let html = template.htmlContent;
+      let text = template.textContent || '';
+      let subject = template.subject;
+
+      // إضافة متغيرات افتراضية
+      const defaultVars = {
+        date: new Date().toLocaleDateString('ar-SA'),
+        year: new Date().getFullYear(),
+        ...variables
+      };
+
+      // استبدال المتغيرات في النص
+      Object.entries(defaultVars).forEach(([key, value]) => {
+        const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
+        html = html.replace(regex, String(value));
+        text = text.replace(regex, String(value));
+        subject = subject.replace(regex, String(value));
+      });
+
+      // إرسال البريد
+      return await this.sendEmail({
+        to,
+        subject,
+        html,
+        text
+      });
+    } catch (error: any) {
+      console.error('Templated email error:', error);
+  return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  // إرسال بريد إلكتروني جماعي
+  async sendBulkEmail(
+    subscribers: Array<{ email: string; name?: string }>,
+    subject: string,
+    html: string,
+    text?: string
+  ): Promise<{ sent: number; failed: number; errors: string[] }> {
+    const results = {
+      sent: 0,
+      failed: 0,
+      errors: [] as string[]
+    };
+
+    // إرسال دفعات صغيرة لتجنب حدود المعدل
+    const batchSize = 10;
+    for (let i = 0; i < subscribers.length; i += batchSize) {
+      const batch = subscribers.slice(i, i + batchSize);
+      
+      await Promise.all(
+        batch.map(async (subscriber) => {
+          // استبدال متغيرات المستلم
+          const personalizedHtml = html
+            .replace(/{{name}}/g, subscriber.name || 'عزيزي القارئ')
+            .replace(/{{email}}/g, subscriber.email);
+          
+          const personalizedText = text
+            ?.replace(/{{name}}/g, subscriber.name || 'عزيزي القارئ')
+            .replace(/{{email}}/g, subscriber.email);
+
+          const result = await this.sendEmail({
+            to: subscriber.email,
+            subject,
+            html: personalizedHtml,
+            text: personalizedText
+          });
+
+          if (result.success) {
+            results.sent++;
+          } else {
+            results.failed++;
+            results.errors.push(`${subscriber.email}: ${result.error}`);
+          }
+        })
+      );
+
+      // تأخير بين الدفعات
+      if (i + batchSize < subscribers.length) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+
+    return results;
+  }
+
+  // إضافة رابط إلغاء الاشتراك
+  addUnsubscribeLink(html: string, subscriberId: string): string {
+    const unsubscribeUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/email/unsubscribe?id=${subscriberId}`;
+    const unsubscribeHtml = `
+      <div style="text-align: center; margin-top: 40px; padding: 20px; border-top: 1px solid #e0e0e0;">
+        <p style="color: #666; font-size: 14px;">
+          إذا كنت لا ترغب في تلقي هذه الرسائل، يمكنك 
+          <a href="${unsubscribeUrl}" style="color: #1a73e8;">إلغاء الاشتراك</a>
+        </p>
+      </div>
+    `;
+    
+    // إضافة الرابط قبل إغلاق body
+    return html.replace('</body>', `${unsubscribeHtml}</body>`);
+  }
+
+  // إضافة بكسل التتبع
+  addTrackingPixel(html: string, emailLogId: string): string {
+    const trackingUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/email/track/open?id=${emailLogId}`;
+    const trackingPixel = `<img src="${trackingUrl}" width="1" height="1" style="display:none;" />`;
+    
+    // إضافة البكسل قبل إغلاق body
+    return html.replace('</body>', `${trackingPixel}</body>`);
+  }
+
+  // تتبع النقرات
+  trackLinks(html: string, emailLogId: string): string {
+    const trackUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/email/track/click`;
+    
+    // استبدال جميع الروابط لتمر عبر نظام التتبع
+    return html.replace(
+      /<a\s+([^>]*href=["'])([^"']+)(["'][^>]*)>/gi,
+      (match, before, url, after) => {
+        // تجاهل روابط إلغاء الاشتراك
+        if (url.includes('unsubscribe')) {
+          return match;
+        }
+        
+        const trackedUrl = `${trackUrl}?id=${emailLogId}&url=${encodeURIComponent(url)}`;
+        return `<a ${before}${trackedUrl}${after}>`;
+      }
+    );
+  }
+}
+
+// إنشاء مثيل واحد للاستخدام
+export const emailService = new EmailService(); 

@@ -53,6 +53,15 @@
       "description": "نقاط ترحيبية للتسجيل (معلقة حتى التحقق)",
       "pending": true,
       "created_at": "2025-06-26T21:05:42.959Z"
+    },
+    {
+      "id": "points-1751708795749-6dxgsq0qy",
+      "user_id": "user-1751708794742-ufndvynal",
+      "points": 50,
+      "action": "registration_bonus",
+      "description": "نقاط ترحيبية للتسجيل (معلقة حتى التحقق)",
+      "pending": false,
+      "created_at": "2025-07-05T09:46:35.749Z"
     }
   ]
 }
