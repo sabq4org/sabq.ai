@@ -137,29 +137,25 @@ export async function GET(request: NextRequest) {
       const parent = category.parentId ? parentsMap.get(category.parentId) : null;
       const articleCount = articleCountMap.get(category.id) || 0;
       
-      // معالجة JSON من حقل description
+      // استخراج البيانات من الحقول المباشرة أولاً، ثم من JSON إذا لزم الأمر
       let metadata: any = {};
-      let icon = '📁';
-      let colorHex = '#6B7280';
+      let icon = category.icon || '📁';
+      let colorHex = category.color || '#6B7280';
       let nameAr = category.name;
-      let nameEn = '';
-      let descriptionText = '';
+      let nameEn = category.nameEn || '';
+      let descriptionText = category.description || '';
       
-      if (category.description) {
+      // إذا كانت البيانات في حقل description كـ JSON (للتوافق مع البيانات القديمة)
+      if (category.description && !category.icon && !category.color) {
         try {
-          // محاولة تحليل JSON من حقل description
           const parsedData = JSON.parse(category.description);
           if (parsedData && typeof parsedData === 'object') {
             icon = parsedData.icon || icon;
-            // البحث عن اللون في color_hex أو color
             colorHex = parsedData.color_hex || parsedData.color || colorHex;
             nameAr = parsedData.name_ar || nameAr;
             nameEn = parsedData.name_en || nameEn;
             descriptionText = parsedData.ar || parsedData.en || '';
             metadata = parsedData;
-          } else {
-            // إذا لم يكن JSON، استخدم النص كما هو
-            descriptionText = category.description;
           }
         } catch (e) {
           // إذا فشل تحليل JSON، استخدم النص كما هو

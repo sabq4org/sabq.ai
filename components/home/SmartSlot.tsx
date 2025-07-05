@@ -86,15 +86,8 @@ export function SmartSlot({ position, className = '' }: SmartSlotProps) {
     try {
       console.log(`[SmartSlot] جلب المقالات للبلوك:`, block.name, block);
       
-      // إذا لم تكن هناك كلمات مفتاحية، لا نعرض أي مقالات
-      if (!block.keywords || block.keywords.length === 0) {
-        console.log(`[SmartSlot] لا توجد كلمات مفتاحية للبلوك ${block.name}`);
-        setBlockArticles(prev => ({
-          ...prev,
-          [block.id]: []
-        }));
-        return;
-      }
+      // إذا لم توجد كلمات مفتاحية ولكن يوجد تصنيف، نكتفي بتصنيف المقالات
+      const hasKeywords = Array.isArray(block.keywords) && block.keywords.length > 0;
       
       // جلب جميع المقالات المنشورة
       let url = `/api/articles?status=published&limit=100`; // جلب عدد كبير للفلترة المحلية
@@ -135,8 +128,19 @@ export function SmartSlot({ position, className = '' }: SmartSlotProps) {
         return;
       }
       
-      // فلترة المقالات بناءً على الكلمات المفتاحية
-      const filteredArticles = articlesData.filter((article: any) => {
+      // فلترة حسب التصنيف أولاً إذا كان block.category مُعطى (باسم التصنيف بالعربية أو الإنجليزية)
+      let preFiltered = articlesData;
+      if (block.category) {
+        const catLower = block.category.toLowerCase();
+        preFiltered = preFiltered.filter((a: any) => {
+          const nameAr = (a.category_name || '').toLowerCase();
+          const nameEn = (a.category?.name_en || a.category?.name || '').toLowerCase();
+          return nameAr.includes(catLower) || nameEn.includes(catLower);
+        });
+      }
+      
+      // فلترة المقالات بناءً على الكلمات المفتاحية (إن وجدت)
+      let filteredArticles = hasKeywords ? preFiltered.filter((article: any) => {
         // التحقق من وجود الكلمات المفتاحية في:
         // 1. seo_keywords (كنص أو مصفوفة)
         // 2. العنوان
@@ -166,7 +170,7 @@ export function SmartSlot({ position, className = '' }: SmartSlotProps) {
             summary.toLowerCase().includes(lowerKeyword)
           );
         });
-      });
+      }) : preFiltered;
       
       // أخذ العدد المطلوب فقط
       const limitedArticles = filteredArticles.slice(0, block.articlesCount || 6);
@@ -177,6 +181,11 @@ export function SmartSlot({ position, className = '' }: SmartSlotProps) {
         limitedCount: limitedArticles.length,
         keywords: block.keywords
       });
+      
+      // في حال لم ينتج أي مقال بعد الفلترة بالكلمات المفتاحية، أظهر مقالات التصنيف مباشرة
+      if (filteredArticles.length === 0) {
+        filteredArticles = preFiltered;
+      }
       
       setBlockArticles(prev => ({
         ...prev,

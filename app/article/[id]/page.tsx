@@ -16,6 +16,7 @@ import Footer from '@/components/Footer';
 import { marked } from 'marked';
 import Header from '@/components/Header';
 import CommentsSection from '@/components/comments/CommentsSection';
+import { ArticleMobileLayout } from '@/components/mobile/MobileLayout';
 
 // تعريف نوع twttr لتويتر
 declare global {
@@ -162,9 +163,22 @@ export default function ArticlePage({ params }: PageProps) {
   const [aiQuestion, setAiQuestion] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
+    
+    // فحص نوع الجهاز
+    const checkDevice = () => {
+      const userAgent = navigator.userAgent;
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+      const isSmallScreen = window.innerWidth <= 768;
+      setIsMobile(isMobileDevice || isSmallScreen);
+    };
+
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
   // إنشاء معرف ثابت للضيف عند تحميل الصفحة

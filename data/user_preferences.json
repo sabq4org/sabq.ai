@@ -100,58 +100,23 @@
   },
   {
     "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
-    "category_id": "196b74d9-249f-4994-b4a2-1f2a000b4b59",
+    "category_id": "category-tech",
     "source": "manual",
-    "created_at": "2025-07-04T18:31:41.116Z",
-    "updated_at": "2025-07-04T18:31:41.116Z"
+    "created_at": "2025-07-05T19:20:55.781Z",
+    "updated_at": "2025-07-05T19:20:55.781Z"
   },
   {
     "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
-    "category_id": "d7355e2b-fc2e-4921-b7c3-9c4ad478cc82",
+    "category_id": "category-sports",
     "source": "manual",
-    "created_at": "2025-07-04T18:31:41.116Z",
-    "updated_at": "2025-07-04T18:31:41.116Z"
+    "created_at": "2025-07-05T19:20:55.781Z",
+    "updated_at": "2025-07-05T19:20:55.781Z"
   },
   {
     "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
-    "category_id": "39ca2269-5ddb-4b09-898f-638eb8b216fb",
+    "category_id": "category-economy",
     "source": "manual",
-    "created_at": "2025-07-04T18:31:41.116Z",
-    "updated_at": "2025-07-04T18:31:41.116Z"
-  },
-  {
-    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
-    "category_id": "b1505b2a-487a-4b82-a72e-7f73c97f3acf",
-    "source": "manual",
-    "created_at": "2025-07-04T18:31:41.116Z",
-    "updated_at": "2025-07-04T18:31:41.116Z"
-  },
-  {
-    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
-    "category_id": "565654a3-e0e8-4342-bb81-89d6c779af28",
-    "source": "manual",
-    "created_at": "2025-07-04T18:31:41.116Z",
-    "updated_at": "2025-07-04T18:31:41.116Z"
-  },
-  {
-    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
-    "category_id": "61b846c8-c1d6-4bb9-95ff-5d2b586bd37b",
-    "source": "manual",
-    "created_at": "2025-07-04T18:31:41.116Z",
-    "updated_at": "2025-07-04T18:31:41.116Z"
-  },
-  {
-    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
-    "category_id": "1ff44046-0958-4b9f-9ab8-499dfd2b841a",
-    "source": "manual",
-    "created_at": "2025-07-04T18:31:41.116Z",
-    "updated_at": "2025-07-04T18:31:41.116Z"
-  },
-  {
-    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
-    "category_id": "01aab8a1-992f-43d4-8f92-39b4e27840bd",
-    "source": "manual",
-    "created_at": "2025-07-04T18:31:41.116Z",
-    "updated_at": "2025-07-04T18:31:41.116Z"
+    "created_at": "2025-07-05T19:20:55.781Z",
+    "updated_at": "2025-07-05T19:20:55.781Z"
   }
 ]

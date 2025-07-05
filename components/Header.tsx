@@ -228,7 +228,7 @@ export default function Header() {
 
   return (
     <header className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-black/50 sticky top-0 z-50 transition-colors duration-300 h-16 safe-area-top">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+      <div className="w-full max-w-full mx-0 px-0 sm:px-4 lg:px-8 h-full">
         <div className="flex items-center justify-between h-full">
           {/* Mobile Layout */}
           <div className="flex lg:hidden items-center justify-between w-full">

@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import AnalysisTypeIcon from './deep-analysis/AnalysisTypeIcon';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useRouter } from 'next/navigation';
 
 interface DeepInsight {
   id: string;
@@ -34,6 +35,7 @@ export default function DeepAnalysisWidget({ insights }: DeepAnalysisWidgetProps
   const darkMode = resolvedTheme === 'dark';
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const router = useRouter();
 
   useEffect(() => {
     // قراءة العناصر المقروءة من localStorage
@@ -177,7 +179,8 @@ export default function DeepAnalysisWidget({ insights }: DeepAnalysisWidgetProps
                 return (
                   <div 
                     key={item.id} 
-                    className={`w-80 flex-shrink-0 ${
+                    onClick={() => { markAsRead(item.id); router.push(item.url); }}
+                    className={`cursor-pointer w-80 flex-shrink-0 ${
                       darkMode 
                         ? 'bg-gradient-to-br from-gray-800 to-gray-850 hover:from-gray-750 hover:to-gray-800 border-gray-700' 
                         : 'bg-white hover:shadow-xl border-gray-200'
@@ -253,7 +256,7 @@ export default function DeepAnalysisWidget({ insights }: DeepAnalysisWidgetProps
                         <div className="flex items-center gap-1">
                           <a 
                             href={item.url} 
-                            onClick={() => markAsRead(item.id)}
+                            onClick={(e) => { e.stopPropagation(); markAsRead(item.id); }}
                             className={`p-1.5 rounded-full transition-all duration-300 transform hover:scale-110 ${
                               darkMode 
                                 ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
@@ -266,7 +269,7 @@ export default function DeepAnalysisWidget({ insights }: DeepAnalysisWidgetProps
 
                           {/* أزرار إضافية للتفاعل */}
                           <button
-                            onClick={() => handleShare(item)}
+                            onClick={(e) => { e.stopPropagation(); handleShare(item); }}
                             className={`p-1.5 rounded-full transition-all duration-300 transform hover:scale-110 opacity-0 group-hover:opacity-100 ${
                               darkMode 
                                 ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
@@ -321,7 +324,7 @@ export default function DeepAnalysisWidget({ insights }: DeepAnalysisWidgetProps
                       <div className="mt-3 pt-2 pb-4">
                         <a 
                           href={item.url} 
-                          onClick={() => markAsRead(item.id)}
+                          onClick={(e) => { e.stopPropagation(); markAsRead(item.id); }}
                           className={`
                             w-fit max-w-[180px] mx-auto flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all
                             ${isAI 

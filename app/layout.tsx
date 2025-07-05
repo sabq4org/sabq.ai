@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import './globals.css'
+import '../styles/mobile-first-optimizations.css'
 import '@/styles/tiptap-editor.css'
 import '@/styles/deep-analysis.css'
 import '@/styles/fix-layout.css'
@@ -130,8 +131,9 @@ export default function RootLayout({
       )} suppressHydrationWarning>
         <Providers>
           <AuthProvider>
-            <MobileOptimizer />
-            {children}
+            <MobileOptimizer>
+              {children}
+            </MobileOptimizer>
             <Toaster 
               position="top-center"
               toastOptions={{

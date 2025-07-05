@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -14,6 +14,7 @@ import {
   Settings, 
   Bell,
   BarChart,
+  BarChart3,
   Edit3,
   FolderOpen,
   Plus,
@@ -25,7 +26,10 @@ import {
   Grid3X3,
   Award,
   Image,
-  MessageCircle
+  MessageCircle,
+  X,
+  ChevronRight,
+  LayoutDashboard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDashboardCounts } from '@/hooks/useDashboardCounts';
@@ -77,9 +81,20 @@ const sidebarItems: SidebarItem[] = [
   { icon: Calendar, label: 'جدولة النشر', href: '/dashboard/schedule' },
 ];
 
-export default function DashboardSidebar() {
+interface DashboardSidebarProps {
+  darkMode: boolean;
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+}
+
+export default function DashboardSidebar({ darkMode, sidebarOpen, setSidebarOpen }: DashboardSidebarProps) {
   const pathname = usePathname();
   const { counts, loading } = useDashboardCounts();
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+
+  const toggleSection = (section: string) => {
+    setExpandedSection(expandedSection === section ? null : section);
+  };
 
   // دالة للحصول على النص التوضيحي للرقم
   const getCountTooltip = (key: string, count: number) => {
@@ -99,120 +114,144 @@ export default function DashboardSidebar() {
   };
 
   return (
-    <aside className="sabq-sidebar w-64 min-h-[calc(100vh-4rem)] p-4">
-      <div className="mb-6">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">
+    <aside className={`${
+      sidebarOpen ? 'translate-x-0' : 'translate-x-full'
+    } lg:translate-x-0 fixed lg:relative w-72 lg:w-64 xl:w-72 shadow-xl border-l h-screen lg:h-auto transition-all duration-300 z-40 lg:z-0 ${
+      darkMode 
+        ? 'bg-gradient-to-b from-gray-800 to-gray-900 border-gray-700' 
+        : 'bg-gradient-to-b from-slate-50 to-white border-gray-100'
+    }`}>
+      {/* زر إغلاق للموبايل */}
+      <div className="lg:hidden flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+        <h2 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
           القائمة الرئيسية
-        </h3>
-      </div>
-      
-      <ul className="space-y-2">
-        {sidebarItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname ? (pathname === item.href || pathname.startsWith(item.href + '/')) : false;
-          const count = item.countKey && counts[item.countKey];
-          const countColorClass = item.countKey ? countColors[item.countKey] : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
-          
-          return (
-            <li key={item.href}>
-              <Link 
-                href={item.href}
-                className={cn(
-                  "sabq-sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group",
-                  isActive && "active"
-                )}
-              >
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                <span className="flex-1">{item.label}</span>
-                <div className="flex items-center gap-2">
-                  {!loading && count !== undefined && count > 0 && (
-                    <div className="relative group/tooltip">
-                      <span 
-                        className={cn(
-                          "text-xs px-2 py-0.5 rounded-full min-w-[32px] text-center font-medium transition-all duration-200",
-                          countColorClass,
-                          "group-hover:scale-110"
-                        )}
-                      >
-                        {(() => {
-                          // للتحقق من القيمة
-                          if (item.label === 'المستخدمون') {
-                            console.log('Users count in sidebar:', count, typeof count);
-                          }
-                          return count > 999 ? '999+' : count;
-                        })()}
-                      </span>
-                      {/* Tooltip */}
-                      <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity duration-200 z-50">
-                        <div className="bg-gray-900 text-white text-xs rounded-md px-2 py-1 whitespace-nowrap">
-                          {item.countKey && getCountTooltip(item.countKey, count)}
-                          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
-                            <div className="border-4 border-transparent border-l-gray-900"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {loading && item.countKey && (
-                    <span className="text-xs px-2 py-0.5 rounded-full min-w-[32px] text-center bg-gray-100 dark:bg-gray-700">
-                      <span className="inline-block w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></span>
-                    </span>
-                  )}
-                  {item.badge && (
-                    <span className="bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs px-2 py-0.5 rounded-full font-medium shadow-sm">
-                      {item.badge}
-                    </span>
-                  )}
-                </div>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-
-      <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">
-          اختصارات
-        </h3>
-        <ul className="space-y-2">
-          <li>
-            <Link 
-              href="/dashboard/articles/new"
-              className="sabq-sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-            >
-              <Plus className="w-5 h-5" />
-              <span>مقال جديد</span>
-            </Link>
-          </li>
-          <li>
-            <Link 
-              href="/dashboard/users/invite"
-              className="sabq-sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
-            >
-              <UserPlus className="w-5 h-5" />
-              <span>دعوة مستخدم</span>
-            </Link>
-          </li>
-        </ul>
+        </h2>
+        <button
+          onClick={() => setSidebarOpen(false)}
+          className={`p-2 rounded-lg transition-colors ${
+            darkMode 
+              ? 'hover:bg-gray-700 text-gray-300' 
+              : 'hover:bg-gray-100 text-gray-600'
+          }`}
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
-      {/* معلومات المستخدم */}
-      <div className="absolute bottom-4 left-4 right-4">
-        <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3">
+      <div className="p-4 lg:p-6 overflow-y-auto h-[calc(100vh-4rem)] lg:h-[calc(100vh-5rem)]">
+        {/* شارة الحالة */}
+        <div className={`hidden lg:block p-4 rounded-xl border transition-colors duration-300 mb-6 ${
+          darkMode 
+            ? 'bg-gradient-to-r from-green-900/30 to-emerald-900/30 border-green-700' 
+            : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-100'
+        }`}>
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-blue-600 font-medium">م</span>
+            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                مستخدم
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                محرر
-              </p>
+            <div>
+              <p className={`text-sm font-medium transition-colors duration-300 ${
+                darkMode ? 'text-green-300' : 'text-green-800'
+              }`}>النظام يعمل بشكل طبيعي</p>
+              <p className={`text-xs transition-colors duration-300 ${
+                darkMode ? 'text-green-400' : 'text-green-600'
+              }`}>آخر تحديث: الآن</p>
             </div>
           </div>
         </div>
+
+        {/* قائمة التنقل */}
+        <nav className="space-y-4 lg:space-y-6">
+          {/* الرئيسية */}
+          <Link href="/dashboard" 
+            onClick={() => setSidebarOpen(false)}
+            className={`group flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-2 lg:py-3 rounded-xl transition-all duration-300 hover:shadow-md hover:translate-x-1 ${
+            darkMode 
+              ? 'text-gray-300 hover:bg-gradient-to-r hover:from-blue-900/30 hover:to-indigo-900/30 hover:text-blue-300' 
+              : 'text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700'
+          }`}>
+            <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
+              darkMode 
+                ? 'bg-blue-900/40 group-hover:bg-blue-500 group-hover:text-white' 
+                : 'bg-blue-100 group-hover:bg-blue-500 group-hover:text-white'
+            }`}>
+              <LayoutDashboard className="w-4 h-4 lg:w-5 lg:h-5" />
+            </div>
+            <span className="text-sm lg:text-base font-medium">لوحة التحكم</span>
+          </Link>
+
+          {/* المحتوى */}
+          <Link href="/dashboard/news" 
+            onClick={() => setSidebarOpen(false)}
+            className={`group flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-2 lg:py-3 rounded-xl transition-all duration-300 hover:shadow-md hover:translate-x-1 ${
+            darkMode 
+              ? 'text-gray-300 hover:bg-gradient-to-r hover:from-green-900/30 hover:to-emerald-900/30 hover:text-green-300' 
+              : 'text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 hover:text-green-700'
+          }`}>
+            <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
+              darkMode 
+                ? 'bg-green-900/40 group-hover:bg-green-500 group-hover:text-white' 
+                : 'bg-green-100 group-hover:bg-green-500 group-hover:text-white'
+            }`}>
+              <FileText className="w-4 h-4 lg:w-5 lg:h-5" />
+            </div>
+            <span className="text-sm lg:text-base font-medium">إدارة الأخبار</span>
+          </Link>
+
+          {/* المستخدمون */}
+          <Link href="/dashboard/users" 
+            onClick={() => setSidebarOpen(false)}
+            className={`group flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-2 lg:py-3 rounded-xl transition-all duration-300 hover:shadow-md hover:translate-x-1 ${
+            darkMode 
+              ? 'text-gray-300 hover:bg-gradient-to-r hover:from-purple-900/30 hover:to-pink-900/30 hover:text-purple-300' 
+              : 'text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-700'
+          }`}>
+            <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
+              darkMode 
+                ? 'bg-purple-900/40 group-hover:bg-purple-500 group-hover:text-white' 
+                : 'bg-purple-100 group-hover:bg-purple-500 group-hover:text-white'
+            }`}>
+              <Users className="w-4 h-4 lg:w-5 lg:h-5" />
+            </div>
+            <span className="text-sm lg:text-base font-medium">المستخدمون</span>
+          </Link>
+
+          {/* التحليلات */}
+          <Link href="/dashboard/analytics" 
+            onClick={() => setSidebarOpen(false)}
+            className={`group flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-2 lg:py-3 rounded-xl transition-all duration-300 hover:shadow-md hover:translate-x-1 ${
+            darkMode 
+              ? 'text-gray-300 hover:bg-gradient-to-r hover:from-indigo-900/30 hover:to-violet-900/30 hover:text-indigo-300' 
+              : 'text-gray-700 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-violet-50 hover:text-indigo-700'
+          }`}>
+            <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
+              darkMode 
+                ? 'bg-indigo-900/40 group-hover:bg-indigo-500 group-hover:text-white' 
+                : 'bg-indigo-100 group-hover:bg-indigo-500 group-hover:text-white'
+            }`}>
+              <BarChart3 className="w-4 h-4 lg:w-5 lg:h-5" />
+            </div>
+            <span className="text-sm lg:text-base font-medium">التحليلات</span>
+          </Link>
+
+          {/* الإعدادات */}
+          <Link href="/dashboard/settings" 
+            onClick={() => setSidebarOpen(false)}
+            className={`group flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-2 lg:py-3 rounded-xl transition-all duration-300 hover:shadow-md hover:translate-x-1 ${
+            darkMode 
+              ? 'text-gray-300 hover:bg-gradient-to-r hover:from-gray-700 hover:to-gray-800 hover:text-gray-100' 
+              : 'text-gray-700 hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-200 hover:text-gray-900'
+          }`}>
+            <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
+              darkMode 
+                ? 'bg-gray-700 group-hover:bg-gray-600 group-hover:text-white' 
+                : 'bg-gray-200 group-hover:bg-gray-600 group-hover:text-white'
+            }`}>
+              <Settings className="w-4 h-4 lg:w-5 lg:h-5" />
+            </div>
+            <span className="text-sm lg:text-base font-medium">الإعدادات</span>
+          </Link>
+        </nav>
       </div>
     </aside>
   );
