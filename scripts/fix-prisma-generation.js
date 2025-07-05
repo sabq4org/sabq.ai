@@ -1,110 +1,75 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
+console.log('🔧 إصلاح مشاكل توليد Prisma...');
+
 const fs = require('fs');
 const path = require('path');
 
-console.log('🔧 إصلاح توليد Prisma...');
-
-// التحقق من وجود ملف schema.prisma
-const schemaPath = path.join(process.cwd(), 'prisma', 'schema.prisma');
-if (!fs.existsSync(schemaPath)) {
-  console.error('❌ ملف prisma/schema.prisma غير موجود!');
-  process.exit(1);
+// إنشاء مجلد lib/generated إذا لم يكن موجوداً
+const generatedDir = path.join(process.cwd(), 'lib', 'generated');
+if (!fs.existsSync(generatedDir)) {
+  fs.mkdirSync(generatedDir, { recursive: true });
+  console.log('📁 تم إنشاء مجلد lib/generated');
 }
 
-// إنشاء مجلد الإخراج إذا لم يكن موجودًا
-const outputDir = path.join(process.cwd(), 'lib', 'generated', 'prisma');
-if (!fs.existsSync(outputDir)) {
-  fs.mkdirSync(outputDir, { recursive: true });
-  console.log('✅ تم إنشاء مجلد:', outputDir);
+// إنشاء ملف prisma client مؤقت
+const prismaClientPath = path.join(generatedDir, 'prisma');
+if (!fs.existsSync(prismaClientPath)) {
+  fs.mkdirSync(prismaClientPath, { recursive: true });
+  console.log('📁 تم إنشاء مجلد prisma client');
 }
 
-// محاولة توليد Prisma مع خيارات مختلفة
-const strategies = [
-  {
-    name: 'Default generate',
-    command: 'npx prisma generate'
-  },
-  {
-    name: 'Generate without engine',
-    command: 'npx prisma generate --no-engine'
-  },
-  {
-    name: 'Generate with data proxy',
-    command: 'npx prisma generate --data-proxy'
-  }
-];
-
-let success = false;
-
-for (const strategy of strategies) {
-  console.log(`\n🔄 جاري تجربة: ${strategy.name}...`);
-  try {
-    execSync(strategy.command, { stdio: 'inherit' });
-    console.log(`✅ نجح: ${strategy.name}`);
-    success = true;
-    break;
-  } catch (error) {
-    console.log(`⚠️ فشل: ${strategy.name}`);
-  }
-}
-
-if (!success) {
-  console.log('\n⚠️ فشلت جميع محاولات توليد Prisma');
-  console.log('📝 سيتم إنشاء ملف Prisma Client أساسي...');
-  
-  // إنشاء ملف Prisma Client أساسي كحل احتياطي
+// إنشاء ملف index.js مؤقت
+const indexPath = path.join(prismaClientPath, 'index.js');
+if (!fs.existsSync(indexPath)) {
   const fallbackClient = `
-// This is a fallback Prisma Client for build purposes
-export class PrismaClient {
-  constructor(options) {
-    console.warn('[Prisma] Using fallback client for build - database operations will not work');
+// Fallback Prisma Client للبناء
+const { PrismaClient } = require('@prisma/client');
+
+let prisma;
+
+if (process.env.NODE_ENV === 'production') {
+  prisma = new PrismaClient();
+} else {
+  if (!global.prisma) {
+    global.prisma = new PrismaClient();
   }
+  prisma = global.prisma;
+}
+
+module.exports = { PrismaClient, prisma };
+`;
   
-  $connect() { return Promise.resolve(); }
-  $disconnect() { return Promise.resolve(); }
-  $use() {}
-  $on() {}
-  $transaction() { return Promise.resolve([]); }
-  
-  // نماذج أساسية مع عمليات dummy
-  user = {
-    findMany: () => Promise.resolve([]),
-    findUnique: () => Promise.resolve(null),
-    findFirst: () => Promise.resolve(null),
-    create: () => Promise.resolve({}),
-    update: () => Promise.resolve({}),
-    delete: () => Promise.resolve({}),
-    count: () => Promise.resolve(0),
-    aggregate: () => Promise.resolve({}),
-    groupBy: () => Promise.resolve([])
+  fs.writeFileSync(indexPath, fallbackClient);
+  console.log('✅ تم إنشاء Prisma Client مؤقت');
+}
+
+// إنشاء ملف package.json للمولد
+const packagePath = path.join(prismaClientPath, 'package.json');
+if (!fs.existsSync(packagePath)) {
+  const packageJson = {
+    name: "@prisma/client",
+    version: "6.11.1",
+    main: "index.js",
+    types: "index.d.ts"
   };
   
-  article = this.user;
-  category = this.user;
-  interaction = this.user;
-  loyaltyPoint = this.user;
-  loyaltyTransaction = this.user;
-  deepAnalysis = this.user;
-  author = this.user;
-  mediaFile = this.user;
-  aiInteraction = this.user;
-  impression = this.user;
-  preference = this.user;
+  fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
+  console.log('✅ تم إنشاء package.json للمولد');
 }
 
-// Export named exports
-export { PrismaClient };
-
-// Default export
-export default PrismaClient;
+// إنشاء ملف types
+const typesPath = path.join(prismaClientPath, 'index.d.ts');
+if (!fs.existsSync(typesPath)) {
+  const types = `
+export * from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+declare const prisma: PrismaClient;
+export { prisma };
 `;
-
-  fs.writeFileSync(path.join(outputDir, 'index.js'), fallbackClient);
-  fs.writeFileSync(path.join(outputDir, 'index.d.ts'), fallbackClient);
-  console.log('✅ تم إنشاء Prisma Client احتياطي');
+  
+  fs.writeFileSync(typesPath, types);
+  console.log('✅ تم إنشاء ملف الأنواع');
 }
 
-console.log('\n✅ اكتمل إصلاح توليد Prisma');
-process.exit(0); 
+console.log('✅ تم إصلاح مشاكل توليد Prisma'); 

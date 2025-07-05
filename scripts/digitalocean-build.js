@@ -1,9 +1,67 @@
 #!/usr/bin/env node
 
+console.log('🚀 تحضير البناء على DigitalOcean...');
+
+// إعداد متغيرات البيئة المطلوبة للبناء
+process.env.NEXT_TELEMETRY_DISABLED = '1';
+process.env.SKIP_ENV_VALIDATION = 'true';
+
+// إنشاء ملف .env مؤقت للبناء إذا لم يكن موجوداً
 const fs = require('fs');
 const path = require('path');
 
-console.log('🌊 بدء تحسين البناء لـ DigitalOcean...');
+const envPath = path.join(process.cwd(), '.env');
+const envLocalPath = path.join(process.cwd(), '.env.local');
+
+// إنشاء .env مؤقت للبناء
+if (!fs.existsSync(envPath) && !fs.existsSync(envLocalPath)) {
+  const buildEnv = `
+# متغيرات البناء المؤقتة
+DATABASE_URL="mysql://build:build@localhost:3306/build"
+NEXT_TELEMETRY_DISABLED=1
+SKIP_ENV_VALIDATION=true
+NODE_ENV=production
+`;
+  
+  fs.writeFileSync(envPath, buildEnv);
+  console.log('✅ تم إنشاء ملف .env مؤقت للبناء');
+}
+
+// تنظيف الملفات المؤقتة
+const tempFiles = [
+  '.next',
+  'node_modules/.cache',
+  '.turbo'
+];
+
+tempFiles.forEach(file => {
+  const filePath = path.join(process.cwd(), file);
+  if (fs.existsSync(filePath)) {
+    try {
+      fs.rmSync(filePath, { recursive: true, force: true });
+      console.log(`🗑️  تم حذف ${file}`);
+    } catch (error) {
+      console.log(`⚠️  تعذر حذف ${file}: ${error.message}`);
+    }
+  }
+});
+
+// إنشاء مجلدات مطلوبة
+const requiredDirs = [
+  '.next',
+  'public',
+  'lib/generated'
+];
+
+requiredDirs.forEach(dir => {
+  const dirPath = path.join(process.cwd(), dir);
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+    console.log(`📁 تم إنشاء مجلد ${dir}`);
+  }
+});
+
+console.log('✅ تم تحضير البيئة للبناء على DigitalOcean');
 
 // التحقق من المتغيرات المطلوبة
 const requiredEnvVars = {

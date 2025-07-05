@@ -8,8 +8,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY prisma ./prisma/
 
-# تثبيت التبعيات
-RUN npm ci --only=production
+# تثبيت التبعيات مع إصلاح مشاكل التبعيات
+RUN npm install --omit=dev --legacy-peer-deps
 
 # مرحلة البناء
 FROM node:20-alpine AS builder
