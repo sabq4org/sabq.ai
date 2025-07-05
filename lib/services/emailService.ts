@@ -356,4 +356,120 @@ export class EmailService {
 }
 
 // إنشاء مثيل واحد للاستخدام
-export const emailService = new EmailService(); 
+export const emailService = new EmailService();
+
+// دوال مساعدة للاستخدام المباشر
+export async function testSMTPConnection(): Promise<{ success: boolean; error?: string }> {
+  try {
+    const testService = new EmailService();
+    if (!testService['transporter']) {
+      return { success: false, error: 'Email service not initialized' };
+    }
+    
+    await testService['transporter'].verify();
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function sendVerificationEmail(
+  email: string, 
+  name: string,
+  verificationToken: string
+): Promise<{ success: boolean; error?: string; messageId?: string }> {
+  try {
+    const verificationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/verify?token=${verificationToken}`;
+    
+    const html = `
+      <div style="direction: rtl; text-align: right; font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1a73e8;">مرحباً ${name}</h2>
+        <p>شكراً لك على التسجيل في منصة سبق. لإكمال عملية التسجيل، يرجى النقر على الرابط أدناه لتأكيد بريدك الإلكتروني:</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${verificationUrl}" 
+             style="background-color: #1a73e8; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            تأكيد البريد الإلكتروني
+          </a>
+        </div>
+        
+        <p style="color: #666; font-size: 14px;">
+          إذا لم تتمكن من النقر على الزر أعلاه، يمكنك نسخ الرابط التالي ولصقه في متصفحك:
+        </p>
+        <p style="word-break: break-all; color: #1a73e8; font-size: 14px;">
+          ${verificationUrl}
+        </p>
+        
+        <p style="color: #666; font-size: 12px; margin-top: 40px;">
+          هذا الرابط صالح لمدة 24 ساعة فقط.
+        </p>
+      </div>
+    `;
+    
+    const result = await emailService.sendEmail({
+      to: email,
+      subject: 'تأكيد البريد الإلكتروني - سبق',
+      html,
+      text: `مرحباً ${name}. لتأكيد بريدك الإلكتروني، يرجى زيارة: ${verificationUrl}`
+    });
+    
+    return {
+      success: result.success,
+      error: result.error,
+      messageId: result.messageId
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function sendWelcomeEmail(
+  email: string, 
+  name: string
+): Promise<{ success: boolean; error?: string; messageId?: string }> {
+  try {
+    const html = `
+      <div style="direction: rtl; text-align: right; font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1a73e8;">مرحباً ${name}!</h2>
+        <p>نحن سعداء بانضمامك إلى مجتمع سبق. منصتنا تقدم لك:</p>
+        
+        <ul style="line-height: 1.8;">
+          <li>آخر الأخبار والتحليلات</li>
+          <li>مقالات متخصصة وتحليلات عميقة</li>
+          <li>تنبيهات فورية للأخبار العاجلة</li>
+          <li>محتوى مخصص حسب اهتماماتك</li>
+        </ul>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${process.env.NEXT_PUBLIC_SITE_URL}" 
+             style="background-color: #1a73e8; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            ابدأ القراءة الآن
+          </a>
+        </div>
+        
+        <p style="color: #666;">
+          إذا كان لديك أي أسئلة أو تحتاج إلى مساعدة، لا تتردد في التواصل معنا.
+        </p>
+        
+        <p style="color: #666; font-size: 14px; margin-top: 40px;">
+          مع تحيات فريق سبق
+        </p>
+      </div>
+    `;
+    
+    const result = await emailService.sendEmail({
+      to: email,
+      subject: `مرحباً بك في سبق، ${name}!`,
+      html,
+      text: `مرحباً ${name}! نحن سعداء بانضمامك إلى مجتمع سبق. ابدأ القراءة الآن: ${process.env.NEXT_PUBLIC_SITE_URL}`
+    });
+    
+    return {
+      success: result.success,
+      error: result.error,
+      messageId: result.messageId
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+} 
