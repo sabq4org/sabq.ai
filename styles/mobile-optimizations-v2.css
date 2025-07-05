@@ -1,0 +1,262 @@
+/* ===================================
+   تحسينات الموبايل المتقدمة - النسخة 2
+   =================================== */
+
+/* إزالة جميع الهوامش الافتراضية */
+@media (max-width: 768px) {
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+  }
+
+  /* تغطية كاملة للخلفية */
+  .min-h-screen {
+    width: 100vw !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* إلغاء الحدود الجانبية للحاويات */
+  .container,
+  .max-w-7xl,
+  .max-w-6xl,
+  .max-w-5xl,
+  .max-w-4xl,
+  .max-w-3xl,
+  .max-w-2xl,
+  .max-w-xl {
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* تحسينات الهيدر */
+  header,
+  .header-container {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 50 !important;
+    width: 100vw !important;
+    margin: 0 !important;
+    border-radius: 0 0 1.5rem 1.5rem !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* إحصائيات أفقية */
+  .stats-container,
+  .deep-insights-stats {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 0 !important;
+    padding: 0.75rem !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    border-radius: 0.75rem !important;
+    margin: 0.5rem !important;
+  }
+
+  .stat-box,
+  .insight-stat {
+    flex: 1 !important;
+    text-align: center !important;
+    padding: 0.5rem 0.25rem !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .stat-box:first-child,
+  .insight-stat:first-child {
+    border-left: none !important;
+  }
+
+  .stat-box .stat-value,
+  .insight-stat-value {
+    font-size: 1.25rem !important;
+    font-weight: bold !important;
+    margin-bottom: 0.125rem !important;
+  }
+
+  .stat-box .stat-label,
+  .insight-stat-label {
+    font-size: 0.625rem !important;
+    opacity: 0.8 !important;
+  }
+
+  /* بطاقات بعرض كامل */
+  .card,
+  .article-card,
+  .news-card,
+  .insight-card {
+    width: calc(100vw - 1rem) !important;
+    margin: 0.5rem !important;
+    border-radius: 1rem !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* تقليل المسافات الرأسية */
+  section {
+    padding: 0.75rem 0 !important;
+  }
+
+  h1, h2, h3 {
+    margin-bottom: 0.5rem !important;
+  }
+
+  p {
+    margin-bottom: 0.375rem !important;
+  }
+
+  /* خلفيات ملونة كاملة */
+  .bg-gradient-to-b,
+  .bg-gradient-to-r,
+  .bg-blue-50,
+  .bg-blue-100 {
+    width: 100vw !important;
+    margin-left: calc(-50vw + 50%) !important;
+    padding-left: calc(50vw - 50%) !important;
+    padding-right: calc(50vw - 50%) !important;
+  }
+
+  /* تحسينات التصنيفات */
+  .categories-section {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    width: 100vw !important;
+    margin: 0 !important;
+    padding: 1rem 0.5rem !important;
+    border-radius: 0 0 1.5rem 1.5rem !important;
+  }
+
+  .category-button {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.75rem !important;
+    margin: 0.25rem !important;
+  }
+
+  /* تحسينات الأزرار */
+  button, .btn {
+    padding: 0.625rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  /* إزالة padding من العناصر الرئيسية */
+  main {
+    padding: 0 !important;
+  }
+
+  /* تحسينات البطاقات الذكية */
+  .smart-slot,
+  .smart-block {
+    margin: 0.5rem !important;
+    width: calc(100vw - 1rem) !important;
+  }
+
+  /* تحسينات القوائم */
+  .list-container {
+    padding: 0 0.5rem !important;
+  }
+
+  /* تحسينات الصور */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* إخفاء العناصر غير الضرورية على الموبايل */
+  .desktop-only {
+    display: none !important;
+  }
+
+  /* تحسينات النصوص */
+  .text-4xl {
+    font-size: 1.75rem !important;
+  }
+
+  .text-3xl {
+    font-size: 1.5rem !important;
+  }
+
+  .text-2xl {
+    font-size: 1.25rem !important;
+  }
+
+  .text-xl {
+    font-size: 1.125rem !important;
+  }
+
+  /* تحسينات الـ Modal والـ Drawer */
+  .modal,
+  .drawer {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+  }
+
+  /* تحسينات خاصة بالتحليلات العميقة */
+  .deep-analysis-widget {
+    background: rgba(0, 0, 0, 0.9) !important;
+    border-radius: 1rem !important;
+    margin: 0.5rem !important;
+    padding: 0.75rem !important;
+  }
+
+  /* تحسينات الفوتر */
+  footer {
+    margin-top: 2rem !important;
+    padding: 1rem 0.5rem !important;
+    width: 100vw !important;
+  }
+}
+
+/* تحسينات خاصة بالأجهزة الصغيرة جداً */
+@media (max-width: 375px) {
+  .stat-box .stat-value,
+  .insight-stat-value {
+    font-size: 1rem !important;
+  }
+
+  .stat-box .stat-label,
+  .insight-stat-label {
+    font-size: 0.5rem !important;
+  }
+
+  .category-button {
+    padding: 0.375rem 0.5rem !important;
+    font-size: 0.625rem !important;
+  }
+}
+
+/* تحسينات الأداء */
+@media (max-width: 768px) {
+  /* تقليل الظلال */
+  * {
+    box-shadow: none !important;
+  }
+
+  .card:hover,
+  .article-card:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* تحسين الانتقالات */
+  * {
+    transition-duration: 0.15s !important;
+  }
+}
+
+/* إصلاحات RTL للموبايل */
+@media (max-width: 768px) {
+  [dir="rtl"] .stat-box,
+  [dir="rtl"] .insight-stat {
+    border-left: none !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+  }
+
+  [dir="rtl"] .stat-box:first-child,
+  [dir="rtl"] .insight-stat:first-child {
+    border-right: none !important;
+  }
+} 

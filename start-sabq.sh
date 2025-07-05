@@ -6,7 +6,7 @@
 echo "🚀 بدء تشغيل مشروع سبق..."
 
 # التحقق من وجود ملف الإعدادات الصحيح
-if [ ! -f .env.local ] || ! grep -q "c9vxzegycj1f11phmk62" .env.local; then
+if [ ! -f .env.local ] || ! grep -q "postgresql://" .env.local; then
     echo "⚠️  الإعدادات غير صحيحة، جاري إعداد البيئة..."
     ./scripts/setup-env.sh
 fi

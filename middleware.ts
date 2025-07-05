@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { DatabaseProtection } from './lib/database-protection';
 
 // قائمة المسارات المحمية
 const protectedPaths = [
@@ -271,6 +272,27 @@ export function middleware(request: NextRequest) {
     );
   }
 
+  // حماية قاعدة البيانات من عمليات الحذف
+  if (request.method === 'DELETE' && request.nextUrl.pathname.startsWith('/api/')) {
+    // استخراج اسم الجدول من المسار
+    const pathParts = request.nextUrl.pathname.split('/');
+    const tableName = pathParts[2]; // /api/[tableName]/...
+    
+    // التحقق من الجداول المحمية
+    if (DatabaseProtection.isProtectedTable(tableName)) {
+      console.error(`⚠️ محاولة حذف محظورة على ${tableName}`);
+      
+      return NextResponse.json(
+        { 
+          error: `عمليات الحذف محظورة على جدول ${tableName}`,
+          code: 'DELETE_NOT_ALLOWED',
+          message: 'هذا الجدول محمي من الحذف لأسباب أمنية'
+        },
+        { status: 403 }
+      );
+    }
+  }
+  
   // في بيئة الإنتاج فقط
   if (process.env.NODE_ENV === 'production') {
     
@@ -350,12 +372,11 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except:
+     * Match all request paths except for the ones starting with:
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public folder
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }; 

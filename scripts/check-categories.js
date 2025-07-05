@@ -1,36 +1,54 @@
+// التحقق من التصنيفات في قاعدة البيانات
+require('dotenv').config({ path: '.env.local' });
 const { PrismaClient } = require('../lib/generated/prisma');
-const prisma = new PrismaClient();
 
 async function checkCategories() {
+  const prisma = new PrismaClient();
+  
   try {
-    const categories = await prisma.category.findMany();
-    console.log('عدد التصنيفات:', categories.length);
+    console.log('🔍 فحص التصنيفات في قاعدة البيانات PostgreSQL');
+    console.log('=========================================\n');
     
-    if (categories.length === 0) {
-      console.log('إضافة تصنيفات تجريبية...');
-      const testCategories = [
-        { name: 'سياسة', slug: 'politics', displayOrder: 1, isActive: true },
-        { name: 'اقتصاد', slug: 'economy', displayOrder: 2, isActive: true },
-        { name: 'رياضة', slug: 'sports', displayOrder: 3, isActive: true },
-        { name: 'تقنية', slug: 'technology', displayOrder: 4, isActive: true },
-        { name: 'ثقافة', slug: 'culture', displayOrder: 5, isActive: true },
-        { name: 'محلي', slug: 'local', displayOrder: 6, isActive: true },
-        { name: 'دولي', slug: 'international', displayOrder: 7, isActive: true }
-      ];
-      
-      for (const cat of testCategories) {
-        const created = await prisma.category.create({ data: cat });
-        console.log(`✓ تم إضافة تصنيف: ${created.name} (${created.id})`);
-      }
-      console.log('تم إضافة جميع التصنيفات التجريبية بنجاح!');
-    } else {
-      console.log('التصنيفات الموجودة:');
-      categories.forEach(cat => {
-        console.log(`- ${cat.name} (ID: ${cat.id}, Slug: ${cat.slug}, Active: ${cat.isActive})`);
+    // جلب جميع التصنيفات
+    const categories = await prisma.category.findMany({
+      orderBy: { displayOrder: 'asc' }
+    });
+    
+    console.log(`📁 عدد التصنيفات: ${categories.length}\n`);
+    
+    if (categories.length > 0) {
+      console.log('📋 قائمة التصنيفات:');
+      categories.forEach((cat, index) => {
+        console.log(`${index + 1}. ${cat.name}`);
+        console.log(`   - ID: ${cat.id}`);
+        console.log(`   - Slug: ${cat.slug}`);
+        console.log(`   - اللون: ${cat.color || 'غير محدد'}`);
+        console.log(`   - الترتيب: ${cat.displayOrder}`);
+        console.log(`   - نشط: ${cat.isActive ? '✅' : '❌'}`);
+        console.log('');
       });
+    } else {
+      console.log('⚠️ لا توجد تصنيفات في قاعدة البيانات!');
     }
+    
+    // التحقق من API endpoint
+    console.log('\n🌐 اختبار API endpoint للتصنيفات...');
+    
+    try {
+      const response = await fetch('http://localhost:3003/api/categories');
+      const data = await response.json();
+      
+      if (response.ok) {
+        console.log(`✅ API يعمل بشكل صحيح - عدد التصنيفات: ${data.categories?.length || 0}`);
+      } else {
+        console.log(`❌ خطأ في API: ${data.error || 'Unknown error'}`);
+      }
+    } catch (apiError) {
+      console.log('❌ فشل الاتصال بـ API - تأكد من أن الخادم يعمل على المنفذ 3003');
+    }
+    
   } catch (error) {
-    console.error('خطأ:', error);
+    console.error('❌ خطأ:', error.message);
   } finally {
     await prisma.$disconnect();
   }

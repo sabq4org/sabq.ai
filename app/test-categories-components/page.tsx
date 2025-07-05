@@ -1,217 +1,200 @@
 'use client';
 
-import React, { useState } from 'react';
-import CategoryFormModal from '@/components/CategoryFormModal';
-import CategoriesAnalytics from '@/components/dashboard/CategoriesAnalytics';
-import { Button } from '@/components/ui/button';
-import { Plus, BarChart2 } from 'lucide-react';
-import { Category } from '@/types/category';
+import { useState, useEffect } from 'react';
+import { Tag, X, BookOpen, Calendar, Clock, Eye, User, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
-// بيانات تجريبية
-const mockCategories: Category[] = [
-  {
-    id: '1',
-    name: 'أخبار',
-    name_ar: 'أخبار',
-    name_en: 'News',
-    slug: 'news',
-    description: 'آخر الأخبار المحلية والعالمية',
-    color: '#FF0000',
-    color_hex: '#FF0000',
-    icon: '📰',
-    articles_count: 150,
-    is_active: true,
-    parent_id: undefined,
-    position: 1,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '2',
-    name: 'رياضة',
-    name_ar: 'رياضة',
-    name_en: 'Sports',
-    slug: 'sports',
-    description: 'أخبار الرياضة والمباريات',
-    color: '#00FF00',
-    color_hex: '#00FF00',
-    icon: '⚽',
-    articles_count: 120,
-    is_active: true,
-    parent_id: undefined,
-    position: 2,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '3',
-    name: 'تقنية',
-    name_ar: 'تقنية',
-    name_en: 'Technology',
-    slug: 'tech',
-    description: 'آخر أخبار التقنية والتكنولوجيا',
-    color: '#0000FF',
-    color_hex: '#0000FF',
-    icon: '💻',
-    articles_count: 80,
-    is_active: true,
-    parent_id: undefined,
-    position: 3,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '4',
-    name: 'اقتصاد',
-    name_ar: 'اقتصاد',
-    name_en: 'Economy',
-    slug: 'economy',
-    description: 'أخبار الاقتصاد والأعمال',
-    color: '#FFA500',
-    color_hex: '#FFA500',
-    icon: '💰',
-    articles_count: 60,
-    is_active: true,
-    parent_id: undefined,
-    position: 4,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '5',
-    name: 'ثقافة',
-    name_ar: 'ثقافة',
-    name_en: 'Culture',
-    slug: 'culture',
-    description: 'أخبار الثقافة والفنون',
-    color: '#8B5CF6',
-    color_hex: '#8B5CF6',
-    icon: '🎭',
-    articles_count: 40,
-    is_active: false,
-    parent_id: undefined,
-    position: 5,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
+// أيقونات التصنيفات
+const categoryIcons: any = {
+  'تقنية': '💻',
+  'رياضة': '⚽',
+  'اقتصاد': '💰',
+  'سياسة': '🏛️',
+  'محليات': '🗺️',
+  'ثقافة ومجتمع': '🎭',
+  'مقالات رأي': '✍️',
+  'منوعات': '🎉',
+  'default': '📁'
+};
 
 export default function TestCategoriesComponents() {
-  const [showModal, setShowModal] = useState(false);
-  const [showAnalytics, setShowAnalytics] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [darkMode, setDarkMode] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<number | string | null>(null);
+  const [categoryArticles, setCategoryArticles] = useState<any[]>([]);
+  const [categoryArticlesLoading, setCategoryArticlesLoading] = useState<boolean>(false);
+  const darkMode = false; // للاختبار
 
-  const handleSaveCategory = async (data: any) => {
-    console.log('حفظ التصنيف:', data);
-    setLoading(true);
-    // محاكاة حفظ البيانات
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setLoading(false);
-    setShowModal(false);
+  // جلب التصنيفات
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setCategoriesLoading(true);
+        console.log('🔍 جلب التصنيفات...');
+        
+        const res = await fetch('/api/categories?is_active=true');
+        console.log('📡 Response status:', res.status);
+        
+        const json = await res.json();
+        console.log('📦 البيانات المستلمة:', json);
+        
+        const list = Array.isArray(json) ? json : (json.categories ?? []);
+        console.log(`✅ عدد التصنيفات: ${list.length}`);
+        
+        setCategories(list);
+      } catch (err) {
+        console.error('❌ خطأ في جلب التصنيفات:', err);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // دالة اختيار التصنيف
+  const handleCategoryClick = async (categoryId: number | string) => {
+    console.log('🔘 تم اختيار التصنيف:', categoryId);
+    setSelectedCategory(categoryId);
+    setCategoryArticlesLoading(true);
+    
+    try {
+      const res = await fetch(`/api/articles?status=published&category_id=${categoryId}&limit=12`);
+      const json = await res.json();
+      const list = Array.isArray(json) ? json : (json.articles ?? []);
+      setCategoryArticles(list);
+    } catch (err) {
+      console.error('خطأ في جلب مقالات التصنيف:', err);
+    } finally {
+      setCategoryArticlesLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-8" dir="rtl">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          اختبار مكونات التصنيفات الجديدة
-        </h1>
-
-        {/* أزرار التحكم */}
-        <div className="flex gap-4 mb-8">
-          <Button onClick={() => setShowModal(true)}>
-            <Plus className="w-4 h-4 ml-2" />
-            إضافة تصنيف جديد
-          </Button>
-          
-          <Button 
-            variant="outline"
-            onClick={() => setShowAnalytics(!showAnalytics)}
-          >
-            <BarChart2 className="w-4 h-4 ml-2" />
-            {showAnalytics ? 'إخفاء الإحصائيات' : 'عرض الإحصائيات'}
-          </Button>
+        <h1 className="text-3xl font-bold mb-8 text-center">اختبار مكونات التصنيفات</h1>
+        
+        {/* معلومات التشخيص */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+          <h2 className="font-bold mb-2">معلومات التشخيص:</h2>
+          <ul className="space-y-1 text-sm">
+            <li>• حالة التحميل: {categoriesLoading ? '⏳ جاري التحميل' : '✅ تم التحميل'}</li>
+            <li>• عدد التصنيفات: {categories.length}</li>
+            <li>• التصنيف المختار: {selectedCategory || 'لا يوجد'}</li>
+            <li>• عدد مقالات التصنيف: {categoryArticles.length}</li>
+          </ul>
         </div>
 
-        {/* عرض الإحصائيات */}
-        {showAnalytics && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              إحصائيات التصنيفات
-            </h2>
-            <CategoriesAnalytics categories={mockCategories} />
-          </div>
-        )}
-
-        {/* قائمة التصنيفات */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            التصنيفات المتاحة
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mockCategories.map((category) => (
-              <div 
-                key={category.id}
-                className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => {
-                  setSelectedCategory(category);
-                  setShowModal(true);
-                }}
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <div 
-                    className="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
-                    style={{ 
-                      backgroundColor: category.color_hex,
-                      color: '#fff'
-                    }}
-                  >
-                    {category.icon}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">
-                      {category.name_ar}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      {category.articles_count} مقال
-                    </p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600">
-                  {category.description}
-                </p>
-                <div className="mt-2 flex items-center justify-between">
-                  <span className="text-xs text-gray-400">
-                    /{category.slug}
-                  </span>
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    category.is_active 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {category.is_active ? 'نشط' : 'مخفي'}
-                  </span>
+        {/* شريط التصنيفات */}
+        <section className="mb-8">
+          <div className="rounded-3xl p-6 bg-blue-50 border border-blue-200">
+            <div className="text-center mb-6">
+              <div className="mb-4">
+                <div className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center shadow-xl bg-gradient-to-br from-blue-500 to-blue-700">
+                  <Tag className="w-10 h-10 text-white" />
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
+              
+              <h2 className="text-2xl font-bold mb-3 text-gray-800">
+                استكشف بحسب التصنيفات
+              </h2>
+              
+              <p className="text-sm text-gray-600">
+                اختر التصنيف الذي يهمك لتصفح الأخبار المتخصصة
+              </p>
+            </div>
 
-        {/* نموذج إضافة/تعديل التصنيف */}
-        <CategoryFormModal
-          isOpen={showModal}
-          onClose={() => {
-            setShowModal(false);
-            setSelectedCategory(null);
-          }}
-          onSave={handleSaveCategory}
-          category={selectedCategory}
-          categories={mockCategories}
-          darkMode={darkMode}
-          loading={loading}
-        />
+            {categoriesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              </div>
+            ) : categories.length > 0 ? (
+              <>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  {categories.map((category: any) => (
+                    <button
+                      key={category.id}
+                      onClick={() => handleCategoryClick(category.id)}
+                      className={`group px-4 py-3 rounded-xl font-medium text-sm transition-all duration-300 transform hover:scale-105 relative ${
+                        selectedCategory === category.id 
+                          ? 'bg-blue-500 text-white border-2 border-blue-400 shadow-lg' 
+                          : 'bg-white hover:bg-white text-gray-700 hover:text-blue-600 border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-lg'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg group-hover:scale-110 transition-transform duration-300">
+                          {category.icon || categoryIcons[category.name_ar] || categoryIcons['default']}
+                        </span>
+                        <span className="whitespace-nowrap">{category.name_ar || category.name}</span>
+                        <span className={`text-xs ${
+                          selectedCategory === category.id 
+                            ? 'text-white/90' 
+                            : 'text-gray-500 opacity-60'
+                        }`}>
+                          ({category.articles_count || 0})
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* عرض المقالات المرتبطة بالتصنيف المختار */}
+                {selectedCategory && (
+                  <div className="mt-8 p-6 rounded-3xl shadow-lg bg-white border border-gray-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bold text-gray-800">
+                        مقالات {categories.find(c => c.id === selectedCategory)?.name_ar}
+                      </h3>
+                      <button
+                        onClick={() => {
+                          setSelectedCategory(null);
+                          setCategoryArticles([]);
+                        }}
+                        className="p-2 rounded-lg transition-colors hover:bg-gray-100"
+                      >
+                        <X className="w-5 h-5 text-gray-600" />
+                      </button>
+                    </div>
+
+                    {categoryArticlesLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                      </div>
+                    ) : categoryArticles.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {categoryArticles.map((article: any) => (
+                          <div key={article.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                            <h4 className="font-bold text-sm mb-2 line-clamp-2">{article.title}</h4>
+                            <p className="text-xs text-gray-500">
+                              {new Date(article.created_at).toLocaleDateString('ar-SA')}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>لا توجد مقالات منشورة في هذا التصنيف حالياً</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p className="text-sm">لا توجد تصنيفات متاحة حالياً</p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* عرض البيانات الخام */}
+        <div className="mt-8 bg-gray-100 rounded-lg p-4">
+          <h3 className="font-bold mb-2">البيانات الخام للتصنيفات:</h3>
+          <pre className="text-xs overflow-auto bg-white p-3 rounded">
+            {JSON.stringify(categories, null, 2)}
+          </pre>
+        </div>
       </div>
     </div>
   );
