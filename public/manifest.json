@@ -1,20 +1,152 @@
 {
-  "name": "صحيفة سبق الذكية",
+  "name": "صحيفة سبق الإلكترونية",
   "short_name": "سبق",
-  "description": "صحيفة إلكترونية ذكية مدعومة بالذكاء الاصطناعي",
+  "description": "أول صحيفة سعودية تأسست على الإنترنت. تغطية شاملة لأخبار السعودية والخليج والعالم",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#ffffff",
-  "theme_color": "#3b82f6",
-  "orientation": "portrait",
+  "theme_color": "#1e40af",
+  "lang": "ar",
+  "dir": "rtl",
+  "scope": "/",
+  "categories": ["news", "media", "lifestyle"],
   "icons": [
     {
-      "src": "/favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
-  "categories": ["news", "education"],
-  "lang": "ar",
-  "dir": "rtl"
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-home.jpg",
+      "sizes": "390x844",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "الصفحة الرئيسية على الموبايل"
+    },
+    {
+      "src": "/screenshots/desktop-home.jpg",
+      "sizes": "1920x1080",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "الصفحة الرئيسية على سطح المكتب"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "الأخبار العاجلة",
+      "short_name": "عاجل",
+      "description": "آخر الأخبار العاجلة",
+      "url": "/news?breaking=true",
+      "icons": [
+        {
+          "src": "/icons/breaking-news.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "لحظة بلحظة",
+      "short_name": "لحظة",
+      "description": "تغطية الأحداث لحظة بلحظة",
+      "url": "/moment-by-moment",
+      "icons": [
+        {
+          "src": "/icons/live.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "التصنيفات",
+      "short_name": "أقسام",
+      "description": "تصفح الأخبار حسب التصنيف",
+      "url": "/categories",
+      "icons": [
+        {
+          "src": "/icons/categories.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.sabq.news",
+      "id": "com.sabq.news"
+    },
+    {
+      "platform": "itunes",
+      "url": "https://apps.apple.com/app/sabq-news/id123456789"
+    }
+  ],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+sabqnews",
+      "url": "/article/%s"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/share",
+      "accept": {
+        "text/plain": [".txt"],
+        "text/html": [".html"]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": ["image/*", "text/*"]
+        }
+      ]
+    }
+  },
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "handle_links": "preferred",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "features": [
+    "cross-origin-isolated"
+  ]
 }

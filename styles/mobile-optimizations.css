@@ -1,0 +1,568 @@
+/* 📱 تحسينات شاملة للموبايل - تجربة مستخدم محسنة */
+
+/* ===============================
+   🎯 1. قابلية القراءة والنصوص
+   =============================== */
+
+/* أحجام نصوص محسنة للموبايل */
+@media (max-width: 768px) {
+  /* العناوين الرئيسية */
+  h1 {
+    font-size: 1.75rem !important; /* 28px */
+    line-height: 1.3 !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  h2 {
+    font-size: 1.5rem !important; /* 24px */
+    line-height: 1.4 !important;
+    margin-bottom: 0.75rem !important;
+  }
+  
+  h3 {
+    font-size: 1.25rem !important; /* 20px */
+    line-height: 1.4 !important;
+  }
+  
+  /* النصوص العادية */
+  p, span, div {
+    font-size: 1rem !important; /* 16px - الحد الأدنى للقراءة المريحة */
+    line-height: 1.6 !important;
+  }
+  
+  /* النصوص الصغيرة */
+  .text-sm {
+    font-size: 0.875rem !important; /* 14px */
+  }
+  
+  .text-xs {
+    font-size: 0.75rem !important; /* 12px */
+  }
+  
+  /* تحسين التباين للقراءة */
+  .text-gray-600 {
+    color: #4b5563 !important;
+  }
+  
+  .dark .text-gray-400 {
+    color: #d1d5db !important;
+  }
+}
+
+/* ===============================
+   🎨 2. تناسق العناصر والهوامش
+   =============================== */
+
+@media (max-width: 768px) {
+  /* الهوامش الثابتة */
+  .container, .max-w-7xl {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+  
+  /* المسافات بين العناصر */
+  .space-y-4 > * + * {
+    margin-top: 1rem !important;
+  }
+  
+  .space-y-6 > * + * {
+    margin-top: 1.5rem !important;
+  }
+  
+  /* البطاقات والكروت */
+  .card, .bg-white {
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
+    border-radius: 0.75rem !important;
+  }
+  
+  /* منع التداخل */
+  * {
+    box-sizing: border-box !important;
+  }
+  
+  /* منع الخروج من الشاشة */
+  img, video, iframe {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}
+
+/* ===============================
+   👆 3. الأزرار وسهولة اللمس
+   =============================== */
+
+@media (max-width: 768px) {
+  /* الحد الأدنى لمساحة اللمس 44px */
+  button, a, input, select {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    padding: 0.75rem 1rem !important;
+  }
+  
+  /* أزرار خاصة */
+  .btn-primary {
+    padding: 0.875rem 1.5rem !important;
+    font-size: 1rem !important;
+    font-weight: 500 !important;
+  }
+  
+  /* أزرار الأيقونات */
+  .icon-button {
+    width: 48px !important;
+    height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  /* تحسين المسافات بين الأزرار */
+  .button-group button {
+    margin: 0.25rem !important;
+  }
+}
+
+/* ===============================
+   🖼️ 4. الصور والوسائط
+   =============================== */
+
+@media (max-width: 768px) {
+  /* الصور المتجاوبة */
+  .article-image, .featured-image {
+    width: 100% !important;
+    height: 200px !important;
+    object-fit: cover !important;
+    border-radius: 0.5rem !important;
+  }
+  
+  /* صور البطاقات */
+  .card-image {
+    width: 100% !important;
+    height: 150px !important;
+    object-fit: cover !important;
+  }
+  
+  /* الصور الصغيرة */
+  .thumbnail {
+    width: 60px !important;
+    height: 60px !important;
+    border-radius: 0.5rem !important;
+  }
+  
+  /* تحسين التحميل */
+  img {
+    loading: lazy;
+    transition: opacity 0.3s ease !important;
+  }
+  
+  img[data-loaded="false"] {
+    opacity: 0.5;
+  }
+  
+  img[data-loaded="true"] {
+    opacity: 1;
+  }
+}
+
+/* ===============================
+   📱 5. الهيدر والتنقل
+   =============================== */
+
+@media (max-width: 768px) {
+  /* الهيدر الثابت */
+  header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+    height: 64px !important;
+    padding: 0.75rem 1rem !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+  
+  /* منع تغطية المحتوى */
+  body {
+    padding-top: 0 !important;
+  }
+  
+  main {
+    padding-top: 1rem !important;
+  }
+  
+  /* القائمة المنسدلة */
+  .mobile-menu {
+    position: fixed !important;
+    top: 64px !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: white !important;
+    border-top: 1px solid #e5e7eb !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    z-index: 999 !important;
+  }
+  
+  .dark .mobile-menu {
+    background: #1f2937 !important;
+    border-top-color: #374151 !important;
+  }
+}
+
+/* ===============================
+   📋 6. القوائم والجداول
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تحويل الجداول إلى بطاقات */
+  .table-responsive {
+    display: block !important;
+  }
+  
+  .table-responsive table {
+    display: none !important;
+  }
+  
+  .mobile-card {
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 0.75rem !important;
+    padding: 1rem !important;
+    margin-bottom: 0.75rem !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .dark .mobile-card {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+  }
+  
+  /* القوائم المنسدلة */
+  .dropdown-menu {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    border-radius: 1rem 1rem 0 0 !important;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+  }
+}
+
+/* ===============================
+   ⚡ 7. الأداء والسلاسة
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تقليل التأثيرات للأداء */
+  * {
+    transition-duration: 0.2s !important;
+  }
+  
+  /* تحسين التمرير */
+  .scroll-container {
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: smooth !important;
+  }
+  
+  /* إخفاء شريط التمرير */
+  .hide-scrollbar {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  /* تحسين الرسوم المتحركة */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ===============================
+   🔄 8. التوجه الأفقي والرأسي
+   =============================== */
+
+/* الوضع الرأسي (عمودي) */
+@media (max-width: 768px) and (orientation: portrait) {
+  .grid-cols-2 {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .grid-cols-3 {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .flex-row {
+    flex-direction: column !important;
+  }
+}
+
+/* الوضع الأفقي (أفقي) */
+@media (max-width: 768px) and (orientation: landscape) {
+  header {
+    height: 56px !important;
+    padding: 0.5rem 1rem !important;
+  }
+  
+  .mobile-menu {
+    top: 56px !important;
+  }
+  
+  /* تقليل المسافات في الوضع الأفقي */
+  .container {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+}
+
+/* ===============================
+   📱 9. أحجام شاشات محددة
+   =============================== */
+
+/* iPhone SE وما شابه (375px) */
+@media (max-width: 375px) {
+  .container {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+  
+  h1 {
+    font-size: 1.5rem !important;
+  }
+  
+  .btn-primary {
+    padding: 0.75rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+}
+
+/* iPhone 13 وما شابه (390px) */
+@media (min-width: 376px) and (max-width: 430px) {
+  .grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Galaxy S21 وما شابه (360px) */
+@media (max-width: 360px) {
+  .text-sm {
+    font-size: 0.8rem !important;
+  }
+  
+  .card {
+    padding: 0.75rem !important;
+  }
+}
+
+/* ===============================
+   🌙 10. الوضع المظلم للموبايل
+   =============================== */
+
+@media (max-width: 768px) {
+  .dark {
+    --mobile-bg: #111827;
+    --mobile-card: #1f2937;
+    --mobile-border: #374151;
+    --mobile-text: #f9fafb;
+    --mobile-text-secondary: #d1d5db;
+  }
+  
+  .dark body {
+    background-color: var(--mobile-bg) !important;
+  }
+  
+  .dark .card,
+  .dark .bg-white {
+    background-color: var(--mobile-card) !important;
+    border-color: var(--mobile-border) !important;
+  }
+  
+  .dark header {
+    background-color: rgba(31, 41, 55, 0.9) !important;
+    border-bottom: 1px solid var(--mobile-border) !important;
+  }
+}
+
+/* ===============================
+   🎮 11. التفاعل باللمس
+   =============================== */
+
+@media (hover: none) and (pointer: coarse) {
+  /* إزالة hover effects */
+  .hover\:bg-gray-50:hover {
+    background-color: transparent !important;
+  }
+  
+  .hover\:text-blue-600:hover {
+    color: inherit !important;
+  }
+  
+  /* استخدام active state */
+  button:active,
+  a:active {
+    transform: scale(0.98) !important;
+    opacity: 0.8 !important;
+  }
+  
+  /* تحسين ردود الأفعال */
+  .tap-highlight {
+    -webkit-tap-highlight-color: rgba(59, 130, 246, 0.1) !important;
+  }
+}
+
+/* ===============================
+   🔧 12. إصلاحات خاصة
+   =============================== */
+
+@media (max-width: 768px) {
+  /* إصلاح مشكلة viewport في iOS */
+  body {
+    -webkit-text-size-adjust: 100% !important;
+    -ms-text-size-adjust: 100% !important;
+  }
+  
+  /* إصلاح مشكلة الـ safe area في iPhone */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top) !important;
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+  
+  /* إصلاح مشكلة الكيبورد */
+  .keyboard-adjust {
+    transition: transform 0.3s ease !important;
+  }
+  
+  /* منع zoom عند focus على input */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ===============================
+   ⚡ 13. تحسينات الأداء النهائية
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تحسين الرسوم */
+  * {
+    will-change: auto !important;
+  }
+  
+  .animate-element {
+    will-change: transform, opacity !important;
+  }
+  
+  /* تحسين الخطوط */
+  body {
+    text-rendering: optimizeSpeed !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+  }
+  
+  /* تحسين التمرير */
+  .scroll-smooth {
+    scroll-behavior: smooth !important;
+  }
+  
+  /* إخفاء العناصر غير المرئية */
+  .offscreen {
+    position: absolute !important;
+    left: -9999px !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+  }
+}
+
+/* ===============================
+   📊 14. مؤشرات التحميل والحالة
+   =============================== */
+
+@media (max-width: 768px) {
+  /* مؤشر التحميل */
+  .loading-spinner {
+    width: 32px !important;
+    height: 32px !important;
+    border: 3px solid #e5e7eb !important;
+    border-top-color: #3b82f6 !important;
+    border-radius: 50% !important;
+    animation: spin 1s linear infinite !important;
+  }
+  
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  /* مؤشر الشبكة */
+  .network-indicator {
+    position: fixed !important;
+    top: 64px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    background: #ef4444 !important;
+    color: white !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 0.5rem !important;
+    font-size: 0.875rem !important;
+    z-index: 9999 !important;
+  }
+  
+  .network-indicator.online {
+    background: #10b981 !important;
+  }
+}
+
+/* ===============================
+   🎯 15. تحسينات نهائية للتجربة
+   =============================== */
+
+@media (max-width: 768px) {
+  /* منع التحديد العشوائي للنص */
+  .no-select {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+  }
+  
+  /* تحسين العرض للنصوص الطويلة */
+  .text-ellipsis {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  
+  .text-clamp-2 {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+  
+  .text-clamp-3 {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 3 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+  
+  /* تحسين المسافات النهائية */
+  .mb-safe {
+    margin-bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
+  }
+  
+  .pb-safe {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
+  }
+} 

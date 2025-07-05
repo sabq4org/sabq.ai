@@ -217,18 +217,18 @@ export default function Header() {
 
   const navigationItems = [
     { label: 'الرئيسية', url: '/', order: 1 },
-    { label: 'لحظة بلحظة', url: '/moment-by-moment', order: 2, highlight: true },
-    { label: 'الأخبار', url: '/news', order: 3 },
-    { label: 'مقالات الرأي', url: '/opinion', order: 4 },
-    { label: 'التصنيفات', url: '/categories', order: 5 },
-    { label: 'المنتدى', url: '/forum', order: 6, icon: MessageCircle },
-    { label: 'التحليلات العميقة', url: '/insights/deep', order: 7 },
-    { label: 'تواصل معنا', url: '/contact', order: 8 }
+    { label: '', url: '/moment-by-moment', order: 2, highlight: true },
+    { label: 'أخبار', url: '/news', order: 3 },
+    { label: 'مقالات', url: '/opinion', order: 4 },
+    { label: 'تصنيفات', url: '/categories', order: 5 },
+    { label: 'منتدى', url: '/forum', order: 6, icon: MessageCircle },
+    { label: 'عمق', url: '/insights/deep', order: 7 },
+    { label: 'تواصل', url: '/contact', order: 8 }
   ];
 
   return (
-    <header className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-black/50 sticky top-0 z-50 transition-colors duration-300 h-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-full">
+    <header className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-black/50 sticky top-0 z-50 transition-colors duration-300 h-16 safe-area-top">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
         <div className="flex items-center justify-between h-full">
           {/* Mobile Layout */}
           <div className="flex lg:hidden items-center justify-between w-full">
@@ -322,12 +322,13 @@ export default function Header() {
                       ? 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 relative' 
                       : 'text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400'
                   } hover:font-semibold`}
+                  title={item.label === '' ? 'لحظة بلحظة' : item.label}
                 >
-                  {item.label === 'لحظة بلحظة' && (
+                  {(item.label === '' || item.label === 'لحظة بلحظة') && (
                     <Activity className="w-5 h-5 animate-pulse" />
                   )}
                   {item.icon && <item.icon className="w-5 h-5" />}
-                  <span>{item.label}</span>
+                  {item.label && <span>{item.label}</span>}
                   {item.highlight && (
                     <span className="absolute -top-1 -right-2 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
                   )}
@@ -411,8 +412,8 @@ export default function Header() {
         </div>
 
         {showMobileMenu && (
-          <div className="lg:hidden py-4 border-t border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 absolute top-full left-0 right-0 shadow-lg">
-            <nav className="flex flex-col gap-2 px-6">
+          <div className="lg:hidden py-4 border-t border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 absolute top-full left-0 right-0 shadow-lg mobile-menu">
+            <nav className="flex flex-col gap-2 px-6 max-h-[70vh] overflow-y-auto hide-scrollbar">
               {navigationItems.map((item) => (
                 <Link
                   key={item.url}
@@ -424,11 +425,13 @@ export default function Header() {
                   }`}
                   onClick={() => setShowMobileMenu(false)}
                 >
-                  {item.label === 'لحظة بلحظة' && (
+                  {(item.label === '' || item.label === 'لحظة بلحظة') && (
                     <Activity className="w-5 h-5 animate-pulse" />
                   )}
                   {item.icon && <item.icon className="w-5 h-5" />}
-                  <span className="flex-1">{item.label}</span>
+                  <span className="flex-1">
+                    {item.label === '' ? 'لحظة بلحظة' : item.label}
+                  </span>
                   {item.highlight && (
                     <span className="w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
                   )}
