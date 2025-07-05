@@ -424,8 +424,9 @@ export default function MobileArticlePage({ params }: PageProps) {
                     ...relatedArticle,
                     category_id: 0,
                     views_count: 0,
-                    content: ''
-                  }}
+                    content: '',
+                    summary: relatedArticle.title
+                  } as Article}
                   viewMode="compact"
                 />
               ))}

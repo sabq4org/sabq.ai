@@ -89,8 +89,8 @@ export default function DeepAnalysisCard({ analysis, viewMode = 'grid' }: DeepAn
     console.log(`${action} clicked for analysis ${analysis.id}`);
   };
 
-  // تحديد الرابط الصحيح
-  const analysisUrl = `/insights/deep/${analysis.slug || analysis.id}`;
+  // تحديد الرابط الصحيح بالاعتماد على id فقط لضمان توافقه مع مسار الـ API
+  const analysisUrl = `/insights/deep/${analysis.id}`;
 
   return (
     <div className={`

@@ -327,8 +327,216 @@ function NewspaperHomePage(): React.ReactElement {
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
-  // بقية الكود الحالي...
-  // ... existing code ...
+  // =============================
+  // المتغيرات المساعدة لمنع الأخطاء أثناء التشغيل (قابلة للتحديث مستقبلاً)
+  // =============================
+  // إعدادات البلوكات الديناميكية
+  const blocksConfig: Record<string, { enabled: boolean }> = {};
+
+  // إرجاع قائمة البلوكات المرتبة (حاليًا لا يوجد بلوكات مفعّلة)
+  const getOrderedBlocks = () => {
+    return [] as Array<{ key: string; component: React.ReactNode }>;
+  };
+
+  // التحليلات العميقة
+  const [deepInsights, setDeepInsights] = useState<any[]>([]);
+  const [deepInsightsLoading, setDeepInsightsLoading] = useState<boolean>(false);
+
+  // التصنيفات
+  const [categories, setCategories] = useState<any[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState<boolean>(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | number | null>(null);
+  const [categoryArticles, setCategoryArticles] = useState<any[]>([]);
+  const [categoryArticlesLoading, setCategoryArticlesLoading] = useState<boolean>(false);
+
+  // متغيرات إضافية مطلوبة
+  const [isCheckingAuth, setIsCheckingAuth] = useState<boolean>(false);
+  const [articlesLoading, setArticlesLoading] = useState<boolean>(false);
+  const [personalizedLoading, setPersonalizedLoading] = useState<boolean>(false);
+  const [userInterests, setUserInterests] = useState<any[]>([]);
+  const [showPersonalized, setShowPersonalized] = useState<boolean>(false);
+  const [articles, setArticles] = useState<any[]>([]);
+  const [personalizedArticles, setPersonalizedArticles] = useState<any[]>([]);
+
+  // دوال مؤقتة
+  const handleInterestClick = (interestId: string) => {
+    /* TODO: تنفيذ فعل عند اختيار الاهتمام */
+  };
+  const handleTogglePersonalized = () => {
+    setShowPersonalized(prev => !prev);
+  };
+
+  // مكون بطاقة الأخبار
+  const NewsCard = ({ news }: { news: any }) => (
+    <Link href={`/article/${news.id}`} className="group block">
+      <article className={`h-full rounded-3xl overflow-hidden shadow-xl dark:shadow-gray-900/50 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700'}`}>
+        {/* صورة المقال */}
+        <div className="relative h-40 sm:h-48 overflow-hidden">
+          {news.featured_image ? (
+            <img
+              src={news.featured_image}
+              alt={news.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          ) : (
+            <div className={`w-full h-full flex items-center justify-center ${darkMode ? 'bg-gray-700' : 'bg-gray-100 dark:bg-gray-800'}`}>
+              <BookOpen className={`w-12 h-12 sm:w-16 sm:h-16 ${darkMode ? 'text-gray-600 dark:text-gray-400 dark:text-gray-500' : 'text-gray-300'}`} />
+            </div>
+          )}
+          
+          {/* تأثير التدرج على الصورة */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          
+          {/* Category Badge */}
+          {news.category_name && (
+            <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
+              <span className={`inline-flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs font-bold ${darkMode ? 'bg-blue-900/80 text-blue-200 backdrop-blur-sm' : 'bg-blue-500/90 text-white backdrop-blur-sm'}`}>
+                <Tag className="w-2 h-2 sm:w-3 sm:h-3" />
+                {news.category_name}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* محتوى البطاقة */}
+        <div className="p-4 sm:p-5">
+          {/* العنوان */}
+          <h4 className={`font-bold text-base sm:text-lg mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors ${darkMode ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+            {news.title}
+          </h4>
+
+          {/* الملخص */}
+          {news.summary && (
+            <p className={`text-sm mb-4 line-clamp-2 transition-colors duration-300 text-gray-600 dark:text-gray-400 dark:text-gray-500`}>
+              {news.summary}
+            </p>
+          )}
+
+          {/* التفاصيل السفلية */}
+          <div className={`flex items-center justify-between pt-3 sm:pt-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-100 dark:border-gray-700'}`}>
+            {/* المعلومات */}
+            <div className="flex flex-col gap-1">
+              {/* التاريخ والوقت */}
+              <div className="flex items-center gap-2 sm:gap-3 text-xs">
+                <span className={`flex items-center gap-1 ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400 dark:text-gray-500'}`}>
+                  <Calendar className="w-3 h-3" />
+                  {new Date(news.created_at).toLocaleDateString('ar-SA', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                  })}
+                </span>
+                {news.reading_time && (
+                  <span className={`flex items-center gap-1 ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400 dark:text-gray-500'}`}>
+                    <Clock className="w-3 h-3" />
+                    {news.reading_time} د
+                  </span>
+                )}
+              </div>
+              
+              {/* الكاتب والمشاهدات */}
+              <div className="flex items-center gap-2 sm:gap-3 text-xs">
+                {news.author_name && (
+                  <span className={`flex items-center gap-1 ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400 dark:text-gray-500'}`}>
+                    <User className="w-3 h-3" />
+                    {news.author_name}
+                  </span>
+                )}
+                <span className={`flex items-center gap-1 ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400 dark:text-gray-500'}`}>
+                  <Eye className="w-3 h-3" />
+                  {news.views_count || 0}
+                </span>
+              </div>
+            </div>
+
+            {/* زر القراءة */}
+            <div className={`p-2 rounded-xl transition-all ${darkMode ? 'bg-blue-900/20 group-hover:bg-blue-800/30' : 'bg-blue-50 dark:bg-blue-900/20 group-hover:bg-blue-100'}`}>
+              <ArrowLeft className={`w-4 h-4 transition-transform group-hover:translate-x-1 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+            </div>
+          </div>
+        </div>
+      </article>
+    </Link>
+  );
+
+  // جلب التحليلات العميقة عند التحميل
+  useEffect(() => {
+    const fetchDeepInsights = async () => {
+      try {
+        setDeepInsightsLoading(true);
+        const response = await fetch('/api/deep-analyses');
+        const data = await response.json();
+        // ✨ التعامل مع هيكلية الاستجابة { analyses: [...] }
+        const rawList = Array.isArray(data) ? data : (data.analyses ?? []);
+        const mapped = rawList.map((item: any) => ({
+          ...item,
+          tags: item.tags || item.categories || [],
+          url: `/insights/deep/${item.id}`
+        }));
+        setDeepInsights(mapped);
+      } catch (error) {
+        console.error('خطأ في جلب التحليلات العميقة:', error);
+      } finally {
+        setDeepInsightsLoading(false);
+      }
+    };
+    fetchDeepInsights();
+  }, []);
+
+  // =============================
+  // جلب التصنيفات عند التحميل
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setCategoriesLoading(true);
+        const res = await fetch('/api/categories?is_active=true');
+        const json = await res.json();
+        const list = Array.isArray(json) ? json : (json.categories ?? []);
+        setCategories(list);
+      } catch (err) {
+        console.error('خطأ في جلب التصنيفات:', err);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // =============================
+  // جلب المقالات الأحدث (للاستخدام في البلوكات لاحقاً)
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        setArticlesLoading(true);
+        const res = await fetch('/api/articles?status=published&limit=12');
+        const json = await res.json();
+        const list = Array.isArray(json) ? json : (json.articles ?? []);
+        // تعيين المقالات للعرض في بلوك "محتوى مخصص لك"
+        setArticles(list);
+      } catch (err) {
+        console.error('خطأ في جلب المقالات:', err);
+      } finally {
+        setArticlesLoading(false);
+      }
+    };
+    fetchArticles();
+  }, []);
+
+  // دالة اختيار التصنيف
+  const handleCategoryClick = async (categoryId: number | string) => {
+    setSelectedCategory(categoryId);
+    setCategoryArticlesLoading(true);
+    try {
+      const res = await fetch(`/api/articles?status=published&category_id=${categoryId}&limit=12`);
+      const json = await res.json();
+      const list = Array.isArray(json) ? json : (json.articles ?? []);
+      setCategoryArticles(list);
+    } catch (err) {
+      console.error('خطأ في جلب مقالات التصنيف:', err);
+    } finally {
+      setCategoryArticlesLoading(false);
+    }
+  };
 
   return (
     <div 
@@ -369,8 +577,13 @@ function NewspaperHomePage(): React.ReactElement {
       
       {/* Deep Analysis Widget - ثالث بلوك */}
       {!deepInsightsLoading && deepInsights.length > 0 && (
-        <DeepAnalysisWidget insights={deepInsights} />
+        <DeepAnalysisWidget insights={deepInsights.slice(0, 3)} />
       )}
+
+      {/* Smart Blocks - قبل المحتوى المخصص (محتوى مخصص لك) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <SmartSlot position="beforePersonalization" />
+      </div>
 
       {/* Smart Blocks - Below Deep Analysis */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -485,7 +698,7 @@ function NewspaperHomePage(): React.ReactElement {
               {selectedCategory && (
                 <div className={`mt-8 p-6 rounded-3xl shadow-lg dark:shadow-gray-900/50 ${darkMode ? 'bg-gray-800/50' : 'bg-white dark:bg-gray-800/70'} backdrop-blur-sm border ${darkMode ? 'border-gray-700' : 'border-gray-200 dark:border-gray-700'}`}>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-800 dark:text-gray-100'}`}>
+                    <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                       مقالات {categories.find(c => c.id === selectedCategory)?.name_ar}
                     </h3>
                     <button
@@ -558,7 +771,7 @@ function NewspaperHomePage(): React.ReactElement {
                                     <div className="flex items-center gap-2 sm:gap-3 text-xs">
                                       <span className={`flex items-center gap-1 ${darkMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400 dark:text-gray-500'}`}>
                                         <Calendar className="w-3 h-3" />
-                                        {new Date(article.created_at).toLocaleDateString('en-US', {
+                                        {new Date(article.created_at).toLocaleDateString('ar-SA', {
                                     year: 'numeric',
                                     month: 'short',
                                     day: 'numeric'
@@ -809,14 +1022,6 @@ function NewspaperHomePage(): React.ReactElement {
 
         {/* Smart Blocks - After Cards - مخفي للنسخة المطورة */}
         {/* <SmartSlot position="afterCards" /> */}
-
-        {/* Smart Blocks - Before Personalization */}
-        <SmartSlot position="beforePersonalization" />
-
-        {/* Enhanced Smart Blocks Section - مخفي للنسخة المطورة */}
-        {/* <section className="mb-16">
-          ... البلوكات الذكية مخفية للتركيز على المحتوى المخصص ...
-        </section> */}
 
         {/* السياق الذكي */}
         <section className="mb-16">

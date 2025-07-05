@@ -610,5 +610,23 @@
       "article_id": "article-1750222780834-politics1"
     },
     "timestamp": "2025-07-05T16:34:41.368Z"
+  },
+  {
+    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "article-1750191083346-v2yxn6cyb"
+    },
+    "timestamp": "2025-07-05T19:03:57.530Z"
+  },
+  {
+    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "article-1750191083346-v2yxn6cyb"
+    },
+    "timestamp": "2025-07-05T19:03:57.549Z"
   }
 ]

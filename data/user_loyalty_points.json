@@ -1837,8 +1837,8 @@
   },
   "3a02d49c-16ca-48ee-a083-e4a44a03e07f": {
     "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
-    "total_points": 128,
-    "earned_points": 128,
+    "total_points": 130,
+    "earned_points": 130,
     "redeemed_points": 0,
     "history": [
       {
@@ -2792,6 +2792,22 @@
           "article_id": "article-1750222780834-politics1"
         },
         "timestamp": "2025-07-05T16:34:41.367Z"
+      },
+      {
+        "points": 1,
+        "action": "view على المقال",
+        "details": {
+          "article_id": "article-1750191083346-v2yxn6cyb"
+        },
+        "timestamp": "2025-07-05T19:03:57.530Z"
+      },
+      {
+        "points": 1,
+        "action": "view على المقال",
+        "details": {
+          "article_id": "article-1750191083346-v2yxn6cyb"
+        },
+        "timestamp": "2025-07-05T19:03:57.549Z"
       }
     ]
   },
