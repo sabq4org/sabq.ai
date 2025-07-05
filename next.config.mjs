@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+import path from 'path';
+
 const nextConfig = {
   reactStrictMode: true,
   serverExternalPackages: ['tailwind-merge', '@prisma/client'],
@@ -32,13 +34,13 @@ const nextConfig = {
       ...config.resolve,
       alias: {
         ...config.resolve.alias,
-        '@': '.',
-        '@/components': './components',
-        '@/contexts': './contexts',
-        '@/lib': './lib',
-        '@/hooks': './hooks',
-        '@/types': './types',
-        '@/config': './config',
+        '@': path.resolve(process.cwd()),
+        '@/components': path.resolve(process.cwd(), 'components'),
+        '@/contexts': path.resolve(process.cwd(), 'contexts'),
+        '@/lib': path.resolve(process.cwd(), 'lib'),
+        '@/hooks': path.resolve(process.cwd(), 'hooks'),
+        '@/types': path.resolve(process.cwd(), 'types'),
+        '@/config': path.resolve(process.cwd(), 'config'),
       },
       fallback: {
         ...config.resolve.fallback,
