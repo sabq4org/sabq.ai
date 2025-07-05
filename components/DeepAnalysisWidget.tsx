@@ -318,21 +318,22 @@ export default function DeepAnalysisWidget({ insights }: DeepAnalysisWidgetProps
                       </div>
 
                       {/* زر عرض التحليل الكامل */}
-                      <div className="mt-3">
+                      <div className="mt-3 pt-2 pb-4">
                         <a 
                           href={item.url} 
                           onClick={() => markAsRead(item.id)}
                           className={`
-                            w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all
+                            w-fit max-w-[180px] mx-auto flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all
                             ${isAI 
                               ? darkMode 
-                                ? 'bg-purple-600 hover:bg-purple-700 text-white' 
-                                : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                ? 'bg-slate-100 hover:bg-purple-100 text-gray-900 hover:text-purple-900' 
+                                : 'bg-slate-100 hover:bg-purple-100 text-gray-900 hover:text-purple-900'
                               : darkMode 
-                                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                ? 'bg-slate-100 hover:bg-blue-100 text-gray-900 hover:text-blue-900' 
+                                : 'bg-slate-100 hover:bg-blue-100 text-gray-900 hover:text-blue-900'
                             }
-                            hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98]
+                            hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98] border border-transparent hover:border-opacity-50
+                            ${isAI ? 'hover:border-purple-200' : 'hover:border-blue-200'}
                           `}
                         >
                           <Brain className="w-4 h-4" />

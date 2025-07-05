@@ -144,7 +144,7 @@ export default function DeepAnalysisCard({ analysis, viewMode = 'grid' }: DeepAn
       </div>
 
       {/* محتوى البطاقة */}
-      <div className={`p-5 ${viewMode === 'list' ? 'flex-1' : ''}`}>
+      <div className={`p-4 sm:p-5 ${viewMode === 'list' ? 'flex-1' : ''} flex flex-col`}>
         {/* التصنيفات */}
         <div className="flex flex-wrap gap-2 mb-3">
           {analysis.categories.slice(0, 2).map((category, index) => (
@@ -166,7 +166,7 @@ export default function DeepAnalysisCard({ analysis, viewMode = 'grid' }: DeepAn
         {/* العنوان */}
         <Link href={analysisUrl}>
           <h3 className={`
-            text-lg font-bold line-clamp-2 mb-3 group-hover:text-purple-600 transition-colors cursor-pointer
+            text-lg font-bold line-clamp-3 mb-3 group-hover:text-purple-600 transition-colors cursor-pointer
             ${darkMode ? 'text-white' : 'text-gray-900'}
           `}>
             {analysis.title}
@@ -175,7 +175,7 @@ export default function DeepAnalysisCard({ analysis, viewMode = 'grid' }: DeepAn
 
         {/* الملخص */}
         <p className={`
-          text-sm line-clamp-2 mb-4
+          text-sm line-clamp-2 mb-4 flex-grow
           ${darkMode ? 'text-gray-400' : 'text-gray-600'}
         `}>
           {analysis.summary}
@@ -183,23 +183,25 @@ export default function DeepAnalysisCard({ analysis, viewMode = 'grid' }: DeepAn
 
         {/* معلومات أسفل البطاقة */}
         <div className={`
-          flex items-center justify-between text-xs pt-3 border-t
+          flex items-center justify-between text-xs pt-3 border-t mb-4
           ${darkMode ? 'border-gray-700 text-gray-400' : 'border-gray-200 text-gray-500'}
         `}>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <span className="flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5" />
-              {formatDate(analysis.publishedAt || analysis.createdAt)}
+              <span className="hidden sm:inline">{formatDate(analysis.publishedAt || analysis.createdAt)}</span>
+              <span className="sm:hidden">{new Date(analysis.publishedAt || analysis.createdAt).toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' })}</span>
             </span>
             <span className="flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
-              {analysis.readingTime} دقائق
+              {analysis.readingTime} د
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <span className="flex items-center gap-1">
               <Eye className="w-3.5 h-3.5" />
-              {analysis.views.toLocaleString('ar-SA')}
+              <span className="hidden sm:inline">{analysis.views.toLocaleString('ar-SA')}</span>
+              <span className="sm:hidden">{analysis.views > 999 ? `${Math.floor(analysis.views / 1000)}k` : analysis.views}</span>
             </span>
             {analysis.likes > 0 && (
               <span className="flex items-center gap-1">
@@ -210,17 +212,17 @@ export default function DeepAnalysisCard({ analysis, viewMode = 'grid' }: DeepAn
           </div>
         </div>
 
-        {/* زر عرض التفاصيل */}
-        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        {/* زر عرض التفاصيل - محسن */}
+        <div className="pt-2 pb-4 mt-auto">
           <Link 
             href={analysisUrl}
             className={`
-              w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
+              w-fit max-w-[180px] mx-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all
               ${darkMode 
-                ? 'bg-purple-600 hover:bg-purple-700 text-white' 
-                : 'bg-purple-600 hover:bg-purple-700 text-white'
+                ? 'bg-slate-100 hover:bg-blue-100 text-gray-900 hover:text-blue-900' 
+                : 'bg-slate-100 hover:bg-blue-100 text-gray-900 hover:text-blue-900'
               }
-              hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98]
+              hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98] border border-transparent hover:border-blue-200
             `}
           >
             <Brain className="w-4 h-4" />
