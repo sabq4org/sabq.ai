@@ -10,6 +10,18 @@
 /* استيراد تحسينات لوحة التحكم للموبايل */
 @import '../styles/dashboard-mobile.css';
 
+/* استيراد التحسينات الشاملة للموبايل */
+@import '../styles/mobile-optimizations.css';
+
+/* استيراد تحسينات صفحة المقال للموبايل */
+@import '../styles/article-mobile.css';
+
+/* استيراد التحسينات المحسنة للوحة التحكم على الموبايل */
+@import '../styles/dashboard-mobile-enhanced.css';
+
+/* استيراد تحسينات الأداء للموبايل */
+@import '../styles/performance-mobile.css';
+
 /* استيراد الألوان الناعمة المريحة للعين */
 @import '../styles/soft-colors.css';
 

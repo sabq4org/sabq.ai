@@ -1,0 +1,479 @@
+/* 📰 تحسينات صفحة المقال للموبايل */
+
+/* ===============================
+   📱 1. تخطيط المقال للموبايل
+   =============================== */
+
+@media (max-width: 768px) {
+  .article-container {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  .article-header {
+    padding: 1rem !important;
+    margin-bottom: 0 !important;
+  }
+  
+  .article-title {
+    font-size: 1.5rem !important; /* 24px */
+    line-height: 1.4 !important;
+    margin-bottom: 1rem !important;
+    padding: 0 !important;
+  }
+  
+  .article-meta {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .article-meta-item {
+    font-size: 0.875rem !important;
+    gap: 0.5rem !important;
+  }
+  
+  .article-meta-item svg {
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+}
+
+/* ===============================
+   🖼️ 2. الصورة البارزة للموبايل
+   =============================== */
+
+@media (max-width: 768px) {
+  .article-featured-image {
+    width: 100vw !important;
+    margin-left: -1rem !important;
+    margin-right: -1rem !important;
+    height: 250px !important;
+    object-fit: cover !important;
+    border-radius: 0 !important;
+  }
+  
+  .article-image-container {
+    position: relative !important;
+    margin: 0 -1rem 1rem -1rem !important;
+  }
+  
+  .article-image-overlay {
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.6)) !important;
+    padding: 1rem !important;
+    color: white !important;
+  }
+  
+  .article-category-badge {
+    position: absolute !important;
+    top: 1rem !important;
+    right: 1rem !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(10px) !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 1rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+  }
+}
+
+/* ===============================
+   📝 3. محتوى المقال للموبايل
+   =============================== */
+
+@media (max-width: 768px) {
+  .article-content {
+    padding: 1rem !important;
+    font-size: 1.125rem !important; /* 18px - مريح للقراءة */
+    line-height: 1.7 !important;
+  }
+  
+  .article-content p {
+    margin-bottom: 1.5rem !important;
+    font-size: 1.125rem !important;
+    line-height: 1.7 !important;
+  }
+  
+  .article-content h2 {
+    font-size: 1.375rem !important; /* 22px */
+    line-height: 1.4 !important;
+    margin: 2rem 0 1rem 0 !important;
+    padding-top: 1rem !important;
+    border-top: 2px solid #e5e7eb !important;
+  }
+  
+  .article-content h3 {
+    font-size: 1.25rem !important; /* 20px */
+    line-height: 1.4 !important;
+    margin: 1.5rem 0 0.75rem 0 !important;
+  }
+  
+  .article-content ul,
+  .article-content ol {
+    padding-right: 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .article-content li {
+    margin-bottom: 0.5rem !important;
+    line-height: 1.6 !important;
+  }
+  
+  .article-content blockquote {
+    margin: 2rem 0 !important;
+    padding: 1rem !important;
+    background: #f8fafc !important;
+    border-right: 4px solid #3b82f6 !important;
+    border-radius: 0.5rem !important;
+    font-style: italic !important;
+  }
+  
+  .dark .article-content blockquote {
+    background: #1e293b !important;
+    border-right-color: #60a5fa !important;
+  }
+}
+
+/* ===============================
+   🖼️ 4. الصور داخل المقال
+   =============================== */
+
+@media (max-width: 768px) {
+  .article-content img {
+    width: 100% !important;
+    height: auto !important;
+    margin: 1.5rem 0 !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .article-content figure {
+    margin: 2rem 0 !important;
+  }
+  
+  .article-content figcaption {
+    text-align: center !important;
+    font-size: 0.875rem !important;
+    color: #6b7280 !important;
+    margin-top: 0.5rem !important;
+    font-style: italic !important;
+  }
+  
+  .dark .article-content figcaption {
+    color: #9ca3af !important;
+  }
+}
+
+/* ===============================
+   📊 5. الجداول للموبايل
+   =============================== */
+
+@media (max-width: 768px) {
+  .article-content table {
+    display: block !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    margin: 1.5rem 0 !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 0.5rem !important;
+  }
+  
+  .article-content table thead {
+    background: #f8fafc !important;
+  }
+  
+  .article-content table th,
+  .article-content table td {
+    padding: 0.75rem !important;
+    font-size: 0.875rem !important;
+    border-bottom: 1px solid #e5e7eb !important;
+  }
+  
+  .article-content table th {
+    font-weight: 600 !important;
+    color: #374151 !important;
+  }
+  
+  .dark .article-content table {
+    border-color: #374151 !important;
+  }
+  
+  .dark .article-content table thead {
+    background: #1f2937 !important;
+  }
+  
+  .dark .article-content table th {
+    color: #f3f4f6 !important;
+  }
+  
+  .dark .article-content table th,
+  .dark .article-content table td {
+    border-bottom-color: #374151 !important;
+  }
+}
+
+/* ===============================
+   🔗 6. الروابط والمراجع
+   =============================== */
+
+@media (max-width: 768px) {
+  .article-content a {
+    color: #3b82f6 !important;
+    text-decoration: underline !important;
+    text-decoration-thickness: 2px !important;
+    text-underline-offset: 2px !important;
+    word-break: break-word !important;
+  }
+  
+  .article-content a:hover {
+    color: #1d4ed8 !important;
+    text-decoration-thickness: 3px !important;
+  }
+  
+  .dark .article-content a {
+    color: #60a5fa !important;
+  }
+  
+  .dark .article-content a:hover {
+    color: #93c5fd !important;
+  }
+  
+  /* الروابط الخارجية */
+  .article-content a[target="_blank"]::after {
+    content: " ↗" !important;
+    font-size: 0.875rem !important;
+    opacity: 0.7 !important;
+  }
+}
+
+/* ===============================
+   💬 7. أزرار التفاعل للموبايل
+   =============================== */
+
+@media (max-width: 768px) {
+  .article-actions {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: white !important;
+    border-top: 1px solid #e5e7eb !important;
+    padding: 1rem !important;
+    display: flex !important;
+    justify-content: space-around !important;
+    z-index: 1000 !important;
+    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+  }
+  
+  .dark .article-actions {
+    background: rgba(31, 41, 55, 0.95) !important;
+    border-top-color: #374151 !important;
+  }
+  
+  .article-action-button {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+    padding: 0.5rem !important;
+    border-radius: 0.5rem !important;
+    background: transparent !important;
+    border: none !important;
+    color: #6b7280 !important;
+    font-size: 0.75rem !important;
+    min-width: 60px !important;
+    transition: all 0.2s !important;
+  }
+  
+  .article-action-button:active {
+    transform: scale(0.95) !important;
+    background: #f3f4f6 !important;
+  }
+  
+  .dark .article-action-button {
+    color: #9ca3af !important;
+  }
+  
+  .dark .article-action-button:active {
+    background: #374151 !important;
+  }
+  
+  .article-action-button svg {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+  }
+  
+  .article-action-button.active {
+    color: #3b82f6 !important;
+  }
+  
+  .dark .article-action-button.active {
+    color: #60a5fa !important;
+  }
+}
+
+/* ===============================
+   📖 8. شريط التقدم في القراءة
+   =============================== */
+
+@media (max-width: 768px) {
+  .reading-progress {
+    position: fixed !important;
+    top: 64px !important; /* تحت الهيدر */
+    left: 0 !important;
+    width: 100% !important;
+    height: 3px !important;
+    background: #e5e7eb !important;
+    z-index: 999 !important;
+  }
+  
+  .reading-progress-bar {
+    height: 100% !important;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6) !important;
+    transition: width 0.1s ease !important;
+    border-radius: 0 2px 2px 0 !important;
+  }
+  
+  .dark .reading-progress {
+    background: #374151 !important;
+  }
+}
+
+/* ===============================
+   🔤 9. تحسين الخطوط للموبايل
+   =============================== */
+
+@media (max-width: 768px) {
+  .article-content {
+    font-family: 'IBM Plex Sans Arabic', 'Tajawal', system-ui, -apple-system, sans-serif !important;
+    text-rendering: optimizeLegibility !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+  }
+  
+  .article-content strong,
+  .article-content b {
+    font-weight: 700 !important;
+  }
+  
+  .article-content em,
+  .article-content i {
+    font-style: italic !important;
+  }
+  
+  .article-content code {
+    background: #f1f5f9 !important;
+    padding: 0.25rem 0.5rem !important;
+    border-radius: 0.25rem !important;
+    font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace !important;
+    font-size: 0.875rem !important;
+  }
+  
+  .dark .article-content code {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+  }
+}
+
+/* ===============================
+   📱 10. تحسينات إضافية للموبايل
+   =============================== */
+
+@media (max-width: 768px) {
+  /* إضافة مساحة في الأسفل لأزرار التفاعل */
+  .article-container {
+    padding-bottom: 100px !important;
+  }
+  
+  /* تحسين التمرير */
+  .article-content {
+    scroll-behavior: smooth !important;
+  }
+  
+  /* منع التحديد العشوائي */
+  .article-actions {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    user-select: none !important;
+  }
+  
+  /* تحسين الأداء */
+  .article-content img {
+    will-change: transform !important;
+  }
+  
+  .article-actions {
+    will-change: transform !important;
+  }
+}
+
+/* ===============================
+   🌙 11. الوضع المظلم للمقال
+   =============================== */
+
+@media (max-width: 768px) {
+  .dark .article-content {
+    color: #e2e8f0 !important;
+  }
+  
+  .dark .article-content h1,
+  .dark .article-content h2,
+  .dark .article-content h3 {
+    color: #f1f5f9 !important;
+  }
+  
+  .dark .article-content h2 {
+    border-top-color: #374151 !important;
+  }
+  
+  .dark .article-title {
+    color: #f1f5f9 !important;
+  }
+  
+  .dark .article-meta-item {
+    color: #9ca3af !important;
+  }
+}
+
+/* ===============================
+   🎯 12. تحسينات نهائية للقراءة
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تحسين المسافات للقراءة المريحة */
+  .article-content > * + * {
+    margin-top: 1.5rem !important;
+  }
+  
+  /* تحسين النقاط والقوائم */
+  .article-content ul li::marker {
+    color: #3b82f6 !important;
+  }
+  
+  .article-content ol li::marker {
+    color: #3b82f6 !important;
+    font-weight: 700 !important;
+  }
+  
+  /* تحسين الاقتباسات */
+  .article-content blockquote p {
+    margin-bottom: 0 !important;
+  }
+  
+  /* تحسين الفواصل */
+  .article-content hr {
+    margin: 2rem 0 !important;
+    border: none !important;
+    height: 2px !important;
+    background: linear-gradient(90deg, transparent, #e5e7eb, transparent) !important;
+  }
+  
+  .dark .article-content hr {
+    background: linear-gradient(90deg, transparent, #374151, transparent) !important;
+  }
+} 

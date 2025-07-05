@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import { Providers } from './providers'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeScript } from './theme-script'
+import MobileOptimizer from '@/components/mobile/MobileOptimizer'
 
 const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({
   subsets: ['arabic'],
@@ -113,7 +114,7 @@ export default function RootLayout({
     <html lang="ar" dir="rtl" className="transition-colors duration-300" suppressHydrationWarning>
       <head>
         <ThemeScript />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
         <meta name="theme-color" content="#1e40af" />
         <meta name="msapplication-TileColor" content="#1e40af" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -129,6 +130,7 @@ export default function RootLayout({
       )} suppressHydrationWarning>
         <Providers>
           <AuthProvider>
+            <MobileOptimizer />
             {children}
             <Toaster 
               position="top-center"

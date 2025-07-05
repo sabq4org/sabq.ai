@@ -1,0 +1,695 @@
+/* 📊 تحسينات محسنة للوحة التحكم على الموبايل */
+
+/* ===============================
+   📱 1. تخطيط لوحة التحكم للموبايل
+   =============================== */
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  .dashboard-sidebar {
+    position: fixed !important;
+    top: 64px !important;
+    left: 0 !important;
+    width: 280px !important;
+    height: calc(100vh - 64px) !important;
+    background: white !important;
+    border-right: 1px solid #e5e7eb !important;
+    z-index: 999 !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s ease !important;
+    overflow-y: auto !important;
+  }
+  
+  .dashboard-sidebar.open {
+    transform: translateX(0) !important;
+  }
+  
+  .dark .dashboard-sidebar {
+    background: #1f2937 !important;
+    border-right-color: #374151 !important;
+  }
+  
+  .dashboard-main {
+    padding: 1rem !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+  }
+  
+  .dashboard-overlay {
+    position: fixed !important;
+    top: 64px !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    z-index: 998 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: all 0.3s ease !important;
+  }
+  
+  .dashboard-overlay.show {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+}
+
+/* ===============================
+   🔗 2. القائمة الجانبية للموبايل
+   =============================== */
+
+@media (max-width: 768px) {
+  .sidebar-nav {
+    padding: 1rem !important;
+  }
+  
+  .sidebar-nav-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    padding: 1rem !important;
+    margin-bottom: 0.5rem !important;
+    border-radius: 0.75rem !important;
+    color: #6b7280 !important;
+    text-decoration: none !important;
+    transition: all 0.2s !important;
+    font-size: 1rem !important;
+    font-weight: 500 !important;
+  }
+  
+  .sidebar-nav-item:active {
+    transform: scale(0.98) !important;
+    background: #f3f4f6 !important;
+  }
+  
+  .sidebar-nav-item.active {
+    background: #eff6ff !important;
+    color: #2563eb !important;
+  }
+  
+  .dark .sidebar-nav-item {
+    color: #9ca3af !important;
+  }
+  
+  .dark .sidebar-nav-item:active {
+    background: #374151 !important;
+  }
+  
+  .dark .sidebar-nav-item.active {
+    background: #1e3a8a !important;
+    color: #60a5fa !important;
+  }
+  
+  .sidebar-nav-item svg {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .sidebar-nav-group {
+    margin-bottom: 2rem !important;
+  }
+  
+  .sidebar-nav-group-title {
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    color: #9ca3af !important;
+    margin-bottom: 0.5rem !important;
+    padding: 0 1rem !important;
+  }
+  
+  .dark .sidebar-nav-group-title {
+    color: #6b7280 !important;
+  }
+}
+
+/* ===============================
+   📊 3. البطاقات الإحصائية للموبايل
+   =============================== */
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  .stats-card {
+    padding: 1.5rem !important;
+    border-radius: 1rem !important;
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .dark .stats-card {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+  }
+  
+  .stats-card-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .stats-card-icon {
+    width: 3rem !important;
+    height: 3rem !important;
+    border-radius: 0.75rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #eff6ff !important;
+    color: #2563eb !important;
+  }
+  
+  .dark .stats-card-icon {
+    background: #1e3a8a !important;
+    color: #60a5fa !important;
+  }
+  
+  .stats-card-icon svg {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+  }
+  
+  .stats-card-value {
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+    margin-bottom: 0.25rem !important;
+  }
+  
+  .dark .stats-card-value {
+    color: #f9fafb !important;
+  }
+  
+  .stats-card-label {
+    font-size: 0.875rem !important;
+    color: #6b7280 !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .dark .stats-card-label {
+    color: #9ca3af !important;
+  }
+  
+  .stats-card-change {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+  }
+  
+  .stats-card-change.positive {
+    color: #059669 !important;
+  }
+  
+  .stats-card-change.negative {
+    color: #dc2626 !important;
+  }
+  
+  .stats-card-change svg {
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+}
+
+/* ===============================
+   📈 4. الرسوم البيانية للموبايل
+   =============================== */
+
+@media (max-width: 768px) {
+  .chart-container {
+    background: white !important;
+    border-radius: 1rem !important;
+    padding: 1.5rem !important;
+    border: 1px solid #e5e7eb !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .dark .chart-container {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+  }
+  
+  .chart-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .chart-title {
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    color: #111827 !important;
+  }
+  
+  .dark .chart-title {
+    color: #f9fafb !important;
+  }
+  
+  .chart-period {
+    font-size: 0.75rem !important;
+    color: #6b7280 !important;
+    background: #f3f4f6 !important;
+    padding: 0.25rem 0.75rem !important;
+    border-radius: 0.5rem !important;
+  }
+  
+  .dark .chart-period {
+    color: #9ca3af !important;
+    background: #374151 !important;
+  }
+  
+  /* تحسين الرسوم البيانية للموبايل */
+  .recharts-wrapper {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+  }
+  
+  .recharts-surface {
+    min-width: 300px !important;
+  }
+}
+
+/* ===============================
+   📋 5. الجداول للموبايل
+   =============================== */
+
+@media (max-width: 768px) {
+  .table-container {
+    background: white !important;
+    border-radius: 1rem !important;
+    border: 1px solid #e5e7eb !important;
+    overflow: hidden !important;
+  }
+  
+  .dark .table-container {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+  }
+  
+  .table-header {
+    padding: 1rem !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    background: #f8fafc !important;
+  }
+  
+  .dark .table-header {
+    border-bottom-color: #374151 !important;
+    background: #111827 !important;
+  }
+  
+  .table-title {
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    color: #111827 !important;
+  }
+  
+  .dark .table-title {
+    color: #f9fafb !important;
+  }
+  
+  /* تحويل الجداول إلى بطاقات */
+  .mobile-table {
+    display: none !important;
+  }
+  
+  .mobile-cards {
+    display: block !important;
+    padding: 1rem !important;
+  }
+  
+  .mobile-table-card {
+    background: #f8fafc !important;
+    border-radius: 0.75rem !important;
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
+    border: 1px solid #e5e7eb !important;
+  }
+  
+  .dark .mobile-table-card {
+    background: #111827 !important;
+    border-color: #374151 !important;
+  }
+  
+  .mobile-table-card:last-child {
+    margin-bottom: 0 !important;
+  }
+  
+  .mobile-table-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 0.5rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  .mobile-table-row:last-child {
+    margin-bottom: 0 !important;
+  }
+  
+  .mobile-table-label {
+    font-weight: 500 !important;
+    color: #6b7280 !important;
+  }
+  
+  .dark .mobile-table-label {
+    color: #9ca3af !important;
+  }
+  
+  .mobile-table-value {
+    font-weight: 600 !important;
+    color: #111827 !important;
+  }
+  
+  .dark .mobile-table-value {
+    color: #f9fafb !important;
+  }
+}
+
+/* ===============================
+   🎛️ 6. النماذج والمدخلات للموبايل
+   =============================== */
+
+@media (max-width: 768px) {
+  .form-container {
+    background: white !important;
+    border-radius: 1rem !important;
+    padding: 1.5rem !important;
+    border: 1px solid #e5e7eb !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .dark .form-container {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+  }
+  
+  .form-group {
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .form-label {
+    display: block !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .dark .form-label {
+    color: #d1d5db !important;
+  }
+  
+  .form-input {
+    width: 100% !important;
+    padding: 0.875rem !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 0.75rem !important;
+    font-size: 1rem !important; /* منع الـ zoom في iOS */
+    background: white !important;
+    color: #111827 !important;
+    transition: all 0.2s !important;
+  }
+  
+  .form-input:focus {
+    outline: none !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+  }
+  
+  .dark .form-input {
+    background: #111827 !important;
+    border-color: #4b5563 !important;
+    color: #f9fafb !important;
+  }
+  
+  .dark .form-input:focus {
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1) !important;
+  }
+  
+  .form-select {
+    width: 100% !important;
+    padding: 0.875rem !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 0.75rem !important;
+    font-size: 1rem !important;
+    background: white !important;
+    color: #111827 !important;
+    appearance: none !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+    background-position: left 0.75rem center !important;
+    background-repeat: no-repeat !important;
+    background-size: 1.5em 1.5em !important;
+    padding-left: 3rem !important;
+  }
+  
+  .dark .form-select {
+    background: #111827 !important;
+    border-color: #4b5563 !important;
+    color: #f9fafb !important;
+  }
+  
+  .form-textarea {
+    width: 100% !important;
+    padding: 0.875rem !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 0.75rem !important;
+    font-size: 1rem !important;
+    background: white !important;
+    color: #111827 !important;
+    min-height: 120px !important;
+    resize: vertical !important;
+  }
+  
+  .dark .form-textarea {
+    background: #111827 !important;
+    border-color: #4b5563 !important;
+    color: #f9fafb !important;
+  }
+}
+
+/* ===============================
+   🔘 7. الأزرار للموبايل
+   =============================== */
+
+@media (max-width: 768px) {
+  .btn-primary {
+    width: 100% !important;
+    padding: 1rem !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    border-radius: 0.75rem !important;
+    background: #3b82f6 !important;
+    color: white !important;
+    border: none !important;
+    transition: all 0.2s !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+  }
+  
+  .btn-primary:active {
+    transform: scale(0.98) !important;
+    background: #2563eb !important;
+  }
+  
+  .btn-secondary {
+    width: 100% !important;
+    padding: 1rem !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    border-radius: 0.75rem !important;
+    background: white !important;
+    color: #374151 !important;
+    border: 1px solid #d1d5db !important;
+    transition: all 0.2s !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+  }
+  
+  .btn-secondary:active {
+    transform: scale(0.98) !important;
+    background: #f9fafb !important;
+  }
+  
+  .dark .btn-secondary {
+    background: #1f2937 !important;
+    color: #d1d5db !important;
+    border-color: #4b5563 !important;
+  }
+  
+  .dark .btn-secondary:active {
+    background: #111827 !important;
+  }
+  
+  .btn-group {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+  
+  .btn-icon {
+    width: 3rem !important;
+    height: 3rem !important;
+    border-radius: 0.75rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #f3f4f6 !important;
+    color: #6b7280 !important;
+    border: none !important;
+    transition: all 0.2s !important;
+  }
+  
+  .btn-icon:active {
+    transform: scale(0.95) !important;
+    background: #e5e7eb !important;
+  }
+  
+  .dark .btn-icon {
+    background: #374151 !important;
+    color: #9ca3af !important;
+  }
+  
+  .dark .btn-icon:active {
+    background: #4b5563 !important;
+  }
+}
+
+/* ===============================
+   📱 8. التنبيهات والإشعارات
+   =============================== */
+
+@media (max-width: 768px) {
+  .alert {
+    padding: 1rem !important;
+    border-radius: 0.75rem !important;
+    margin-bottom: 1rem !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+  
+  .alert-success {
+    background: #ecfdf5 !important;
+    border: 1px solid #bbf7d0 !important;
+    color: #166534 !important;
+  }
+  
+  .alert-warning {
+    background: #fffbeb !important;
+    border: 1px solid #fed7aa !important;
+    color: #92400e !important;
+  }
+  
+  .alert-error {
+    background: #fef2f2 !important;
+    border: 1px solid #fecaca !important;
+    color: #991b1b !important;
+  }
+  
+  .alert-info {
+    background: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+    color: #1e40af !important;
+  }
+  
+  .dark .alert-success {
+    background: #064e3b !important;
+    border-color: #065f46 !important;
+    color: #6ee7b7 !important;
+  }
+  
+  .dark .alert-warning {
+    background: #451a03 !important;
+    border-color: #78350f !important;
+    color: #fbbf24 !important;
+  }
+  
+  .dark .alert-error {
+    background: #450a0a !important;
+    border-color: #7f1d1d !important;
+    color: #f87171 !important;
+  }
+  
+  .dark .alert-info {
+    background: #1e3a8a !important;
+    border-color: #1e40af !important;
+    color: #93c5fd !important;
+  }
+  
+  .alert-icon {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    flex-shrink: 0 !important;
+    margin-top: 0.125rem !important;
+  }
+  
+  .alert-content {
+    flex: 1 !important;
+  }
+  
+  .alert-title {
+    font-weight: 600 !important;
+    margin-bottom: 0.25rem !important;
+  }
+  
+  .alert-message {
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+  }
+}
+
+/* ===============================
+   🎯 9. تحسينات نهائية للأداء
+   =============================== */
+
+@media (max-width: 768px) {
+  /* تحسين التمرير */
+  .dashboard-container {
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: smooth !important;
+  }
+  
+  /* تحسين الانتقالات */
+  * {
+    transition-duration: 0.2s !important;
+  }
+  
+  /* تحسين الخطوط */
+  .dashboard-container {
+    text-rendering: optimizeSpeed !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+  }
+  
+  /* إخفاء العناصر غير الضرورية */
+  .desktop-only {
+    display: none !important;
+  }
+  
+  /* تحسين الذاكرة */
+  .will-change-transform {
+    will-change: transform !important;
+  }
+  
+  .will-change-opacity {
+    will-change: opacity !important;
+  }
+} 
