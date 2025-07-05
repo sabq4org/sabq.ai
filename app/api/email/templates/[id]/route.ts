@@ -18,11 +18,12 @@ const updateSchema = z.object({
 // GET: جلب قالب واحد
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const template = await prisma.emailTemplate.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         _count: {
           select: { emailJobs: true }
@@ -53,9 +54,10 @@ export async function GET(
 // PATCH: تحديث قالب
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     
     // التحقق من البيانات
@@ -63,7 +65,7 @@ export async function PATCH(
     
     // تحديث القالب
     const template = await prisma.emailTemplate.update({
-      where: { id: params.id },
+      where: { id },
       data: validatedData
     });
     
@@ -92,13 +94,14 @@ export async function PATCH(
 // DELETE: حذف قالب
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // التحقق من عدم استخدام القالب في مهام نشطة
     const activeJobs = await prisma.emailJob.count({
       where: {
-        templateId: params.id,
+        templateId: id,
         status: { in: ['queued', 'sending'] }
       }
     });
@@ -111,7 +114,7 @@ export async function DELETE(
     }
     
     await prisma.emailTemplate.delete({
-      where: { id: params.id }
+      where: { id }
     });
     
     return NextResponse.json({

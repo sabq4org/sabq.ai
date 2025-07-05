@@ -15,11 +15,12 @@ const updateSchema = z.object({
 // GET: جلب مشترك واحد
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const subscriber = await prisma.subscriber.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         emailLogs: {
           orderBy: { eventAt: 'desc' },
@@ -63,9 +64,10 @@ export async function GET(
 // PATCH: تحديث مشترك
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     
     // التحقق من البيانات
@@ -73,7 +75,7 @@ export async function PATCH(
     
     // تحديث المشترك
     const subscriber = await prisma.subscriber.update({
-      where: { id: params.id },
+      where: { id },
       data: validatedData
     });
     
@@ -102,11 +104,12 @@ export async function PATCH(
 // DELETE: حذف مشترك
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await prisma.subscriber.delete({
-      where: { id: params.id }
+      where: { id }
     });
     
     return NextResponse.json({
