@@ -1,9 +1,18 @@
 import OpenAI from 'openai';
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+// Initialize OpenAI client with safety check
+let openai: OpenAI | null = null;
+
+try {
+  if (process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+} catch (error) {
+  console.warn('OpenAI client initialization failed:', error);
+  openai = null;
+}
 
 export interface AIClassificationResult {
   score: number; // 0-100
@@ -20,6 +29,22 @@ export interface AIClassificationResult {
  */
 export async function classifyCommentWithAI(comment: string): Promise<AIClassificationResult> {
   const startTime = Date.now();
+  
+  // إذا لم يكن OpenAI متاحاً، استخدم التحليل المحلي مباشرة
+  if (!openai) {
+    const { quickLocalAnalysis } = await import('../comment-moderation');
+    const localResult = quickLocalAnalysis(comment);
+    
+    return {
+      score: localResult.score,
+      classification: localResult.classification,
+      suggestedAction: localResult.suggestedAction,
+      confidence: localResult.confidence,
+      reason: localResult.reason || 'تم التحليل محلياً - OpenAI غير متاح',
+      aiProvider: 'local',
+      processingTime: Date.now() - startTime
+    };
+  }
   
   try {
     const prompt = `
