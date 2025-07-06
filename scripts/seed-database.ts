@@ -50,7 +50,7 @@ async function main() {
 
   // 3. إنشاء مقالات تجريبية
   const articles = await Promise.all([
-    prisma.article.create({
+    prisma.articles.create({
       data: {
         title: 'إطلاق منصة سبق الإخبارية الجديدة بتقنيات الذكاء الاصطناعي',
         slug: 'sabq-ai-launch',
@@ -67,7 +67,7 @@ async function main() {
         }
       }
     }),
-    prisma.article.create({
+    prisma.articles.create({
       data: {
         title: 'الهلال يحقق فوزاً كبيراً في دوري أبطال آسيا',
         slug: 'alhilal-champions-league',
@@ -81,7 +81,7 @@ async function main() {
         views: 3500
       }
     }),
-    prisma.article.create({
+    prisma.articles.create({
       data: {
         title: 'نمو الاقتصاد السعودي يتجاوز التوقعات',
         slug: 'saudi-economy-growth',

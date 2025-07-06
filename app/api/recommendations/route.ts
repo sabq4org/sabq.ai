@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     // 1. مقالات من الفئات المفضلة
     if (userInterests.length > 0) {
       const interestNames = userInterests.map(i => i.name || i);
-      const categoryArticles = await prisma.article.findMany({
+      const categoryArticles = await prisma.articles.findMany({
         where: {
           status: 'published',
           id: { notIn: readArticleIds },
@@ -84,13 +84,13 @@ export async function GET(request: NextRequest) {
     
     // 2. مقالات مشابهة لما تفاعل معه المستخدم مؤخراً
     if (readArticleIds.length > 0) {
-      const recentArticle = await prisma.article.findFirst({
+      const recentArticle = await prisma.articles.findFirst({
         where: { id: readArticleIds[0] },
         select: { categoryId: true, seoKeywords: true }
       });
       
       if (recentArticle?.categoryId) {
-        const similarArticles = await prisma.article.findMany({
+        const similarArticles = await prisma.articles.findMany({
           where: {
             status: 'published',
             id: { notIn: readArticleIds },
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
     }
     
     // 3. مقالات رائجة
-    const trendingArticles = await prisma.article.findMany({
+    const trendingArticles = await prisma.articles.findMany({
       where: {
         status: 'published',
         id: { notIn: readArticleIds },
