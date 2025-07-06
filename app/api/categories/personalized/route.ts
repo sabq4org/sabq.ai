@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
 
     // جلب معرفات المقالات من التفاعلات
     const articleIds = userInteractions
-      .map((interaction) => interaction.article_id)
+      .map((interaction: { article_id: string | null }) => interaction.article_id)
       .filter((id): id is string => !!id);
     
     // جلب مقالات مع تصنيفاتها
