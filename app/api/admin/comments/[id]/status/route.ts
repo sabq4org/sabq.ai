@@ -6,12 +6,12 @@ const prisma = new PrismaClient();
 
 // دالة مساعدة للتحقق من صلاحيات الإدارة
 async function checkAdminPermission(userId: string): Promise<boolean> {
-  const user = await prisma.user.findUnique({
+  const user = await prisma.users.findUnique({
     where: { id: userId },
-    select: { role: true, isAdmin: true }
+    select: { role: true, is_admin: true }
   });
   
-  return !!(user && (user.isAdmin || ['admin', 'moderator'].includes(user.role)));
+  return !!(user && (user.is_admin || ['admin', 'moderator'].includes(user.role)));
 }
 
 export async function PUT(
@@ -48,11 +48,11 @@ export async function PUT(
     }
 
     // جلب التعليق الحالي
-    const comment = await prisma.comment.findUnique({
+    const comment = await prisma.comments.findUnique({
       where: { id: commentId },
       select: {
         status: true,
-        articleId: true
+        article_id: true
       }
     });
 
@@ -64,7 +64,7 @@ export async function PUT(
     }
 
     // تحديث حالة التعليق
-    const updatedComment = await prisma.comment.update({
+    const updatedComment = await prisma.comments.update({
       where: { id: commentId },
       data: { status }
     });
@@ -80,14 +80,14 @@ export async function PUT(
         UPDATE articles 
         SET comments_count = comments_count + 1,
             last_comment_at = NOW()
-        WHERE id = ${comment.articleId}
+        WHERE id = ${comment.article_id}
       `;
     } else if (comment.status === 'approved' && status !== 'approved') {
       // التعليق تم إلغاء اعتماده
       await prisma.$executeRaw`
         UPDATE articles 
         SET comments_count = GREATEST(comments_count - 1, 0)
-        WHERE id = ${comment.articleId}
+        WHERE id = ${comment.article_id}
       `;
     }
 
