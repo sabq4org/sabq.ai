@@ -72,7 +72,7 @@ async function main() {
       const categories = await prisma.category.findMany()
       
       for (let i = 1; i <= 3; i++) {
-        await prisma.article.create({
+        await prisma.articles.create({
           data: {
             title: `مقال تجريبي رقم ${i} من المحرر`,
             slug: `editor-article-${i}`,
@@ -93,7 +93,7 @@ async function main() {
 
   // إضافة بعض التفاعلات التجريبية
   const allUsers = await prisma.user.findMany()
-  const allArticles = await prisma.article.findMany({ take: 5 })
+  const allArticles = await prisma.articles.findMany({ take: 5 })
 
   for (const user of allUsers) {
     for (const article of allArticles) {

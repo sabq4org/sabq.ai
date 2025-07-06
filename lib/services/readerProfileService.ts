@@ -156,7 +156,7 @@ export async function buildReaderProfile(userId: string): Promise<ReaderProfile>
 
     // جلب معلومات المقالات والتصنيفات بشكل منفصل
     const articleIds = [...new Set(interactions.map(i => i.articleId))];
-    const articles = await prisma.article.findMany({
+    const articles = await prisma.articles.findMany({
       where: { id: { in: articleIds } },
       select: {
         id: true,
