@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/lib/generated/prisma';
+import { prisma } from '@/lib/prisma';
+import { interactions_type, interactions } from '@/lib/generated/prisma';
 import jwt from 'jsonwebtoken';
 
-const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production';
 
 // دالة مساعدة للتحقق من المستخدم
@@ -18,237 +18,169 @@ async function getUserIdFromToken(request: NextRequest): Promise<string | null> 
   }
 }
 
+// POST: Toggle (add/remove) a bookmark/save
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { itemId, itemType, metadata } = body;
+    const { userId, itemId, itemType } = await request.json();
 
-    // التحقق من المستخدم
-    const userId = await getUserIdFromToken(request) || body.userId;
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'User authentication required' },
-        { status: 401 }
-      );
+    if (!userId || !itemId || !itemType) {
+      return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
     }
 
-    // التحقق من البيانات المطلوبة
-    if (!itemId || !itemType) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
-
-    // التحقق من وجود الإشارة المرجعية في جدول interactions
-    const existing = await prisma.interaction.findFirst({
+    const existingInteraction = await prisma.interactions.findFirst({
       where: {
-        userId,
-        articleId: itemId,
-        type: 'save'
+        user_id: userId,
+        article_id: itemId,
+        type: interactions_type.save
       }
     });
 
-    if (existing) {
-      // حذف الإشارة المرجعية إذا كانت موجودة (toggle)
-      await prisma.interaction.delete({
-        where: { id: existing.id }
+    if (existingInteraction) {
+      // It exists, so remove it
+      await prisma.interactions.delete({
+        where: { id: existingInteraction.id }
+      });
+      
+      await prisma.activity_logs.create({
+        data: {
+          user_id: userId,
+          action: 'unsaved_article',
+          entity_type: 'article',
+          entity_id: itemId
+        }
       });
 
-      return NextResponse.json({ 
-        success: true, 
-        action: 'removed',
-        bookmarkId: existing.id 
-      });
+      return NextResponse.json({ success: true, status: 'removed', message: 'Save removed' });
     } else {
-      // إنشاء إشارة مرجعية جديدة في جدول interactions
-      const bookmark = await prisma.interaction.create({
+      // It doesn't exist, so create it
+      const newInteraction = await prisma.interactions.create({
         data: {
-          userId,
-          articleId: itemId,
-          type: 'save'
+          user_id: userId,
+          article_id: itemId,
+          type: interactions_type.save
         }
       });
 
-      // تسجيل النشاط
-      await prisma.activityLog.create({
+      await prisma.activity_logs.create({
         data: {
-          userId,
-          action: 'bookmark_added',
-          entityType: itemType,
-          entityId: itemId,
-          metadata: { bookmarkId: bookmark.id }
+          user_id: userId,
+          action: 'saved_article',
+          entity_type: 'article',
+          entity_id: itemId
         }
       });
 
-      return NextResponse.json({ 
-        success: true, 
-        action: 'added',
-        bookmark: {
-          id: bookmark.id,
-          createdAt: bookmark.createdAt
-        }
-      });
+      return NextResponse.json({ success: true, status: 'created', message: 'Article saved', data: newInteraction });
     }
   } catch (error) {
-    console.error('Error managing bookmark:', error);
-    return NextResponse.json(
-      { error: 'Failed to manage bookmark' },
-      { status: 500 }
-    );
-  } finally {
-    await prisma.$disconnect();
+    console.error('Save toggle error:', error);
+    return NextResponse.json({ success: false, error: 'Failed to toggle save' }, { status: 500 });
   }
 }
 
+// GET all user saved items with pagination
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = await getUserIdFromToken(request) || searchParams.get('userId');
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const userId = searchParams.get('userId');
 
     if (!userId) {
-      return NextResponse.json(
-        { error: 'User ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'User ID is required' }, { status: 400 });
     }
 
-    // جلب الإشارات المرجعية من جدول interactions
-    const bookmarks = await prisma.interaction.findMany({
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const skip = (page - 1) * limit;
+
+    const savedItems = await prisma.interactions.findMany({
       where: {
-        userId,
-        type: 'save'
+        user_id: userId,
+        type: interactions_type.save
       },
-      orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * limit,
-      take: limit,
-      select: {
-        id: true,
-        articleId: true,
-        createdAt: true,
+      orderBy: { created_at: 'desc' },
+      include: {
         article: {
           select: {
             id: true,
             title: true,
             slug: true,
-            excerpt: true,
-            featuredImage: true,
-            publishedAt: true,
-            author: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true
-              }
-            },
-            category: {
-              select: {
-                id: true,
-                name: true,
-                slug: true
-              }
-            }
+            featured_image: true,
+            published_at: true,
+            category: { select: { name: true, slug: true } }
           }
         }
-      }
+      },
+      skip,
+      take: limit
+    });
+    
+    const total = await prisma.interactions.count({
+      where: { user_id: userId, type: interactions_type.save }
     });
 
-    // تحويل البيانات إلى التنسيق المطلوب
-    const bookmarksWithContent = bookmarks.map((bookmark: any) => ({
-      id: bookmark.id,
-      itemId: bookmark.articleId,
-      itemType: 'article',
-      createdAt: bookmark.createdAt,
-      content: bookmark.article
+    const formattedItems = savedItems.map((item: interactions & { article: any }) => ({
+      ...item,
+      item_id: item.article_id,
+      item_type: 'article'
     }));
 
-    // حساب العدد الإجمالي
-    const total = await prisma.interaction.count({ 
-      where: {
-        userId,
-        type: 'save'
+    return NextResponse.json({
+      success: true,
+      data: formattedItems,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
       }
     });
 
-    return NextResponse.json({ 
-      bookmarks: bookmarksWithContent,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit)
-      }
-    });
   } catch (error) {
-    console.error('Error fetching bookmarks:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch bookmarks' },
-      { status: 500 }
-    );
-  } finally {
-    await prisma.$disconnect();
+    console.error('Error fetching saved items:', error);
+    return NextResponse.json({ success: false, error: 'Failed to fetch saved items' }, { status: 500 });
   }
 }
 
+// DELETE a specific saved item by its interaction ID
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const bookmarkId = searchParams.get('id');
-    const userId = await getUserIdFromToken(request);
+    const interactionId = searchParams.get('interactionId');
+    const userId = searchParams.get('userId');
 
-    if (!bookmarkId || !userId) {
-      return NextResponse.json(
-        { error: 'Bookmark ID and user authentication required' },
-        { status: 400 }
-      );
+    if (!interactionId || !userId) {
+      return NextResponse.json({ success: false, error: 'Interaction ID and User ID are required' }, { status: 400 });
     }
 
-    // التحقق من وجود الإشارة المرجعية
-    const bookmark = await prisma.interaction.findFirst({
+    const savedItem = await prisma.interactions.findFirst({
       where: {
-        id: bookmarkId,
-        userId,
-        type: 'save'
+        id: interactionId,
+        user_id: userId,
+        type: interactions_type.save
       }
     });
 
-    if (!bookmark) {
-      return NextResponse.json(
-        { error: 'Bookmark not found or access denied' },
-        { status: 404 }
-      );
+    if (!savedItem) {
+      return NextResponse.json({ success: false, error: 'Saved item not found or permission denied' }, { status: 404 });
     }
 
-    // حذف الإشارة المرجعية
-    await prisma.interaction.delete({
-      where: { id: bookmarkId }
+    await prisma.interactions.delete({
+      where: { id: interactionId }
     });
-
-    // تسجيل النشاط
-    await prisma.activityLog.create({
+    
+    await prisma.activity_logs.create({
       data: {
-        userId,
-        action: 'bookmark_removed',
-        entityType: 'article',
-        entityId: bookmark.articleId,
-        metadata: { bookmarkId }
+        user_id: userId,
+        action: 'deleted_save_by_id',
+        entity_type: 'interaction',
+        entity_id: interactionId,
+        metadata: { article_id: savedItem.article_id }
       }
     });
 
-    return NextResponse.json({ 
-      success: true,
-      message: 'Bookmark removed successfully'
-    });
+    return NextResponse.json({ success: true, message: 'Saved item deleted successfully' });
   } catch (error) {
-    console.error('Error deleting bookmark:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete bookmark' },
-      { status: 500 }
-    );
-  } finally {
-    await prisma.$disconnect();
+    console.error('Error deleting saved item:', error);
+    return NextResponse.json({ success: false, error: 'Failed to delete saved item' }, { status: 500 });
   }
 } 
