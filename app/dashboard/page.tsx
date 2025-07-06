@@ -9,10 +9,16 @@ import {
   Activity,
   BarChart3,
   Star,
-  UserCheck
+  UserCheck,
+  Calendar,
+  Eye,
+  Menu,
+  X
 } from 'lucide-react';
 import { useDarkModeContext } from '@/contexts/DarkModeContext';
 import { TabsEnhanced } from '@/components/ui/tabs-enhanced';
+import Link from 'next/link';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('behavior');
@@ -26,10 +32,13 @@ export default function DashboardPage() {
     activeUsers: 0,
     comments: 0,
     accuracy: 0,
-    updates: 0
+    updates: 0,
+    views: 0
   });
   const [tableData, setTableData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   // جلب البيانات الحقيقية
   useEffect(() => {
@@ -92,7 +101,8 @@ export default function DashboardPage() {
           activeUsers: 0, // سيتم حسابه من بيانات التفاعل الحقيقية
           comments: 0, // سيتم ربطه بنظام التعليقات الحقيقي
           accuracy: 0, // سيتم حسابه من التحليلات الحقيقية
-          updates: 0 // سيتم حسابه من سجل التحديثات
+          updates: 0, // سيتم حسابه من سجل التحديثات
+          views: 0
         });
 
         // تصفير بيانات الجدول (سيتم ملؤها بالبيانات الحقيقية لاحقاً)
@@ -307,191 +317,160 @@ export default function DashboardPage() {
     );
   };
 
+  const menuItems = [
+    { href: '/dashboard/news', icon: FileText, label: 'المقالات' },
+    { href: '/dashboard/categories', icon: BarChart3, label: 'التصنيفات' },
+    { href: '/dashboard/users', icon: Users, label: 'المستخدمين' },
+    { href: '/dashboard/analytics', icon: TrendingUp, label: 'التحليلات' },
+    { href: '/dashboard/comments', icon: MessageSquare, label: 'التعليقات' },
+    { href: '/dashboard/settings', icon: Calendar, label: 'الإعدادات' }
+  ];
+
   return (
-    <div className={`p-3 sm:p-4 lg:p-6 xl:p-8 transition-colors duration-300 ${
-      darkMode ? 'bg-gray-900' : ''
-    }`}>
-      {/* عنوان وتعريف الصفحة */}
-      <div className="mb-4 sm:mb-6 lg:mb-8">
-        <h1 className={`text-xl sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2 transition-colors duration-300 ${
-          darkMode ? 'text-white' : 'text-gray-800'
-        }`}>لوحة سبق</h1>
-        <p className={`text-xs sm:text-sm lg:text-base transition-colors duration-300 ${
-          darkMode ? 'text-gray-300' : 'text-gray-600'
-        }`}>نظام إدارة المحتوى الذكي لصحيفة سبق - تحكم شامل في المحتوى والتفاعل</p>
-      </div>
-
-      {/* قسم النظام الذكي - محسّن للموبايل */}
-      <div className="mb-4 sm:mb-6 lg:mb-8">
-        <div className={`rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 border transition-colors duration-300 ${
-          darkMode 
-            ? 'bg-gradient-to-r from-purple-900/30 to-indigo-900/30 border-purple-700' 
-            : 'bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-100'
-        }`}>
-          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg sm:rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-base sm:text-lg lg:text-xl">🤖</span>
-            </div>
-            <div className="flex-1">
-              <h2 className={`text-base sm:text-lg lg:text-xl font-bold transition-colors duration-300 ${
-                darkMode ? 'text-white' : 'text-gray-800'
-              }`}>النظام الذكي</h2>
-              <p className={`text-xs sm:text-sm transition-colors duration-300 ${
-                darkMode ? 'text-gray-300' : 'text-gray-600'
-              }`}>تحليل متقدم للمحتوى والتفاعل باستخدام الذكاء الاصطناعي</p>
-            </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header للموبايل */}
+      {isMobile && (
+        <header className="sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between h-16 px-4">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+            >
+              {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+            <h1 className="text-lg font-bold">لوحة التحكم</h1>
+            <Link href="/" className="text-sm text-primary hover:underline">
+              العودة للموقع
+            </Link>
           </div>
+        </header>
+      )}
+
+      <div className="flex">
+        {/* Sidebar */}
+        <aside className={`
+          ${isMobile ? 'fixed inset-y-0 right-0 z-50' : 'relative'}
+          ${isMobile && !sidebarOpen ? 'translate-x-full' : 'translate-x-0'}
+          w-64 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700
+          transition-transform duration-300
+        `}>
+          {!isMobile && (
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <h1 className="text-xl font-bold">لوحة التحكم</h1>
+            </div>
+          )}
           
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
-            <div className={`rounded-lg sm:rounded-xl p-2 sm:p-3 lg:p-4 border transition-colors duration-300 ${
-              darkMode 
-                ? 'bg-gray-800 border-purple-600' 
-                : 'bg-white border-purple-100'
-            }`}>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-purple-100 rounded-md sm:rounded-lg flex items-center justify-center">
-                  <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-purple-600" />
+          <nav className="p-4 space-y-2">
+            {menuItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => isMobile && setSidebarOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <item.icon className="w-5 h-5" />
+                <span>{item.label}</span>
+              </Link>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Overlay للموبايل */}
+        {isMobile && sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Main Content */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            {/* الإحصائيات */}
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <CircularStatsCard
+                title="المقالات"
+                value={stats.articles}
+                subtitle="مقال"
+                icon={FileText}
+                bgColor="bg-green-100"
+                iconColor="text-green-600"
+              />
+              <CircularStatsCard
+                title="المستخدمين"
+                value={stats.users}
+                subtitle="مستخدم مسجل"
+                icon={Users}
+                bgColor="bg-blue-100"
+                iconColor="text-blue-600"
+              />
+              <CircularStatsCard
+                title="المشاهدات"
+                value={stats.views}
+                subtitle="مشاهدة"
+                icon={Eye}
+                bgColor="bg-purple-100"
+                iconColor="text-purple-600"
+              />
+              <CircularStatsCard
+                title="التعليقات"
+                value={stats.comments}
+                subtitle="تعليق"
+                icon={MessageSquare}
+                bgColor="bg-orange-100"
+                iconColor="text-orange-600"
+              />
+            </div>
+
+            {/* الرسوم البيانية */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm">
+                <h3 className="text-lg font-semibold mb-4">نشاط المستخدمين</h3>
+                <div className="h-64 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                  <span className="text-gray-500">الرسم البياني هنا</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-xs sm:text-sm font-medium truncate transition-colors duration-300 ${
-                    darkMode ? 'text-gray-200' : 'text-gray-800'
-                  }`}>تحليل المحتوى</p>
-                  <p className={`text-[10px] sm:text-xs transition-colors duration-300 ${
-                    darkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`}>متوقف</p>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm">
+                <h3 className="text-lg font-semibold mb-4">المقالات الأكثر قراءة</h3>
+                <div className="space-y-3">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium truncate">مقال تجريبي رقم {i}</h4>
+                        <p className="text-sm text-gray-500">1,234 مشاهدة</p>
+                      </div>
+                      <Link href="#" className="text-primary text-sm hover:underline">
+                        عرض
+                      </Link>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
-            
-            <div className={`rounded-lg sm:rounded-xl p-2 sm:p-3 lg:p-4 border transition-colors duration-300 ${
-              darkMode 
-                ? 'bg-gray-800 border-purple-600' 
-                : 'bg-white border-purple-100'
-            }`}>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-100 rounded-md sm:rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-green-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-xs sm:text-sm font-medium truncate transition-colors duration-300 ${
-                    darkMode ? 'text-gray-200' : 'text-gray-800'
-                  }`}>توقع الاتجاهات</p>
-                  <p className={`text-[10px] sm:text-xs transition-colors duration-300 ${
-                    darkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`}>متوقف</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className={`rounded-lg sm:rounded-xl p-2 sm:p-3 lg:p-4 border transition-colors duration-300 ${
-              darkMode 
-                ? 'bg-gray-800 border-purple-600' 
-                : 'bg-white border-purple-100'
-            }`}>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 rounded-md sm:rounded-lg flex items-center justify-center">
-                  <Users className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-blue-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-xs sm:text-sm font-medium truncate transition-colors duration-300 ${
-                    darkMode ? 'text-gray-200' : 'text-gray-800'
-                  }`}>تحليل الجمهور</p>
-                  <p className={`text-[10px] sm:text-xs transition-colors duration-300 ${
-                    darkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`}>متوقف</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className={`rounded-lg sm:rounded-xl p-2 sm:p-3 lg:p-4 border transition-colors duration-300 ${
-              darkMode 
-                ? 'bg-gray-800 border-purple-600' 
-                : 'bg-white border-purple-100'
-            }`}>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-orange-100 rounded-md sm:rounded-lg flex items-center justify-center">
-                  <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-orange-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-xs sm:text-sm font-medium truncate transition-colors duration-300 ${
-                    darkMode ? 'text-gray-200' : 'text-gray-800'
-                  }`}>تصنيف التعليقات</p>
-                  <p className={`text-[10px] sm:text-xs transition-colors duration-300 ${
-                    darkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`}>متوقف</p>
-                </div>
+
+            {/* الأنشطة الأخيرة */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm">
+              <h3 className="text-lg font-semibold mb-4">الأنشطة الأخيرة</h3>
+              <div className="space-y-3">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex items-start gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                    <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm">
+                        <span className="font-medium">مستخدم جديد</span> قام بالتسجيل
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">منذ {i} ساعات</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        </div>
+        </main>
       </div>
-
-      {/* Stats Cards - محسّنة للموبايل */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 lg:gap-4 xl:gap-6 mb-4 sm:mb-6 lg:mb-8">
-        <CircularStatsCard
-          title="إجمالي المستخدمين"
-          value={stats.users}
-          subtitle="مستخدم مسجل"
-          icon={UserCheck}
-          bgColor="bg-blue-100"
-          iconColor="text-blue-600"
-        />
-        <CircularStatsCard
-          title="النقاط المكتسبة"
-          value={stats.points}
-          subtitle="نقطة ولاء"
-          icon={Star}
-          bgColor="bg-yellow-100"
-          iconColor="text-yellow-600"
-        />
-        <CircularStatsCard
-          title="المقالات المنشورة"
-          value={stats.articles}
-          subtitle="مقال"
-          icon={FileText}
-          bgColor="bg-green-100"
-          iconColor="text-green-600"
-        />
-        <CircularStatsCard
-          title="التفاعلات"
-          value={stats.interactions}
-          subtitle="تفاعل"
-          icon={Activity}
-          bgColor="bg-purple-100"
-          iconColor="text-purple-600"
-        />
-        <CircularStatsCard
-          title="التصنيفات النشطة"
-          value={stats.categories}
-          subtitle="تصنيف"
-          icon={BarChart3}
-          bgColor="bg-orange-100"
-          iconColor="text-orange-600"
-        />
-        <CircularStatsCard
-          title="المستخدمون النشطون"
-          value={stats.activeUsers}
-          subtitle="آخر 7 أيام"
-          icon={Users}
-          bgColor="bg-red-100"
-          iconColor="text-red-600"
-        />
-      </div>
-
-      {/* أزرار التنقل */}
-      <TabsEnhanced
-        tabs={[
-          { id: 'behavior', name: 'سلوك المستخدمين', icon: Users },
-          { id: 'analysis', name: 'تحليل التفاعلات', icon: TrendingUp },
-          { id: 'preferences', name: 'تطوير التفضيلات', icon: Activity },
-          { id: 'insights', name: 'رؤى الآراء', icon: BarChart3 }
-        ]}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
-
-      {/* Data Table */}
-      <DataTable />
     </div>
   );
 } 

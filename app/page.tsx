@@ -102,6 +102,10 @@ import InteractiveArticle from '@/components/InteractiveArticle';
 import MobileLayout from '@/components/mobile/MobileLayout';
 import MobileArticleCard from '@/components/mobile/MobileArticleCard';
 import { useDarkModeContext } from '@/contexts/DarkModeContext';
+import { Suspense } from 'react'
+import { MobileOptimizer, MobileStats } from '@/components/mobile/MobileOptimizer'
+import { MobileArticlesList } from '@/components/mobile/MobileArticleCard'
+import { MobileHeader } from '@/components/mobile/MobileHeader'
 
 // دالة تشخيص المصادقة
 function DebugAuth() {

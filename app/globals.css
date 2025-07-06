@@ -11,7 +11,7 @@
 @import '../styles/dashboard-mobile.css';
 
 /* استيراد التحسينات الشاملة للموبايل */
-@import '../styles/mobile-optimizations.css';
+@import '../styles/mobile-optimization.css';
 
 /* استيراد تحسينات صفحة المقال للموبايل */
 @import '../styles/article-mobile.css';

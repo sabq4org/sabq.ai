@@ -6,6 +6,9 @@ import Image from 'next/image';
 import { Clock, Eye, User, Award, Zap, Heart, Bookmark, Share2 } from 'lucide-react';
 import { formatDateOnly } from '@/lib/date-utils';
 import { getValidImageUrl, generatePlaceholderImage } from '@/lib/cloudinary';
+import { formatDistanceToNow } from 'date-fns';
+import { ar } from 'date-fns/locale';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 interface Article {
   id: string;
@@ -21,6 +24,17 @@ interface Article {
   reading_time?: number;
   is_breaking?: boolean;
   is_featured?: boolean;
+  excerpt?: string;
+  slug: string;
+  category?: {
+    name: string;
+    slug: string;
+    color?: string;
+  };
+  author?: {
+    name: string;
+    avatar?: string;
+  };
 }
 
 interface MobileArticleCardProps {
@@ -38,6 +52,7 @@ export default function MobileArticleCard({
   const [isSaved, setIsSaved] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   useEffect(() => {
     // جلب معرف المستخدم
@@ -116,8 +131,8 @@ export default function MobileArticleCard({
       try {
         await navigator.share({
           title: article.title,
-          text: article.summary || '',
-          url: `${window.location.origin}/article/${article.id}`
+          text: article.excerpt || article.title,
+          url: `/article/${article.id}`
         });
       } catch (error) {
         console.error('Error sharing:', error);
@@ -332,14 +347,31 @@ export function MobileArticleList({ articles, viewMode = 'detailed' }: {
   articles: Article[];
   viewMode?: 'compact' | 'detailed' | 'featured';
 }) {
+  const isMobile = useMediaQuery('(max-width: 768px)');
+
+  if (!isMobile) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {articles.map((article, index) => (
+          <MobileArticleCard
+            key={article.id}
+            article={article}
+            viewMode={index === 0 ? 'featured' : viewMode}
+            showActions={index === 0}
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className="mobile-article-list space-y-4">
-      {articles.map((article, index) => (
+    <div className="w-full -mx-4">
+      {articles.map((article) => (
         <MobileArticleCard
           key={article.id}
           article={article}
-          viewMode={index === 0 ? 'featured' : viewMode}
-          showActions={index === 0}
+          viewMode="detailed"
+          showActions={true}
         />
       ))}
     </div>
