@@ -15,10 +15,10 @@ export async function GET(request: NextRequest) {
     }
 
     // جلب اهتمامات المستخدم المحفوظة
-    const savedPreference = await prisma.userPreference.findUnique({
+    const savedPreference = await prisma.user_preferences.findUnique({
       where: {
-        userId_key: {
-          userId,
+        user_id_key: {
+          user_id: userId,
           key: 'selected_categories'
         }
       }
@@ -36,9 +36,9 @@ export async function GET(request: NextRequest) {
 
     // إذا لم نجد تفضيلات محفوظة، نحاول من UserPreference
     if (categoryIds.length === 0) {
-      const userPreferences = await prisma.userPreference.findMany({
+      const userPreferences = await prisma.user_preferences.findMany({
         where: { 
-          userId,
+          user_id: userId,
           key: { startsWith: 'category_' }
         },
         select: { value: true }
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
           return value?.categorySlug || '';
         }).filter(slug => slug);
 
-        const categories = await prisma.category.findMany({
+        const categories = await prisma.categories.findMany({
           where: {
             slug: { in: categorySlugs }
           },
@@ -63,12 +63,12 @@ export async function GET(request: NextRequest) {
 
     // إذا لم نجد أي اهتمامات، نعيد أحدث المقالات
     if (categoryIds.length === 0) {
-      const latestArticles = await prisma.article.findMany({
+      const latestArticles = await prisma.articles.findMany({
         where: { status: 'published' },
         include: {
           category: { select: { id: true, name: true, slug: true,  } }
         },
-        orderBy: { publishedAt: 'desc' },
+        orderBy: { published_at: 'desc' },
         take: limit
       });
 
@@ -80,17 +80,17 @@ export async function GET(request: NextRequest) {
     }
 
     // جلب المقالات من التصنيفات المختارة
-    const personalizedArticles = await prisma.article.findMany({
+    const personalizedArticles = await prisma.articles.findMany({
       where: {
         status: 'published',
-        categoryId: { in: categoryIds }
+        category_id: { in: categoryIds }
       },
       include: {
         category: { select: { id: true, name: true, slug: true,  } }
       },
       orderBy: [
         { featured: 'desc' },
-        { publishedAt: 'desc' }
+        { published_at: 'desc' }
       ],
       take: limit
     });
@@ -105,11 +105,11 @@ export async function GET(request: NextRequest) {
     });
 
     // تسجيل النشاط
-    await prisma.activityLog.create({
+    await prisma.activity_logs.create({
       data: {
-        userId,
+        user_id: userId,
         action: 'personalized_content_viewed',
-        entityType: 'articles',
+        entity_type: 'articles',
         metadata: {
           categoryIds,
           articlesCount: shuffledArticles.length
