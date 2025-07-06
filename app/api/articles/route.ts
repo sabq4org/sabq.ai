@@ -197,11 +197,10 @@ export async function GET(request: NextRequest) {
     })
     console.timeEnd('🔄 تحويل وتنسيق البيانات')
 
-    // تصفية المحتوى التجريبي في الإنتاج
-    console.time('🚫 تصفية المحتوى التجريبي')
-    const filteredArticles = filterTestContent(formattedArticles)
-    console.timeEnd('🚫 تصفية المحتوى التجريبي')
-
+    // تصفية المحتوى التجريبي إذا كان مطلوباً
+    // const filteredArticles = filterTestContent(formattedArticles);
+    const filteredArticles = formattedArticles; // تعطيل التصفية مؤقتاً
+    
     // إحصائيات التقسيم
     const stats = {
       total,
