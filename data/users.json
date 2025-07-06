@@ -85,6 +85,51 @@
       "email_verified": true,
       "created_at": "2025-07-05T09:46:34.742Z",
       "updated_at": "2025-07-05T09:46:46.238Z"
+    },
+    {
+      "id": "user-1751817632502-it0exfx3o",
+      "name": "مستخدم تجريبي",
+      "email": "test@sabq.com",
+      "password": "$2b$10$7ZWQSUmLCsSibs8XY.lrFOzs3QczixQ3iuJvVnzClbO9UEqhyErwS",
+      "email_verified": false,
+      "created_at": "2025-07-06T16:00:32.502Z",
+      "updated_at": "2025-07-06T16:00:32.502Z"
+    },
+    {
+      "id": "user-1751817699036-dp5uozre6",
+      "name": "مدير النظام",
+      "email": "admin@sabq.com",
+      "password": "$2b$10$JUB7F59QqMFNtywVwvyZVuQ8fOdZ.gSIiId.O5YlQg6bjzOJsWufC",
+      "email_verified": false,
+      "created_at": "2025-07-06T16:01:39.036Z",
+      "updated_at": "2025-07-06T16:01:39.036Z"
+    },
+    {
+      "id": "user-1751817827062-gden3snhi",
+      "name": "مستخدم جديد",
+      "email": "newuser@sabq.com",
+      "password": "$2b$10$wayvnGMMXV2nHmIOT.Ba0u3CPVuCTmCLclWp0W9F3seIomAqvZCKq",
+      "email_verified": false,
+      "created_at": "2025-07-06T16:03:47.062Z",
+      "updated_at": "2025-07-06T16:03:47.062Z"
+    },
+    {
+      "id": "user-1751817917321-jvlu2ztmm",
+      "name": "اختبار نهائي",
+      "email": "test-final@sabq.com",
+      "password": "$2b$10$rQzI3.Ru/Gew3lZH9VniGezaXtwBRfwPCJK8Stjlv8Khe1L2ccrvK",
+      "email_verified": false,
+      "created_at": "2025-07-06T16:05:17.321Z",
+      "updated_at": "2025-07-06T16:05:17.322Z"
+    },
+    {
+      "id": "user-1751819450407-i8yc3eawl",
+      "name": "اختبار سبق",
+      "email": "sabq-test@example.com",
+      "password": "$2b$10$FYLs7UYYy/1I8H6WBqz6puP5JqjJRtuCtIYWQsaL6uqt.gOpOV1Du",
+      "email_verified": false,
+      "created_at": "2025-07-06T16:30:50.407Z",
+      "updated_at": "2025-07-06T16:30:50.407Z"
     }
   ]
 }

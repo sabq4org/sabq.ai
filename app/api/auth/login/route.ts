@@ -50,7 +50,14 @@ export async function POST(request: NextRequest) {
         email: true,
         name: true,
         password_hash: true,
-        role: true,
+        roleId: true,
+        role: {
+          select: {
+            id: true,
+            name: true,
+            nameAr: true
+          }
+        },
         is_verified: true,
         is_admin: true,
         created_at: true,
@@ -95,7 +102,8 @@ export async function POST(request: NextRequest) {
       // التأكد من وجود جميع الحقول المطلوبة
       loyaltyPoints: 0, // قيمة افتراضية
       status: 'active', // قيمة افتراضية
-      role: user.role || 'regular',
+      role: user.role?.nameAr || 'مستخدم',
+      roleId: user.roleId,
       isVerified: user.is_verified || false,
       isAdmin: user.is_admin || false
     };
@@ -105,7 +113,8 @@ export async function POST(request: NextRequest) {
       { 
         id: user.id, 
         email: user.email, 
-        role: user.role,
+        roleId: user.roleId,
+        role: user.role?.name || 'user',
         is_admin: responseUser.is_admin
       },
       JWT_SECRET,
