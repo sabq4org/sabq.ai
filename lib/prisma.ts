@@ -39,18 +39,48 @@ function createPrismaClient() {
 
 const prismaClient = globalForPrisma.prisma ?? createPrismaClient();
 
-let prisma: PrismaClient;
+let prisma: PrismaClient & {
+  article?: any;
+  category?: any;
+  user?: any;
+  comment?: any;
+};
 
 if (!prismaClient) {
   console.error('[Prisma] Failed to initialize Prisma Client');
   // إنشاء كائن وهمي لتجنب أخطاء البناء
-  prisma = new Proxy({} as PrismaClient, {
+  prisma = new Proxy({} as any, {
     get: () => {
       throw new Error('Prisma Client is not initialized. Please check your DATABASE_URL.');
     }
   });
 } else {
-  prisma = prismaClient;
+  prisma = prismaClient as any;
+  
+  // إضافة تحويل أسماء النماذج من المفرد إلى الجمع
+  if (!prisma.article) {
+    Object.defineProperty(prisma, 'article', {
+      get() { return prisma.articles; }
+    });
+  }
+  
+  if (!prisma.category) {
+    Object.defineProperty(prisma, 'category', {
+      get() { return prisma.categories; }
+    });
+  }
+  
+  if (!prisma.user) {
+    Object.defineProperty(prisma, 'user', {
+      get() { return prisma.users; }
+    });
+  }
+  
+  if (!prisma.comment) {
+    Object.defineProperty(prisma, 'comment', {
+      get() { return prisma.comments; }
+    });
+  }
   
   if (process.env.NODE_ENV !== 'production') {
     globalForPrisma.prisma = prismaClient;

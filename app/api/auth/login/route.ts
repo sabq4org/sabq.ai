@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/lib/generated/prisma';
+import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 export const runtime = 'nodejs';
 
-const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production';
 
 export async function POST(request: NextRequest) {
@@ -50,12 +49,12 @@ export async function POST(request: NextRequest) {
         id: true,
         email: true,
         name: true,
-        passwordHash: true,
+        password_hash: true,
         role: true,
-        isVerified: true,
-        isAdmin: true,
-        createdAt: true,
-        updatedAt: true
+        is_verified: true,
+        is_admin: true,
+        created_at: true,
+        updated_at: true
       }
     });
 
@@ -69,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     // التحقق من كلمة المرور
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash || '');
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash || '');
     
     console.log('Password validation result:', isPasswordValid);
     
@@ -81,7 +80,7 @@ export async function POST(request: NextRequest) {
     }
 
     // التحقق من حالة الحساب
-    if (!user.isVerified) {
+    if (!user.is_verified) {
       return NextResponse.json(
         { success: false, error: 'يرجى تأكيد بريدك الإلكتروني أولاً' },
         { status: 403 }
@@ -93,12 +92,12 @@ export async function POST(request: NextRequest) {
     // إضافة معلومات إضافية للمستخدم
     const responseUser = {
       ...user,
-      is_admin: user.isAdmin,
       // التأكد من وجود جميع الحقول المطلوبة
       loyaltyPoints: 0, // قيمة افتراضية
       status: 'active', // قيمة افتراضية
       role: user.role || 'regular',
-      isVerified: user.isVerified || false
+      isVerified: user.is_verified || false,
+      isAdmin: user.is_admin || false
     };
 
     // إنشاء JWT token
@@ -107,7 +106,7 @@ export async function POST(request: NextRequest) {
         id: user.id, 
         email: user.email, 
         role: user.role,
-        is_admin: responseUser.is_admin
+        is_admin: responseUser.isAdmin
       },
       JWT_SECRET,
       { expiresIn: '7d' } // صلاحية لمدة 7 أيام
@@ -158,7 +157,5 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 } 
