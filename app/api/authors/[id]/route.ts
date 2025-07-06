@@ -5,10 +5,10 @@ export const runtime = 'nodejs';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const dbAuthor = await prisma.users.findUnique({ where: { id } });
     if (!dbAuthor) {
       return NextResponse.json({ error: 'Author not found' }, { status: 404 });
