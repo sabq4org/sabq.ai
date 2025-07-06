@@ -150,12 +150,13 @@
     "tailwindcss-rtl": "^0.9.0",
     "uuid": "^11.1.0",
     "velocityjs": "^2.1.5",
-    "zod": "^3.25.74"
+    "zod": "^3.25.74",
+    "typescript": "^5.8.3",
+    "@types/react": "^19.1.8",
+    "@types/node": "^24.0.10"
   },
   "devDependencies": {
     "@types/js-cookie": "^3.0.6",
-    "@types/node": "^24.0.10",
-    "@types/react": "^19.1.8",
     "@types/uuid": "^10.0.0",
     "critters": "^0.0.23",
     "eslint": "^8",
@@ -163,7 +164,6 @@
     "eslint-plugin-next": "^0.0.0",
     "eslint-plugin-unused-imports": "^4.1.4",
     "ts-prune": "^0.10.3",
-    "typescript": "^5.8.3",
     "vercel": "^44.2.7"
   }
 }
