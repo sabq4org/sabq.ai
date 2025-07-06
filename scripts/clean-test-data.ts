@@ -40,8 +40,8 @@ async function analyzeData() {
   console.log('\n📊 تحليل البيانات الحالية...\n');
 
   // تحليل المقالات
-  const totalArticles = await prisma.article.count();
-  const testArticles = await prisma.article.findMany({
+  const totalArticles = await prisma.articles.count();
+  const testArticles = await prisma.articles.findMany({
     where: {
       OR: [
         ...TEST_KEYWORDS.map(keyword => ({
@@ -185,7 +185,7 @@ async function cleanTestData(dataToDelete: {
 
       // حذف المقالات التجريبية
       if (dataToDelete.testArticles.length > 0) {
-        const deletedArticles = await tx.article.deleteMany({
+        const deletedArticles = await tx.articles.deleteMany({
           where: {
             id: { in: dataToDelete.testArticles }
           }
@@ -197,7 +197,7 @@ async function cleanTestData(dataToDelete: {
       // ملاحظة: لن نحذف المستخدمين إذا كان لديهم مقالات حقيقية
       if (dataToDelete.testUsers.length > 0) {
         // التحقق من وجود مقالات حقيقية للمستخدمين
-        const usersWithRealArticles = await tx.article.findMany({
+        const usersWithRealArticles = await tx.articles.findMany({
           where: {
             authorId: { in: dataToDelete.testUsers },
             id: { notIn: dataToDelete.testArticles }

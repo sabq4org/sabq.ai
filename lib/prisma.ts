@@ -1,4 +1,4 @@
-import { PrismaClient } from './generated/prisma'
+import { PrismaClient } from '@prisma/client'
 import { setupPrismaProtection } from './database-protection'
 
 const globalForPrisma = globalThis as unknown as {

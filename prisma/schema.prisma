@@ -83,7 +83,7 @@ model Subscriber {
 }
 
 model activity_logs {
-  id          String   @id
+  id          String   @id @default(uuid())
   user_id     String?
   action      String
   entity_type String?

@@ -17,7 +17,7 @@ async function testAPI() {
     
     // جلب المقالات مع العلاقات
     const [articles, total] = await Promise.all([
-      prisma.article.findMany({
+      prisma.articles.findMany({
         where,
         orderBy,
         skip,
@@ -41,7 +41,7 @@ async function testAPI() {
           }
         }
       }),
-      prisma.article.count({ where })
+      prisma.articles.count({ where })
     ])
     
     console.log(`✅ تم جلب ${articles.length} مقال من أصل ${total}`)

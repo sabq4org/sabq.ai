@@ -165,7 +165,7 @@ async function migrateArticles() {
         categoryId = category?.id
       }
 
-      await prisma.article.upsert({
+      await prisma.articles.upsert({
         where: { slug: article.slug },
         update: {
           title: article.title,
@@ -226,7 +226,7 @@ async function migrateInteractions() {
   for (const interaction of interactions) {
     try {
       // التحقق من وجود المقال
-      const article = await prisma.article.findUnique({
+      const article = await prisma.articles.findUnique({
         where: { id: interaction.article_id }
       })
       
@@ -358,7 +358,7 @@ async function migrateDeepAnalyses() {
   for (const analysis of analyses) {
     try {
       // التحقق من وجود المقال
-      const article = await prisma.article.findUnique({
+      const article = await prisma.articles.findUnique({
         where: { id: analysis.article_id }
       })
       

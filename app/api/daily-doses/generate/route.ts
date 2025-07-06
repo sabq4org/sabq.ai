@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     since.setHours(since.getHours() - hoursAgo);
 
     // محاولة جلب المقالات الحديثة أولاً
-    let articles = await prisma.article.findMany({
+    let articles = await prisma.articles.findMany({
       where: {
         status: 'published',
         publishedAt: {
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
 
     // إذا لم توجد مقالات حديثة، جلب أي مقالات منشورة
     if (articles.length === 0) {
-      articles = await prisma.article.findMany({
+      articles = await prisma.articles.findMany({
         where: {
           status: 'published'
         },

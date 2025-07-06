@@ -55,7 +55,7 @@ async function main() {
 
     // إنشاء مقالات تجريبية
     const articles = await Promise.all([
-      prisma.article.create({
+      prisma.articles.create({
         data: {
           title: 'مقال تجريبي أول - أخبار اليوم',
           slug: 'test-article-1',
@@ -70,7 +70,7 @@ async function main() {
           readingTime: 5
         }
       }),
-      prisma.article.create({
+      prisma.articles.create({
         data: {
           title: 'أخبار الرياضة - نتائج المباريات',
           slug: 'sports-news-1',
@@ -85,7 +85,7 @@ async function main() {
           readingTime: 3
         }
       }),
-      prisma.article.create({
+      prisma.articles.create({
         data: {
           title: 'ثورة الذكاء الاصطناعي في 2024',
           slug: 'ai-revolution-2024',
