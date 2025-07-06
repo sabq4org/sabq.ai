@@ -4,14 +4,10 @@ import bcrypt from 'bcryptjs';
 
 export const runtime = 'nodejs';
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
 // GET /api/users/[id] - الحصول على بيانات مستخدم محدد
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     
     // جلب المستخدم مع جميع البيانات المرتبطة
     const user = await prisma.user.findUnique({
@@ -61,23 +57,23 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
     
     // حساب نقاط الولاء
-    const totalPoints = await prisma.loyaltyPoint.aggregate({
-      where: { userId: id },
+    const totalPoints = await prisma.loyalty_points.aggregate({
+      where: { user_id: id },
       _sum: { points: true }
     });
     
     // جلب آخر الأنشطة
-    const recentActivities = await prisma.activityLog.findMany({
-      where: { userId: id },
+    const recentActivities = await prisma.activity_logs.findMany({
+      where: { user_id: id },
       take: 10,
-      orderBy: { createdAt: 'desc' }
+      orderBy: { created_at: 'desc' }
     });
     
     // جلب آخر التفاعلات
-    const recentInteractions = await prisma.interaction.findMany({
-      where: { userId: id },
+    const recentInteractions = await prisma.interactions.findMany({
+      where: { user_id: id },
       take: 10,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
       include: {
         article: {
           select: {
@@ -98,7 +94,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       status: mapRoleToStatus(user.role),
       recentActivities,
       recentInteractions,
-      roles: user.userRoles.map(ur => ur.role),
+      roles: user.userRoles.map((ur: any) => ur.role),
       created_at: user.createdAt.toISOString(),
       updated_at: user.updatedAt.toISOString()
     };
@@ -119,9 +115,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 }
 
 // PUT /api/users/[id] - تحديث بيانات مستخدم
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     const body = await request.json();
     const { name, status, role, isVerified, newPassword, avatar } = body;
     
@@ -168,18 +164,18 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     });
     
     // تسجيل النشاط
-    await prisma.activityLog.create({
+    await prisma.activity_logs.create({
       data: {
-        userId: id,
+        user_id: id,
         action: 'user_profile_updated',
-        entityType: 'user',
-        entityId: id,
-        oldValue: {
+        entity_type: 'user',
+        entity_id: id,
+        old_value: {
           name: existingUser.name,
           role: existingUser.role,
           isVerified: existingUser.isVerified
         },
-        newValue: updateData
+        new_value: updateData
       }
     });
     
@@ -204,9 +200,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 }
 
 // DELETE /api/users/[id] - حذف مستخدم
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     
     // التحقق من وجود المستخدم
     const user = await prisma.user.findUnique({
@@ -262,9 +258,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 }
 
 // PATCH /api/users/[id] - تحديث حالة المستخدم (تعليق/تفعيل)
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     const body = await request.json();
     const { status, reason } = body;
     
@@ -291,12 +287,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     });
     
     // تسجيل النشاط
-    await prisma.activityLog.create({
+    await prisma.activity_logs.create({
       data: {
-        userId: id,
+        user_id: id,
         action: status === 'suspended' ? 'user_suspended' : 'user_activated',
-        entityType: 'user',
-        entityId: id,
+        entity_type: 'user',
+        entity_id: id,
         metadata: { reason }
       }
     });

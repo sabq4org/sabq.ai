@@ -628,5 +628,86 @@
       "article_id": "article-1750191083346-v2yxn6cyb"
     },
     "timestamp": "2025-07-05T19:03:57.549Z"
+  },
+  {
+    "user_id": "84a37981-3a15-4810-90e1-e17baa3550d7",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "87eb3e71-50e5-4b39-a3a0-f96e788229fe"
+    },
+    "timestamp": "2025-07-06T14:36:26.294Z"
+  },
+  {
+    "user_id": "84a37981-3a15-4810-90e1-e17baa3550d7",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "87eb3e71-50e5-4b39-a3a0-f96e788229fe"
+    },
+    "timestamp": "2025-07-06T14:38:11.953Z"
+  },
+  {
+    "user_id": "84a37981-3a15-4810-90e1-e17baa3550d7",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "87eb3e71-50e5-4b39-a3a0-f96e788229fe"
+    },
+    "timestamp": "2025-07-06T14:44:31.135Z"
+  },
+  {
+    "user_id": "84a37981-3a15-4810-90e1-e17baa3550d7",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "87eb3e71-50e5-4b39-a3a0-f96e788229fe"
+    },
+    "timestamp": "2025-07-06T14:44:34.099Z"
+  },
+  {
+    "user_id": "84a37981-3a15-4810-90e1-e17baa3550d7",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "87eb3e71-50e5-4b39-a3a0-f96e788229fe"
+    },
+    "timestamp": "2025-07-06T14:44:34.160Z"
+  },
+  {
+    "user_id": "84a37981-3a15-4810-90e1-e17baa3550d7",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "87eb3e71-50e5-4b39-a3a0-f96e788229fe"
+    },
+    "timestamp": "2025-07-06T14:44:35.779Z"
+  },
+  {
+    "user_id": "84a37981-3a15-4810-90e1-e17baa3550d7",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "87eb3e71-50e5-4b39-a3a0-f96e788229fe"
+    },
+    "timestamp": "2025-07-06T14:44:35.865Z"
+  },
+  {
+    "user_id": "guest-1751813083446-il9p",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "87eb3e71-50e5-4b39-a3a0-f96e788229fe"
+    },
+    "timestamp": "2025-07-06T14:44:44.660Z"
+  },
+  {
+    "user_id": "guest-1751813083446-il9p",
+    "points_earned": 1,
+    "action": "view على المقال",
+    "details": {
+      "article_id": "87eb3e71-50e5-4b39-a3a0-f96e788229fe"
+    },
+    "timestamp": "2025-07-06T14:44:46.108Z"
   }
 ]

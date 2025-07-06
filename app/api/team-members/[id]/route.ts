@@ -6,9 +6,6 @@ import { TeamMember, UpdateTeamMemberInput } from '@/types/team';
 
 export const runtime = 'nodejs';
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
 
 const TEAM_MEMBERS_FILE = path.join(process.cwd(), 'data', 'team-members.json');
 
@@ -32,7 +29,7 @@ export async function GET(
   { params }: RouteParams
 ) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     const members = await getTeamMembers();
     const member = members.find(m => m.id === id);
     
@@ -65,7 +62,7 @@ export async function PATCH(
   { params }: RouteParams
 ) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     const body: UpdateTeamMemberInput = await request.json();
     const members = await getTeamMembers();
     const memberIndex = members.findIndex(m => m.id === id);
@@ -165,7 +162,7 @@ export async function DELETE(
   { params }: RouteParams
 ) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     const members = await getTeamMembers();
     const memberIndex = members.findIndex(m => m.id === id);
     

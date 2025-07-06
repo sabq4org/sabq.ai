@@ -91,6 +91,7 @@ const nextConfig = {
   // إعدادات تجريبية محسنة للإنتاج
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    appDir: true,
   },
   
   // إعدادات TypeScript

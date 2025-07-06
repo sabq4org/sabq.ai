@@ -15,10 +15,10 @@ const updateSchema = z.object({
 // GET: جلب مشترك واحد
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     const subscriber = await prisma.subscriber.findUnique({
       where: { id }
     });
@@ -80,10 +80,10 @@ export async function GET(
 // PATCH: تحديث مشترك
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     const body = await request.json();
     
     // التحقق من البيانات
@@ -120,10 +120,10 @@ export async function PATCH(
 // DELETE: حذف مشترك
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     await prisma.subscriber.delete({
       where: { id }
     });
