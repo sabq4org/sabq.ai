@@ -7,6 +7,8 @@ import {
   Home, Newspaper, Bookmark, Settings, LogOut 
 } from 'lucide-react';
 import { useDarkModeContext } from '@/contexts/DarkModeContext';
+import { useTheme } from 'next-themes';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 interface MobileHeaderProps {
   showSearch?: boolean;
@@ -24,6 +26,8 @@ export default function MobileHeader({
   const [searchOpen, setSearchOpen] = useState(false);
   const [newEventsCount, setNewEventsCount] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const navigationItems = [
     { label: 'الرئيسية', url: '/', icon: Home },
@@ -82,6 +86,11 @@ export default function MobileHeader({
     setMobileMenuOpen(false);
     setSearchOpen(false);
   }, []);
+
+  if (!isMobile) {
+    // الهيدر العادي للشاشات الكبيرة
+    return null; // استخدم الهيدر الافتراضي
+  }
 
   return (
     <>
@@ -151,11 +160,11 @@ export default function MobileHeader({
               {/* تبديل الوضع الليلي */}
               {mounted && (
                 <button
-                  onClick={toggleDarkMode}
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                   className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   aria-label="تبديل الوضع الليلي"
                 >
-                  {darkMode ? (
+                  {theme === 'dark' ? (
                     <Sun className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                   ) : (
                     <Moon className="w-5 h-5 text-gray-600 dark:text-gray-300" />

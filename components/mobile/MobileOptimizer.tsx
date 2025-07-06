@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Smartphone, Wifi, WifiOff, Battery, Signal } from 'lucide-react';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 interface MobileOptimizerProps {
   children: React.ReactNode;
@@ -358,4 +359,97 @@ export function DisplayOptimizer() {
   }, []);
 
   return null;
+}
+
+export function MobileCard({ 
+  children, 
+  className = '',
+  noPadding = false 
+}: { 
+  children: React.ReactNode
+  className?: string
+  noPadding?: boolean
+}) {
+  const isMobile = useMediaQuery('(max-width: 768px)')
+
+  return (
+    <div className={`
+      ${isMobile ? 'w-full px-4' : ''}
+      ${className}
+    `}>
+      <div className={`
+        bg-white dark:bg-gray-800
+        rounded-2xl
+        shadow-sm
+        overflow-hidden
+        ${!noPadding ? (isMobile ? 'p-3' : 'p-6') : ''}
+        ${isMobile ? 'mb-3' : 'mb-6'}
+      `}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+export function MobileStats({ stats }: { stats: Array<{ label: string; value: string | number }> }) {
+  const isMobile = useMediaQuery('(max-width: 768px)')
+
+  return (
+    <div className={`
+      ${isMobile ? 'flex flex-row gap-2 overflow-x-auto px-4 -mx-4' : 'grid grid-cols-4 gap-4'}
+      ${isMobile ? 'mobile-stats-container' : ''}
+    `}>
+      {stats.map((stat, index) => (
+        <div
+          key={index}
+          className={`
+            ${isMobile ? 'flex-shrink-0 min-w-[80px]' : 'flex-1'}
+            bg-black bg-opacity-85
+            text-white
+            rounded-xl
+            ${isMobile ? 'py-2 px-3' : 'py-4 px-6'}
+            text-center
+          `}
+        >
+          <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>
+            {stat.value}
+          </div>
+          <div className={`${isMobile ? 'text-xs' : 'text-sm'} opacity-90`}>
+            {stat.label}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function MobileImage({ 
+  src, 
+  alt, 
+  className = '',
+  height = 'h-48'
+}: { 
+  src: string
+  alt: string
+  className?: string
+  height?: string
+}) {
+  const isMobile = useMediaQuery('(max-width: 768px)')
+
+  return (
+    <div className={`relative overflow-hidden rounded-xl ${className}`}>
+      <img
+        src={src}
+        alt={alt}
+        className={`
+          w-full
+          ${isMobile ? 'h-32' : height}
+          object-cover
+          transition-transform duration-300
+          hover:scale-105
+        `}
+        loading="lazy"
+      />
+    </div>
+  )
 } 
