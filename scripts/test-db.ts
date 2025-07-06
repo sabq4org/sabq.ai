@@ -7,11 +7,11 @@ async function testDatabase() {
     console.log('🔍 اختبار الاتصال بقاعدة البيانات...')
     
     // عد المقالات
-    const articlesCount = await prisma.article.count()
+    const articlesCount = await prisma.articles.count()
     console.log(`📊 عدد المقالات: ${articlesCount}`)
     
     // جلب أول مقال
-    const firstArticle = await prisma.article.findFirst({
+    const firstArticle = await prisma.articles.findFirst({
       include: {
         author: true,
         category: true

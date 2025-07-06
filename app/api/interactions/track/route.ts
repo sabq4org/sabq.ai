@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
     if (process.env.NODE_ENV === 'production' || process.env.USE_DATABASE === 'true') {
       try {
         // تسجيل التفاعل في قاعدة البيانات
-        const interaction = await prisma.interaction.upsert({
+        const interaction = await prisma.interactions.upsert({
           where: {
             userId_articleId_type: {
               userId,
@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
         
         if (points > 0 && userId !== 'guest') {
           // تسجيل نقاط الولاء
-          await prisma.loyaltyPoint.create({
+          await prisma.loyaltyPoints.create({
             data: {
               userId,
               points,
@@ -233,7 +233,7 @@ export async function POST(request: NextRequest) {
         
         // تحديث عدد المشاهدات للمقال إذا كان التفاعل مشاهدة
         if (interactionType === 'view') {
-          await prisma.article.update({
+          await prisma.articles.update({
             where: { id: articleId },
             data: { views: { increment: 1 } }
           });

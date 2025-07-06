@@ -240,7 +240,7 @@ async function updateReadingHistory(
   try {
     // تحديث اهتمامات المستخدم بناءً على القراءة
     if (scrollDepth > 50) {
-      const article = await prisma.article.findUnique({
+      const article = await prisma.articles.findUnique({
         where: { id: articleId },
         select: { categoryId: true }
       });

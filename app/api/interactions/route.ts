@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     }
 
     // التحقق من وجود المقال
-    const article = await prisma.article.findUnique({
+    const article = await prisma.articles.findUnique({
       where: { id: articleId },
       select: {
         id: true,

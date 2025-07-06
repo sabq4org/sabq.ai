@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     
     // اختبار جدول المقالات
     console.log('[test-db] Testing articles table...');
-    const articleCount = await prisma.article.count();
+    const articleCount = await prisma.articles.count();
     console.log('[test-db] Article count:', articleCount);
     
     return NextResponse.json({

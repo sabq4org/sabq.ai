@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
       const enrichedContents = await Promise.all(
         contents.map(async (content: any) => {
           if (content.articleId) {
-            const article = await prisma.article.findUnique({
+            const article = await prisma.articles.findUnique({
               where: { id: content.articleId },
               select: {
                 id: true,
@@ -195,7 +195,7 @@ export async function GET(request: NextRequest) {
     const since = new Date();
     since.setHours(since.getHours() - hoursAgo);
 
-    const articles = await prisma.article.findMany({
+    const articles = await prisma.articles.findMany({
       where: {
         status: 'published',
         publishedAt: {

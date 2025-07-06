@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     const twoHoursAgo = new Date();
     twoHoursAgo.setHours(twoHoursAgo.getHours() - 48);
     
-    const articles = await prisma.article.findMany({
+    const articles = await prisma.articles.findMany({
       where: {
         status: 'published',
         publishedAt: {
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
     
     // إذا لم نجد مقالات كافية، جلب مقالات إضافية
     if (topArticles.length < 3) {
-      const additionalArticles = await prisma.article.findMany({
+      const additionalArticles = await prisma.articles.findMany({
         where: {
           status: 'published',
           id: {

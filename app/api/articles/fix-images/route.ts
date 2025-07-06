@@ -6,7 +6,7 @@ import { deleteFromCloudinary } from '@/lib/cloudinary-server';
 export async function GET(request: NextRequest) {
   try {
     // جلب جميع المقالات مع الصور
-    const articles = await prisma.article.findMany({
+    const articles = await prisma.articles.findMany({
       select: {
         id: true,
         title: true,
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
           articleResult.featuredImage.fixed = true;
           
           // تحديث قاعدة البيانات
-          await prisma.article.update({
+          await prisma.articles.update({
             where: { id: article.id },
             data: { featuredImage: getDefaultImageUrl('article') }
           });
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
           articleResult.socialImage.fixed = true;
           
           // تحديث قاعدة البيانات
-          await prisma.article.update({
+          await prisma.articles.update({
             where: { id: article.id },
             data: { socialImage: getDefaultImageUrl('article') }
           });
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
     }
 
     // التحقق من وجود المقال
-    const article = await prisma.article.findUnique({
+    const article = await prisma.articles.findUnique({
       where: { id: articleId },
       select: { id: true, title: true, featuredImage: true, socialImage: true }
     });
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
       ? { featuredImage: newImageUrl }
       : { socialImage: newImageUrl };
 
-    const updatedArticle = await prisma.article.update({
+    const updatedArticle = await prisma.articles.update({
       where: { id: articleId },
       data: updateData,
       select: { id: true, title: true, featuredImage: true, socialImage: true }

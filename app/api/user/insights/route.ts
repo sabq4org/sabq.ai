@@ -237,7 +237,7 @@ async function getTodayRecommendation(userId: string, readCategories: Set<string
   if (readCategories.size === 0) return null;
   
   // البحث عن مقال من التصنيفات المفضلة لم يقرأه المستخدم
-  const recommendedArticle = await prisma.article.findFirst({
+  const recommendedArticle = await prisma.articles.findFirst({
     where: {
       status: 'published',
       categoryId: { in: Array.from(readCategories) },

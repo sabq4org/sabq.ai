@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       recentAuthors
     ] = await Promise.all([
       // 1. المقالات المنشورة حديثاً
-      prisma.article.findMany({
+      prisma.articles.findMany({
         where: {
           status: 'published',
           publishedAt: {
@@ -316,8 +316,8 @@ export async function GET(request: NextRequest) {
         activeUsers,
         totalViews
       ] = await Promise.all([
-        prisma.article.count({ where: { status: 'published' } }),
-        prisma.article.count({ 
+        prisma.articles.count({ where: { status: 'published' } }),
+        prisma.articles.count({ 
           where: { 
             status: 'published',
             publishedAt: { gte: new Date(now.setHours(0, 0, 0, 0)) }
@@ -325,7 +325,7 @@ export async function GET(request: NextRequest) {
         }),
         prisma.comment.count({ where: { status: 'approved' } }),
         prisma.user.count({ where: { isVerified: true } }),
-        prisma.article.aggregate({
+        prisma.articles.aggregate({
           _sum: { views: true },
           where: { status: 'published' }
         })

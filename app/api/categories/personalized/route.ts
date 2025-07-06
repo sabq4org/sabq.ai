@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     const articleIds = userInteractions.map(interaction => interaction.articleId);
     
     // جلب مقالات مع تصنيفاتها
-    const articlesWithCategories = articleIds.length > 0 ? await prisma.article.findMany({
+    const articlesWithCategories = articleIds.length > 0 ? await prisma.articles.findMany({
       where: { id: { in: articleIds } },
       select: { id: true, categoryId: true }
     }) : [];
@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
 
     // حساب عدد المقالات لكل تصنيف
     const categoryIds = personalizedCategories.map(c => c.id);
-    const articleCounts = await prisma.article.groupBy({
+    const articleCounts = await prisma.articles.groupBy({
       by: ['categoryId'],
       where: {
         categoryId: { in: categoryIds },

@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
       });
 
       // تحديث عدد المشاهدات في المقال
-      await prisma.article.update({
+      await prisma.articles.update({
         where: { id: articleId },
         data: {
           views: { increment: 1 }
