@@ -78,14 +78,14 @@ export async function getCurrentUser(): Promise<User | null> {
     const { PrismaClient } = await import('@/lib/generated/prisma');
     const prisma = new PrismaClient();
     
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: payload.id || payload.userId },
       select: {
         id: true,
         email: true,
         name: true,
         role: true,
-        isAdmin: true,
+        is_admin: true,
         avatar: true
       }
     });
@@ -98,11 +98,12 @@ export async function getCurrentUser(): Promise<User | null> {
       id: user.id,
       email: user.email,
       name: user.name || 'User',
-      role_id: user.isAdmin ? 1 : 2, // 1 for admin, 2 for user
+      role_id: user.is_admin ? 1 : 2, // 1 for admin, 2 for user
       status: 'active',
       avatar_url: user.avatar || undefined,
       // إضافة role للتحقق في API
-      role: user.role
+      role: user.role,
+      isAdmin: user.is_admin
     } as User & { role: string };
   } catch (error) {
     console.error('Error getting current user:', error);

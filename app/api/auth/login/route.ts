@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
         id: user.id, 
         email: user.email, 
         role: user.role,
-        is_admin: responseUser.isAdmin
+        is_admin: responseUser.is_admin
       },
       JWT_SECRET,
       { expiresIn: '7d' } // صلاحية لمدة 7 أيام

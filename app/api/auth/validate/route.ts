@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         email: user.email,
         name: user.name,
         role: user.role,
-        isAdmin: user.isAdmin
+        isAdmin: user.is_admin
       },
       JWT_SECRET,
       { expiresIn: '7d' }
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       success: true,
       user: {
         ...user,
-        is_admin: user.isAdmin || user.role === 'admin',
+        is_admin: user.is_admin || user.role === 'admin',
         status: 'active'
       },
       token

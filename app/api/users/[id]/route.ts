@@ -142,7 +142,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (name !== undefined) updateData.name = name;
     if (avatar !== undefined) updateData.avatar = avatar;
     if (role !== undefined) updateData.role = role;
-    if (role === 'admin') updateData.isAdmin = true;
+    if (role === 'admin') updateData.is_admin = true;
     if (isVerified !== undefined) updateData.isVerified = isVerified;
     
     // تحديث كلمة المرور إذا تم توفيرها
