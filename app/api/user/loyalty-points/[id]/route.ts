@@ -8,11 +8,11 @@ const interactionsFilePath = path.join(process.cwd(), 'data', 'user_article_inte
 const prisma = new PrismaClient();
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: { id: string } }
 ) {
   try {
-    const { id: userId } = await params;
+    const { id: userId } = context.params;
 
     // في بيئة الإنتاج، استخدم قاعدة البيانات
     if (process.env.NODE_ENV === 'production' || process.env.USE_DATABASE === 'true') {

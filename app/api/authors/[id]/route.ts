@@ -4,11 +4,11 @@ import { prisma } from '@/lib/prisma';
 export const runtime = 'nodejs';
 
 export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: { id: string } }
 ) {
   try {
-    const { id } = await context.params;
+    const { id } = context.params;
     const dbAuthor = await prisma.users.findUnique({ where: { id } });
     if (!dbAuthor) {
       return NextResponse.json({ error: 'Author not found' }, { status: 404 });

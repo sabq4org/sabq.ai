@@ -5,9 +5,9 @@ import bcrypt from 'bcryptjs';
 export const runtime = 'nodejs';
 
 // GET /api/users/[id] - الحصول على بيانات مستخدم محدد
-export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, context: { params: { id: string } }) {
   try {
-    const { id } = await context.params;
+    const { id } = context.params;
     
     // جلب المستخدم مع جميع البيانات المرتبطة
     const user = await prisma.user.findUnique({
@@ -115,9 +115,9 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
 }
 
 // PUT /api/users/[id] - تحديث بيانات مستخدم
-export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function PUT(request: Request, context: { params: { id: string } }) {
   try {
-    const { id } = await context.params;
+    const { id } = context.params;
     const body = await request.json();
     const { name, status, role, isVerified, newPassword, avatar } = body;
     
@@ -200,9 +200,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 }
 
 // DELETE /api/users/[id] - حذف مستخدم
-export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, context: { params: { id: string } }) {
   try {
-    const { id } = await context.params;
+    const { id } = context.params;
     
     // التحقق من وجود المستخدم
     const user = await prisma.user.findUnique({
@@ -258,9 +258,9 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
 }
 
 // PATCH /api/users/[id] - تحديث حالة المستخدم (تعليق/تفعيل)
-export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: Request, context: { params: { id: string } }) {
   try {
-    const { id } = await context.params;
+    const { id } = context.params;
     const body = await request.json();
     const { status, reason } = body;
     

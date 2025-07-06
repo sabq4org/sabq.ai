@@ -4,11 +4,11 @@ import path from 'path';
 
 // تحديث حالة المستخدم
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: { id: string } }
 ) {
   try {
-    const { id: userId } = await params;
+    const { id: userId } = context.params;
     const body = await request.json();
     const { status } = body;
 

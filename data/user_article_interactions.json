@@ -3533,6 +3533,14 @@
       "timestamp": "2025-07-06T14:44:46.105Z",
       "source": "article_page",
       "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    },
+    {
+      "user_id": "guest-1751813083446-il9p",
+      "article_id": "87eb3e71-50e5-4b39-a3a0-f96e788229fe",
+      "interaction_type": "view",
+      "timestamp": "2025-07-06T14:55:31.410Z",
+      "source": "article_page",
+      "device": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
     }
   ]
 }

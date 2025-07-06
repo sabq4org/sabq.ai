@@ -6,11 +6,11 @@ type Params = {
 }
 
 export async function GET(
-  request: NextRequest,
+  request: Request,
   context: Params
 ) {
   try {
-    const { id: userId } = await context.params;
+    const { id: userId } = context.params;
 
     // جلب جميع التفاعلات
     const interactions = await prisma.interaction.findMany({

@@ -4,6 +4,15 @@ import { getCurrentUser } from '@/app/lib/auth';
 
 const prisma = new PrismaClient();
 
+// دالة مساعدة للتحقق من دور المستخدم
+async function getUserRole(userId: string): Promise<string> {
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    select: { role: true }
+  });
+  return user?.role || 'user';
+}
+
 // دالة مساعدة للتحقق من صلاحيات الإدارة
 async function checkAdminPermission(userId: string): Promise<boolean> {
   const user = await prisma.users.findUnique({
@@ -15,30 +24,30 @@ async function checkAdminPermission(userId: string): Promise<boolean> {
 }
 
 export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: { id: string } }
 ) {
   try {
     // التحقق من المستخدم
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'غير مصرح' },
+        { success: false, error: 'يجب تسجيل الدخول' },
         { status: 401 }
       );
     }
 
     // التحقق من الصلاحيات
-    const isAdmin = await checkAdminPermission(user.id);
-    if (!isAdmin) {
+    const userRole = await getUserRole(user.id);
+    if (!['admin', 'moderator'].includes(userRole)) {
       return NextResponse.json(
-        { success: false, error: 'ليس لديك صلاحية الوصول' },
+        { success: false, error: 'ليس لديك صلاحية للوصول' },
         { status: 403 }
       );
     }
 
-    const { status } = await request.json();
-    const { id: commentId } = await params;
+    const { id: commentId } = context.params;
+    const { status, reason } = await request.json();
 
     if (!['pending', 'approved', 'rejected', 'reported', 'archived'].includes(status)) {
       return NextResponse.json(

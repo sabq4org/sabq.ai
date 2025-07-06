@@ -4,11 +4,11 @@ import { prisma } from '@/lib/prisma';
 export const runtime = 'nodejs';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ categorySlug: string }> }
+  request: Request,
+  context: { params: { categorySlug: string } }
 ) {
   try {
-    const { categorySlug } = await params;
+    const { categorySlug } = context.params;
     const category = await prisma.category.findUnique({
       where: { slug: categorySlug },
       include: {

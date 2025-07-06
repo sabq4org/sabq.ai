@@ -53,11 +53,11 @@ async function writeBlocks(blocks: SmartBlock[]) {
 
 // GET - جلب بلوك واحد
 export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: { id: string } }
 ) {
   try {
-    const { id } = await context.params;
+    const { id } = context.params;
     const blocks = await readBlocks();
     const block = blocks.find(b => b.id === id);
     
@@ -80,11 +80,11 @@ export async function GET(
 
 // PUT - تحديث بلوك
 export async function PUT(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: { id: string } }
 ) {
   try {
-    const { id } = await context.params;
+    const { id } = context.params;
     const updateData = await request.json();
     console.log(`[SmartBlocks API] تحديث البلوك ${id} بالبيانات:`, updateData);
     
@@ -122,11 +122,11 @@ export async function PUT(
 
 // PATCH - تحديث جزئي للبلوك (مثل تغيير الحالة)
 export async function PATCH(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: { id: string } }
 ) {
   try {
-    const { id } = await context.params;
+    const { id } = context.params;
     const updateData = await request.json();
     const blocks = await readBlocks();
     const blockIndex = blocks.findIndex(b => b.id === id);
@@ -159,11 +159,11 @@ export async function PATCH(
 
 // DELETE - حذف بلوك
 export async function DELETE(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: { id: string } }
 ) {
   try {
-    const { id } = await context.params;
+    const { id } = context.params;
     const blocks = await readBlocks();
     const blockIndex = blocks.findIndex(b => b.id === id);
     

@@ -17,11 +17,11 @@ const updateSchema = z.object({
 
 // GET: جلب قالب واحد
 export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: { id: string } }
 ) {
   try {
-    const { id } = await context.params;
+    const { id } = context.params;
     const template = await prisma.emailTemplate.findUnique({
       where: { id }
     });
@@ -58,11 +58,11 @@ export async function GET(
 
 // PATCH: تحديث قالب
 export async function PATCH(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: { id: string } }
 ) {
   try {
-    const { id } = await context.params;
+    const { id } = context.params;
     const body = await request.json();
     
     // التحقق من البيانات
@@ -98,11 +98,11 @@ export async function PATCH(
 
 // DELETE: حذف قالب
 export async function DELETE(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: { id: string } }
 ) {
   try {
-    const { id } = await context.params;
+    const { id } = context.params;
     // التحقق من عدم استخدام القالب في مهام نشطة
     const activeJobs = await prisma.emailJob.count({
       where: {

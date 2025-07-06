@@ -3,11 +3,11 @@ import { emailScheduler } from '@/lib/services/emailScheduler';
 
 // GET: جلب إحصائيات المهمة
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = context.params;
     const stats = await emailScheduler.getJobStats(id);
     
     return NextResponse.json({

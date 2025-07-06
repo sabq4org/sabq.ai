@@ -2,32 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(
-  request: NextRequest,
-  props: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: { id: string } }
 ) {
   try {
-    const { id: userId } = await props.params;
+    const { id: userId } = context.params;
     
     // جلب التفاعلات من قاعدة البيانات
-    const interactions = await prisma.interaction.findMany({
-      where: { userId },
+    const interactions = await prisma.interactions.findMany({
+      where: { user_id: userId },
       include: {
         article: {
           select: {
             id: true,
             title: true,
             slug: true,
-            category: {
-              select: {
-                id: true,
-                name: true,
-                slug: true
-              }
-            }
+            featured_image: true
           }
         }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { created_at: 'desc' },
+      take: 50
     });
     
     // حساب الإحصائيات

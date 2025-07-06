@@ -4,8 +4,8 @@ import { templateService } from '@/lib/services/templateService'
 
 // POST /api/templates/[id]/preview
 export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: { id: string } }
 ) {
   try {
     const user = await requirePermission('templates.view')
