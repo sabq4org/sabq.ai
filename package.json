@@ -104,8 +104,10 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/marked": "^5.0.2",
+    "@types/node": "^24.0.10",
     "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^6.4.17",
+    "@types/react": "^19.1.8",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.21",
     "axios": "^1.10.0",
@@ -130,6 +132,7 @@
     "marked": "^16.0.0",
     "mysql2": "^3.14.1",
     "next": "^15.3.5",
+    "next-themes": "^0.4.6",
     "node-cron": "^4.2.0",
     "nodemailer": "^7.0.3",
     "openai": "^5.6.0",
@@ -148,12 +151,10 @@
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^3.4.17",
     "tailwindcss-rtl": "^0.9.0",
+    "typescript": "^5.8.3",
     "uuid": "^11.1.0",
     "velocityjs": "^2.1.5",
-    "zod": "^3.25.74",
-    "typescript": "^5.8.3",
-    "@types/react": "^19.1.8",
-    "@types/node": "^24.0.10"
+    "zod": "^3.25.74"
   },
   "devDependencies": {
     "@types/js-cookie": "^3.0.6",
