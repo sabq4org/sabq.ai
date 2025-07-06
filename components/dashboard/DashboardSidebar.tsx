@@ -161,101 +161,61 @@ export default function DashboardSidebar({ darkMode, sidebarOpen, setSidebarOpen
         </div>
 
         {/* قائمة التنقل */}
-        <nav className="space-y-4 lg:space-y-6">
-          {/* الرئيسية */}
-          <Link href="/dashboard" 
-            onClick={() => setSidebarOpen(false)}
-            className={`group flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-2 lg:py-3 rounded-xl transition-all duration-300 hover:shadow-md hover:translate-x-1 ${
-            darkMode 
-              ? 'text-gray-300 hover:bg-gradient-to-r hover:from-blue-900/30 hover:to-indigo-900/30 hover:text-blue-300' 
-              : 'text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700'
-          }`}>
-            <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
-              darkMode 
-                ? 'bg-blue-900/40 group-hover:bg-blue-500 group-hover:text-white' 
-                : 'bg-blue-100 group-hover:bg-blue-500 group-hover:text-white'
-            }`}>
-              <LayoutDashboard className="w-4 h-4 lg:w-5 lg:h-5" />
-            </div>
-            <span className="text-sm lg:text-base font-medium">لوحة التحكم</span>
-          </Link>
-
-          {/* المحتوى */}
-          <Link href="/dashboard/news" 
-            onClick={() => setSidebarOpen(false)}
-            className={`group flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-2 lg:py-3 rounded-xl transition-all duration-300 hover:shadow-md hover:translate-x-1 ${
-            darkMode 
-              ? 'text-gray-300 hover:bg-gradient-to-r hover:from-green-900/30 hover:to-emerald-900/30 hover:text-green-300' 
-              : 'text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 hover:text-green-700'
-          }`}>
-            <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
-              darkMode 
-                ? 'bg-green-900/40 group-hover:bg-green-500 group-hover:text-white' 
-                : 'bg-green-100 group-hover:bg-green-500 group-hover:text-white'
-            }`}>
-              <FileText className="w-4 h-4 lg:w-5 lg:h-5" />
-            </div>
-            <span className="text-sm lg:text-base font-medium">إدارة الأخبار</span>
-          </Link>
-
-          {/* المستخدمون */}
-          <Link href="/dashboard/users" 
-            onClick={() => setSidebarOpen(false)}
-            className={`group flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-2 lg:py-3 rounded-xl transition-all duration-300 hover:shadow-md hover:translate-x-1 ${
-            darkMode 
-              ? 'text-gray-300 hover:bg-gradient-to-r hover:from-purple-900/30 hover:to-pink-900/30 hover:text-purple-300' 
-              : 'text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-700'
-          }`}>
-            <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
-              darkMode 
-                ? 'bg-purple-900/40 group-hover:bg-purple-500 group-hover:text-white' 
-                : 'bg-purple-100 group-hover:bg-purple-500 group-hover:text-white'
-            }`}>
-              <Users className="w-4 h-4 lg:w-5 lg:h-5" />
-            </div>
-            <span className="text-sm lg:text-base font-medium">المستخدمون</span>
-          </Link>
-
-          {/* التحليلات */}
-          <Link href="/dashboard/analytics" 
-            onClick={() => setSidebarOpen(false)}
-            className={`group flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-2 lg:py-3 rounded-xl transition-all duration-300 hover:shadow-md hover:translate-x-1 ${
-            darkMode 
-              ? 'text-gray-300 hover:bg-gradient-to-r hover:from-indigo-900/30 hover:to-violet-900/30 hover:text-indigo-300' 
-              : 'text-gray-700 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-violet-50 hover:text-indigo-700'
-          }`}>
-            <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
-              darkMode 
-                ? 'bg-indigo-900/40 group-hover:bg-indigo-500 group-hover:text-white' 
-                : 'bg-indigo-100 group-hover:bg-indigo-500 group-hover:text-white'
-            }`}>
-              <BarChart3 className="w-4 h-4 lg:w-5 lg:h-5" />
-            </div>
-            <span className="text-sm lg:text-base font-medium">التحليلات</span>
-          </Link>
-
-          {/* الإعدادات */}
-          <Link href="/dashboard/settings" 
-            onClick={() => setSidebarOpen(false)}
-            className={`group flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-2 lg:py-3 rounded-xl transition-all duration-300 hover:shadow-md hover:translate-x-1 ${
-            darkMode 
-              ? 'text-gray-300 hover:bg-gradient-to-r hover:from-gray-700 hover:to-gray-800 hover:text-gray-100' 
-              : 'text-gray-700 hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-200 hover:text-gray-900'
-          }`}>
-            <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
-              darkMode 
-                ? 'bg-gray-700 group-hover:bg-gray-600 group-hover:text-white' 
-                : 'bg-gray-200 group-hover:bg-gray-600 group-hover:text-white'
-            }`}>
-              <Settings className="w-4 h-4 lg:w-5 lg:h-5" />
-            </div>
-            <span className="text-sm lg:text-base font-medium">الإعدادات</span>
-          </Link>
+        <nav className="space-y-2">
+          {sidebarItems.map((item) => {
+            const isActive = pathname === item.href;
+            const count = item.countKey && counts ? counts[item.countKey] : null;
+            const countColor = item.countKey ? countColors[item.countKey as keyof typeof countColors] : '';
+            
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setSidebarOpen(false)}
+                className={`group flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                  isActive
+                    ? darkMode
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                      : 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg'
+                    : darkMode
+                    ? 'text-gray-300 hover:bg-gray-700/50 hover:text-white'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+                title={item.countKey && count !== null && count !== undefined ? getCountTooltip(item.countKey, count) : item.label}
+              >
+                <div className="flex items-center gap-3">
+                  <item.icon className={`w-5 h-5 ${
+                    isActive ? 'text-white' : ''
+                  }`} />
+                  <span className="text-sm font-medium">{item.label}</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  {item.badge && (
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                      darkMode
+                        ? 'bg-yellow-900/30 text-yellow-400'
+                        : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {item.badge}
+                    </span>
+                  )}
+                  
+                  {item.countKey && count !== null && count !== undefined && count > 0 && (
+                    <span className={`px-2 py-0.5 text-xs font-bold rounded-full transition-all duration-200 ${
+                      isActive 
+                        ? 'bg-white/20 text-white' 
+                        : countColor || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                    }`}>
+                      {count > 999 ? '999+' : count}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
         </nav>
       </div>
     </aside>
   );
-}
-
-// تصدير المكون Plus
-export { Plus as UserPlus } from 'lucide-react'; 
+} 
