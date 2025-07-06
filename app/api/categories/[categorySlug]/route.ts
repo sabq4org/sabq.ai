@@ -5,10 +5,10 @@ export const runtime = 'nodejs';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { categorySlug: string } }
+  { params }: { params: Promise<{ categorySlug: string }> }
 ) {
   try {
-    const { categorySlug } = params;
+    const { categorySlug } = await params;
     const category = await prisma.categories.findUnique({ where: { slug: categorySlug } });
     if (!category) {
       return NextResponse.json({ error: 'Category not found' }, { status: 404 });
