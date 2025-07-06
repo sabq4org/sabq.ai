@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       });
 
       if (userPreferences.length > 0) {
-        const categorySlugs = userPreferences.map(pref => {
+        const categorySlugs = userPreferences.map((pref: any) => {
           const value = pref.value as any;
           return value?.categorySlug || '';
         }).filter(slug => slug);
