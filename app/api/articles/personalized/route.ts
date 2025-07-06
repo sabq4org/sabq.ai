@@ -61,21 +61,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // إذا لم نجد أي اهتمامات، نعيد أحدث المقالات
+    // إذا لم نجد أي اهتمامات، نعيد استجابة واضحة
     if (categoryIds.length === 0) {
-      const latestArticles = await prisma.articles.findMany({
-        where: { status: 'published' },
-        include: {
-          category: { select: { id: true, name: true, slug: true,  } }
-        },
-        orderBy: { published_at: 'desc' },
-        take: limit
-      });
-
       return NextResponse.json({
-        articles: latestArticles,
-        source: 'latest',
-        message: 'لم يتم العثور على اهتمامات محفوظة، يتم عرض أحدث المقالات'
+        articles: [],
+        source: 'no_interests',
+        message: 'لا توجد اهتمامات محفوظة للمستخدم. لا يمكن جلب مقالات مخصصة.'
       });
     }
 
