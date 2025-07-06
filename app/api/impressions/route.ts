@@ -68,30 +68,34 @@ export async function POST(request: NextRequest) {
     // تسجيل التفاعل كـ view (فقط إذا كان هناك مستخدم)
     let interaction = null;
     if (userId) {
-      interaction = await prisma.interaction.create({
+      interaction = await prisma.interactions.create({
         data: {
-          userId,
-          articleId,
-          type: 'view'
+          id: crypto.randomUUID(),
+          user_id: userId,
+          article_id: articleId,
+          type: 'view',
+          created_at: new Date()
         }
       });
     }
 
     // تسجيل النشاط إذا كان هناك مستخدم
     if (userId) {
-      await prisma.activityLog.create({
+      await prisma.activity_logs.create({
         data: {
-          userId,
+          id: crypto.randomUUID(),
+          user_id: userId,
           action: 'article_viewed',
-          entityType: 'article',
-          entityId: articleId,
+          entity_type: 'article',
+          entity_id: articleId,
           metadata: {
             sessionId,
             userAgent,
             ipAddress,
             referrer,
             ...metadata
-          }
+          },
+          created_at: new Date()
         }
       });
     }
@@ -99,13 +103,15 @@ export async function POST(request: NextRequest) {
     // إضافة نقاط ولاء إذا كان هناك مستخدم
     if (userId) {
       try {
-        await prisma.loyaltyPoint.create({
+        await prisma.loyalty_points.create({
           data: {
-            userId,
+            id: crypto.randomUUID(),
+            user_id: userId,
             points: 1,
             action: 'article_view',
-            referenceId: articleId,
-            referenceType: 'article'
+            reference_id: articleId,
+            reference_type: 'article',
+            created_at: new Date()
           }
         });
       } catch (error) {
@@ -141,7 +147,7 @@ export async function PUT(request: NextRequest) {
     }
     
     // تحديث التفاعل مع معلومات القراءة
-    const interaction = await prisma.interaction.update({
+    const interaction = await prisma.interactions.update({
       where: { id: interactionId },
       data: {
         // يمكن إضافة metadata للتفاعل إذا لزم الأمر
@@ -149,15 +155,17 @@ export async function PUT(request: NextRequest) {
     });
     
     // إضافة نقاط ولاء إضافية إذا كانت القراءة مكتملة (أكثر من 30 ثانية)
-    if (readDuration > 30 && interaction.userId) {
+    if (readDuration > 30 && interaction.user_id) {
       try {
-        await prisma.loyaltyPoint.create({
+        await prisma.loyalty_points.create({
           data: {
-            userId: interaction.userId,
+            id: crypto.randomUUID(),
+            user_id: interaction.user_id,
             points: 2,
             action: 'read_complete',
-            referenceId: interaction.articleId,
-            referenceType: 'article'
+            reference_id: interaction.article_id,
+            reference_type: 'article',
+            created_at: new Date()
           }
         });
       } catch (error) {
@@ -188,36 +196,46 @@ export async function GET(request: NextRequest) {
     
     const where: any = { type: 'view' };
     
-    if (userId) where.userId = userId;
-    if (articleId) where.articleId = articleId;
+    if (userId) where.user_id = userId;
+    if (articleId) where.article_id = articleId;
     
-    const interactions = await prisma.interaction.findMany({
+    const interactions = await prisma.interactions.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-      include: {
-        article: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            categoryId: true,
-            readingTime: true
-          }
-        }
+      orderBy: { created_at: 'desc' },
+      take: 50
+    });
+
+    // جلب معلومات المقالات بشكل منفصل
+    const articleIds = [...new Set(interactions.map(i => i.article_id).filter(Boolean))];
+    const articles = await prisma.articles.findMany({
+      where: { id: { in: articleIds } },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        category_id: true,
+        reading_time: true
       }
     });
+
+    const articlesMap = new Map(articles.map(a => [a.id, a]));
+
+    // دمج البيانات
+    const interactionsWithArticles = interactions.map(interaction => ({
+      ...interaction,
+      article: articlesMap.get(interaction.article_id!)
+    }));
     
     // حساب الإحصائيات
     const stats = {
       totalViews: interactions.length,
-      uniqueUsers: new Set(interactions.filter((i: any) => i.userId).map((i: any) => i.userId)).size,
-      totalArticles: new Set(interactions.map((i: any) => i.articleId)).size
+      uniqueUsers: new Set(interactions.filter((i: any) => i.user_id).map((i: any) => i.user_id)).size,
+      totalArticles: new Set(interactions.map((i: any) => i.article_id)).size
     };
     
     return NextResponse.json({
       success: true,
-      interactions,
+      interactions: interactionsWithArticles,
       stats
     });
     
@@ -242,21 +260,21 @@ async function updateReadingHistory(
     if (scrollDepth > 50) {
       const article = await prisma.articles.findUnique({
         where: { id: articleId },
-        select: { categoryId: true }
+        select: { category_id: true }
       });
       
-      if (article?.categoryId) {
-        const category = await prisma.category.findUnique({
-          where: { id: article.categoryId },
+      if (article?.category_id) {
+        const category = await prisma.categories.findUnique({
+          where: { id: article.category_id },
           select: { slug: true }
         });
         
         if (category?.slug) {
           // تحديث اهتمامات المستخدم في UserPreference
-          const userPreference = await prisma.userPreference.findUnique({
+          const userPreference = await prisma.user_preferences.findUnique({
             where: {
-              userId_key: {
-                userId,
+              user_id_key: {
+                user_id: userId,
                 key: 'interests'
               }
             }
@@ -271,21 +289,23 @@ async function updateReadingHistory(
             currentInterests.push({ name: category.slug, score: 1.0 });
           }
           
-          await prisma.userPreference.upsert({
+          await prisma.user_preferences.upsert({
             where: {
-              userId_key: {
-                userId,
+              user_id_key: {
+                user_id: userId,
                 key: 'interests'
               }
             },
             update: {
               value: currentInterests,
-              updatedAt: new Date()
+              updated_at: new Date()
             },
             create: {
-              userId,
+              id: crypto.randomUUID(),
+              user_id: userId,
               key: 'interests',
-              value: currentInterests
+              value: currentInterests,
+              updated_at: new Date()
             }
           });
         }
