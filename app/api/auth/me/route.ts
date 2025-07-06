@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
     // إضافة معلومات إضافية
     const responseUser = {
       ...user,
-      is_admin: user.isAdmin || user.role === 'admin' || user.role === 'super_admin',
+      is_admin: user.is_admin || user.role === 'admin' || user.role === 'super_admin',
       loyaltyPoints: totalLoyaltyPoints,
       status: 'active', // قيمة افتراضية
       role: user.role || 'user',

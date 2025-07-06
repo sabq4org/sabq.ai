@@ -6,12 +6,12 @@ const prisma = new PrismaClient();
 
 // دالة مساعدة للتحقق من صلاحيات الإدارة
 async function checkAdminPermission(userId: string): Promise<boolean> {
-  const user = await prisma.user.findUnique({
+  const user = await prisma.users.findUnique({
     where: { id: userId },
-    select: { role: true, isAdmin: true }
+    select: { role: true, is_admin: true }
   });
   
-  return !!(user && (user.isAdmin || ['admin', 'moderator'].includes(user.role)));
+  return !!(user && (user.is_admin || ['admin', 'moderator'].includes(user.role)));
 }
 
 export async function GET(request: NextRequest) {
@@ -53,9 +53,7 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       where.OR = [
-        { content: { contains: search } },
-        { user: { name: { contains: search } } },
-        { user: { email: { contains: search } } }
+        { content: { contains: search } }
       ];
     }
 
@@ -67,45 +65,24 @@ export async function GET(request: NextRequest) {
     let orderBy: any = {};
     switch (sortBy) {
       case 'oldest':
-        orderBy = { createdAt: 'asc' };
+        orderBy = { created_at: 'asc' };
         break;
       case 'mostReported':
         orderBy = { reports: { _count: 'desc' } };
         break;
       default:
-        orderBy = { createdAt: 'desc' };
+        orderBy = { created_at: 'desc' };
     }
 
     // جلب التعليقات
     const [comments, total] = await Promise.all([
-      prisma.comment.findMany({
+      prisma.comments.findMany({
         where,
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          },
-          article: {
-            select: {
-              id: true,
-              title: true
-            }
-          },
-          _count: {
-            select: {
-              // reports: true,
-              replies: true
-            }
-          }
-        },
         orderBy,
         skip,
         take: limit
       }),
-      prisma.comment.count({ where })
+      prisma.comments.count({ where })
     ]);
 
     return NextResponse.json({
