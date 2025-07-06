@@ -10,9 +10,8 @@ import { Share2, Eye, Clock, Calendar,
 } from 'lucide-react';
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { MobileOptimizer } from '@/components/mobile/MobileOptimizer'
-import { MobileHeader } from '@/components/mobile/MobileHeader'
-import ArticleContent from './ArticleContent'
+import MobileOptimizer from '@/components/mobile/MobileOptimizer'
+import MobileHeader from '@/components/mobile/MobileHeader'
 import { Article } from '@/types'
 
 import { useDarkModeContext } from '@/contexts/DarkModeContext';
@@ -175,18 +174,6 @@ export default function ArticlePage({ params }: PageProps) {
 
   useEffect(() => {
     setIsMounted(true);
-    
-    // فحص نوع الجهاز
-    const checkDevice = () => {
-      const userAgent = navigator.userAgent;
-      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-      const isSmallScreen = window.innerWidth <= 768;
-      setIsMobile(isMobileDevice || isSmallScreen);
-    };
-
-    checkDevice();
-    window.addEventListener('resize', checkDevice);
-    return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
   // إنشاء معرف ثابت للضيف عند تحميل الصفحة
@@ -852,14 +839,14 @@ export default function ArticlePage({ params }: PageProps) {
               <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-600 dark:text-gray-400">
                 {article.author && (
                   <div className="flex items-center gap-2">
-                    {article.author.avatar && (
+                    {typeof article.author === 'object' && article.author.avatar && (
                       <img
                         src={article.author.avatar}
                         alt={article.author.name}
                         className="w-8 h-8 rounded-full"
                       />
                     )}
-                    <span>{article.author_name || (article.author && (article.author as any).name) || '—'}</span>
+                    <span>{article.author_name || (article.author && typeof article.author === 'object' ? article.author.name : article.author) || '—'}</span>
                   </div>
                 )}
                 
@@ -885,7 +872,7 @@ export default function ArticlePage({ params }: PageProps) {
             
             {/* المحتوى */}
             <div className="prose prose-sm sm:prose-base md:prose-lg dark:prose-invert max-w-none">
-              <ArticleContent content={article.content} />
+              {renderArticleContent(article.content)}
             </div>
             
             {/* أزرار المشاركة والتفاعل */}
