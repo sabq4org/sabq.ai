@@ -64,13 +64,13 @@ export async function GET(request: NextRequest) {
     // فلترة حسب التصنيف
     const categoryId = searchParams.get('category_id')
     if (categoryId) {
-      where.categoryId = categoryId
+      where.category_id = categoryId
     }
 
     // فلترة حسب المؤلف
     const authorId = searchParams.get('author_id')
     if (authorId) {
-      where.authorId = authorId
+      where.author_id = authorId
     }
 
     // البحث في العنوان والمحتوى
@@ -96,22 +96,16 @@ export async function GET(request: NextRequest) {
     }
 
     // الترتيب
-    const sortField = searchParams.get('sort') || 'created_at'
+    const sort = searchParams.get('sort') || 'oldest'
     const order = (searchParams.get('order') || 'desc') as 'asc' | 'desc'
     
     let orderBy: any = {}
-    switch (sortField) {
-      case 'title':
-        orderBy = { title: order }
-        break
-      case 'views':
-        orderBy = { views: order }
-        break
-      case 'published_at':
-        orderBy = { publishedAt: order }
-        break
-      default:
-        orderBy = { createdAt: order }
+    if (sort === 'oldest') {
+      orderBy.created_at = 'asc'
+    } else if (sort === 'popular') {
+      orderBy.views = 'desc'
+    } else {
+      orderBy.created_at = 'desc'
     }
 
     // التقسيم (Pagination)
@@ -123,78 +117,54 @@ export async function GET(request: NextRequest) {
     console.time('🔍 جلب المقالات من قاعدة البيانات')
     let articles = []
     try {
-      articles = await prisma.article.findMany({
+      articles = await prisma.articles.findMany({
         where,
         orderBy,
         skip,
-        take: limit,
-        include: {
-          category: true,
-          author: true
-        }
+        take: limit
       })
     } catch (dbError) {
       console.error('خطأ في قاعدة البيانات:', dbError)
-      // إذا فشل الاستعلام بسبب author، نحاول بدون include
-      articles = await prisma.article.findMany({
-        where,
-        orderBy,
-        skip,
-        take: limit,
-        include: {
-          category: true
-        }
-      })
+      throw dbError
     }
     console.timeEnd('🔍 جلب المقالات من قاعدة البيانات')
 
     // جلب العدد الإجمالي
     console.time('📊 جلب العدد الإجمالي للمقالات')
-    const total = await prisma.article.count({ where })
+    const total = await prisma.articles.count({ where })
     console.timeEnd('📊 جلب العدد الإجمالي للمقالات')
+
+    // جلب التصنيفات إذا كانت هناك مقالات
+    let categoriesMap: any = {}
+    if (articles.length > 0) {
+      const categoryIds = [...new Set(articles.map((a: any) => a.category_id).filter(Boolean))]
+      if (categoryIds.length > 0) {
+        const categories = await prisma.categories.findMany({
+          where: { id: { in: categoryIds } }
+        })
+        categoriesMap = categories.reduce((acc: any, cat: any) => {
+          acc[cat.id] = cat
+          return acc
+        }, {})
+      }
+    }
 
     // تحويل البيانات للتوافق مع الواجهة
     console.time('🔄 تحويل وتنسيق البيانات')
-    const formattedArticles = articles.map(article => {
-      // محاولة استخراج اسم المؤلف من metadata أولاً، ثم من author relation
-      let authorName = null;
-      if (article.metadata && typeof article.metadata === 'object' && 'author_name' in article.metadata) {
-        authorName = (article.metadata as any).author_name;
-      } else if ((article as any).author) {
-        authorName = (article as any).author.name;
-      }
-      
-      return {
-        id: article.id,
-        title: article.title,
-        slug: article.slug,
-        content: article.content,
-        summary: article.excerpt,
-        author_id: article.authorId,
-        author_name: authorName, // إضافة اسم المؤلف مباشرة
-        author: (article as any).author ? {
-          id: (article as any).author.id,
-          name: (article as any).author.name,
-          email: (article as any).author.email,
-          avatar: (article as any).author.avatar
-        } : null,
-        category_id: article.categoryId,
-        category_name: article.category?.name || 'غير مصنف',
-        status: article.status,
-        featured_image: article.featuredImage,
-        is_breaking: article.breaking,
-        is_featured: article.featured,
-        views_count: article.views,
-        reading_time: article.readingTime || calculateReadingTime(article.content),
-        created_at: article.createdAt ? article.createdAt.toISOString() : null,
-        updated_at: article.updatedAt ? article.updatedAt.toISOString() : null,
-        published_at: article.publishedAt ? article.publishedAt.toISOString() : null,
-        seo_keywords: article.seoKeywords ? article.seoKeywords.split(',').map((k: string) => k.trim()).filter(Boolean) : [],
-        tags: article.metadata && typeof article.metadata === 'object' && 'tags' in article.metadata ? (article.metadata as any).tags : [],
-        interactions_count: 0,
-        comments_count: 0
-      }
-    })
+    const formattedArticles = articles.map((article: any) => ({
+      ...article,
+      author: { id: article.author_id, name: 'كاتب مجهول' },
+      category: categoriesMap[article.category_id] || { 
+        id: article.category_id, 
+        name: 'غير مصنف',
+        slug: 'uncategorized'
+      },
+      featuredImage: article.featured_image,
+      readingTime: article.reading_time,
+      createdAt: article.created_at,
+      updatedAt: article.updated_at,
+      publishedAt: article.published_at
+    }))
     console.timeEnd('🔄 تحويل وتنسيق البيانات')
 
     // تصفية المحتوى التجريبي إذا كان مطلوباً
@@ -261,14 +231,14 @@ export async function POST(request: NextRequest) {
     }
 
     // إنشاء المقال في قاعدة البيانات البعيدة
-    const article = await prisma.article.create({
+    const article = await prisma.articles.create({
       data: {
         title,
         content,
         excerpt: excerpt || content.substring(0, 200) + '...',
-        categoryId: category_id || null,
+        category_id: category_id || null,
         status,
-        featuredImage: featured_image,
+        featured_image: featured_image,
         metadata: {
           ...metadata,
           createdAt: new Date().toISOString(),
@@ -276,10 +246,10 @@ export async function POST(request: NextRequest) {
           aiEditor: metadata.aiEditor || false,
           author_name: author_name || undefined // حفظ اسم المؤلف في metadata
         },
-        authorId: author_id || 'default-author-id', // استخدام author_id المرسل أو القيمة الافتراضية
+        author_id: author_id || 'default-author-id', // استخدام author_id المرسل أو القيمة الافتراضية
         slug: generateSlug(title),
         views: 0,
-        readingTime: Math.ceil(content.split(' ').length / 200) // تقدير وقت القراءة
+        reading_time: Math.ceil(content.split(' ').length / 200) // تقدير وقت القراءة
       }
     })
 
@@ -351,15 +321,15 @@ async function checkUserPermissions(request: NextRequest): Promise<{ valid: bool
     }
 
     // البحث عن المستخدم في قاعدة البيانات
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: decoded.id },
       select: {
         id: true,
         email: true,
         name: true,
         role: true,
-        isAdmin: true,
-        isVerified: true
+        is_admin: true,
+        is_verified: true
       }
     });
 
@@ -368,12 +338,12 @@ async function checkUserPermissions(request: NextRequest): Promise<{ valid: bool
     }
 
     // التحقق من أن المستخدم مفعل
-    if (!user.isVerified) {
+    if (!user.is_verified) {
       return { valid: false, error: 'المستخدم غير مفعل' };
     }
 
     // التحقق من صلاحيات الحذف
-    const canDelete = user.isAdmin || 
+    const canDelete = user.is_admin || 
                      user.role === 'admin' || 
                      user.role === 'editor' || 
                      user.role === 'super_admin';
@@ -420,25 +390,25 @@ export async function DELETE(request: NextRequest) {
     });
 
     // تحديث حالة المقالات إلى "محذوف" في قاعدة البيانات البعيدة
-    const result = await prisma.article.updateMany({
+    const result = await prisma.articles.updateMany({
       where: {
         id: { in: ids }
       },
       data: {
         status: 'deleted',
-        updatedAt: new Date()
+        updated_at: new Date()
       }
     })
 
     // تسجيل النشاط في سجل الأنشطة
-    await prisma.activityLog.create({
+    await prisma.activity_logs.create({
       data: {
-        userId: authCheck.user.id,
+        user_id: authCheck.user.id,
         action: 'articles_deleted',
-        entityType: 'article',
-        entityId: ids.join(','),
-        oldValue: { status: 'published' },
-        newValue: { status: 'deleted', count: result.count }
+        entity_type: 'article',
+        entity_id: ids.join(','),
+        old_value: { status: 'published' },
+        new_value: { status: 'deleted', count: result.count }
       }
     });
 

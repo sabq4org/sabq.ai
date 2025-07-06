@@ -66,31 +66,31 @@ export async function GET(request: NextRequest) {
     // فلترة الفئات النشطة فقط
     const activeOnly = searchParams.get('active') !== 'false';
     if (activeOnly) {
-      where.isActive = true;
+      where.is_active = true;
     }
     
     // فلترة حسب الفئة الأم
     const parentId = searchParams.get('parent_id');
     if (parentId === 'null') {
-      where.parentId = null;
+      where.parent_id = null;
     } else if (parentId) {
-      where.parentId = parentId;
+      where.parent_id = parentId;
     }
     
     // جلب الفئات
-    let categories = await prisma.category.findMany({
+    let categories = await prisma.categories.findMany({
       where,
       orderBy: {
-        displayOrder: 'asc'
+        display_order: 'asc'
       }
     });
     
     // حساب عدد المقالات لكل تصنيف
     const categoryIds = categories.map(c => c.id);
-    const articleCounts = await prisma.article.groupBy({
-      by: ['categoryId'],
+    const articleCounts = await prisma.articles.groupBy({
+      by: ['category_id'],
       where: {
-        categoryId: { in: categoryIds }
+        category_id: { in: categoryIds }
       },
       _count: {
         id: true
@@ -99,12 +99,12 @@ export async function GET(request: NextRequest) {
     
     // إنشاء خريطة لعدد المقالات
     const articleCountMap = new Map(
-      articleCounts.map(item => [item.categoryId, item._count.id])
+      articleCounts.map(item => [item.category_id, item._count.id])
     );
     
     // جلب التصنيفات الأب إن وجدت
-    const parentIds = [...new Set(categories.map(c => c.parentId).filter(Boolean))] as string[];
-    const parents = parentIds.length > 0 ? await prisma.category.findMany({
+    const parentIds = [...new Set(categories.map(c => c.parent_id).filter(Boolean))] as string[];
+    const parents = parentIds.length > 0 ? await prisma.categories.findMany({
       where: { id: { in: parentIds } },
       select: { id: true, name: true, slug: true }
     }) : [];
@@ -113,8 +113,9 @@ export async function GET(request: NextRequest) {
 
     // إذا لم تكن هناك تصنيفات، أنشئ تصنيفاً افتراضياً
     if (categories.length === 0) {
-      const defaultCategory = await prisma.category.create({
+      const defaultCategory = await prisma.categories.create({
         data: {
+          id: 'category-general',
           name: 'عام',
           slug: 'general',
           description: JSON.stringify({
@@ -124,8 +125,10 @@ export async function GET(request: NextRequest) {
             color_hex: '#6B7280',
             icon: '📄'
           }),
-          isActive: true,
-          displayOrder: 0
+          is_active: true,
+          display_order: 0,
+          created_at: new Date(),
+          updated_at: new Date()
         }
       });
 
@@ -134,7 +137,7 @@ export async function GET(request: NextRequest) {
     
     // تحويل البيانات للتوافق مع الواجهة
     const formattedCategories = categories.map(category => {
-      const parent = category.parentId ? parentsMap.get(category.parentId) : null;
+      const parent = category.parent_id ? parentsMap.get(category.parent_id) : null;
       const articleCount = articleCountMap.get(category.id) || 0;
       
       // استخراج البيانات من الحقول المباشرة أولاً، ثم من JSON إذا لزم الأمر
@@ -142,7 +145,7 @@ export async function GET(request: NextRequest) {
       let icon = category.icon || '📁';
       let colorHex = category.color || '#6B7280';
       let nameAr = category.name;
-      let nameEn = category.nameEn || '';
+      let nameEn = category.name_en || '';
       let descriptionText = category.description || '';
       
       // إذا كانت البيانات في حقل description كـ JSON (للتوافق مع البيانات القديمة)
@@ -173,15 +176,15 @@ export async function GET(request: NextRequest) {
         color: colorHex,
         color_hex: colorHex,
         icon: icon,
-        parent_id: category.parentId,
+        parent_id: category.parent_id,
         parent: parent,
         children: [],
         articles_count: articleCount,
         children_count: 0,
-        order_index: category.displayOrder,
-        is_active: category.isActive,
-        created_at: category.createdAt.toISOString(),
-        updated_at: category.updatedAt.toISOString(),
+        order_index: category.display_order,
+        is_active: category.is_active,
+        created_at: category.created_at.toISOString(),
+        updated_at: category.updated_at.toISOString(),
         metadata: metadata
       };
     });
@@ -219,7 +222,7 @@ export async function POST(request: NextRequest) {
     }
     
     // التحقق من عدم تكرار الـ slug
-    const existingCategory = await prisma.category.findUnique({
+    const existingCategory = await prisma.categories.findUnique({
       where: { slug: categorySlug }
     });
     
@@ -231,8 +234,9 @@ export async function POST(request: NextRequest) {
     }
     
     // إنشاء الفئة الجديدة
-    const newCategory = await prisma.category.create({
+    const newCategory = await prisma.categories.create({
       data: {
+        id: generateSlug(categoryName) + '-' + Date.now(),
         name: categoryName,
         slug: categorySlug,
         description: JSON.stringify({
@@ -249,9 +253,11 @@ export async function POST(request: NextRequest) {
           noindex: body.noindex,
           og_type: body.og_type || 'website'
         }),
-        parentId: body.parent_id,
-        displayOrder: body.order_index || body.position || 0,
-        isActive: body.is_active !== false
+        parent_id: body.parent_id,
+        display_order: body.order_index || body.position || 0,
+        is_active: body.is_active !== false,
+        created_at: new Date(),
+        updated_at: new Date()
       }
     });
     
@@ -284,7 +290,7 @@ export async function PUT(request: NextRequest) {
     }
     
     // التحقق من وجود الفئة
-    const existingCategory = await prisma.category.findUnique({
+    const existingCategory = await prisma.categories.findUnique({
       where: { id: body.id }
     });
     
@@ -323,14 +329,15 @@ export async function PUT(request: NextRequest) {
     };
     
     // تحديث الفئة
-    const updatedCategory = await prisma.category.update({
+    const updatedCategory = await prisma.categories.update({
       where: { id: body.id },
       data: {
         name: body.name || body.name_ar || existingCategory.name,
         description: JSON.stringify(updatedMetadata),
-        parentId: body.parent_id !== undefined ? body.parent_id : existingCategory.parentId,
-        displayOrder: body.order_index ?? body.position ?? existingCategory.displayOrder,
-        isActive: body.is_active ?? existingCategory.isActive
+        parent_id: body.parent_id !== undefined ? body.parent_id : existingCategory.parent_id,
+        display_order: body.order_index ?? body.position ?? existingCategory.display_order,
+        is_active: body.is_active ?? existingCategory.is_active,
+        updated_at: new Date()
       }
     });
     
@@ -363,10 +370,10 @@ export async function DELETE(request: NextRequest) {
       }, 400);
     }
     
-    // التحقق من عدم وجود مقالات مرتبطة
-    const articlesCount = await prisma.article.count({
+    // التحقق من وجود مقالات مرتبطة
+    const articlesCount = await prisma.articles.count({
       where: {
-        categoryId: { in: ids }
+        category_id: { in: ids }
       }
     });
     
@@ -379,7 +386,7 @@ export async function DELETE(request: NextRequest) {
     }
     
     // حذف الفئات
-    const result = await prisma.category.deleteMany({
+    const result = await prisma.categories.deleteMany({
       where: {
         id: { in: ids }
       }
