@@ -8,6 +8,9 @@ const globalForPrisma = globalThis as unknown as {
 // إنشاء PrismaClient مع معالجة الأخطاء
 function createPrismaClient() {
   try {
+    console.log('[Prisma] DATABASE_URL exists:', !!process.env.DATABASE_URL);
+    console.log('[Prisma] DATABASE_URL preview:', process.env.DATABASE_URL?.substring(0, 20) + '...');
+    
     // في بيئة البناء، قد لا يكون DATABASE_URL موجوداً
     if (!process.env.DATABASE_URL) {
       console.warn('[Prisma] DATABASE_URL not found - using fallback mode');
@@ -30,6 +33,7 @@ function createPrismaClient() {
       console.log('🔒 تم تفعيل حماية قاعدة البيانات');
     }
 
+    console.log('[Prisma] Client created successfully');
     return client;
   } catch (error) {
     console.error('[Prisma] Failed to create client:', error);
@@ -39,7 +43,7 @@ function createPrismaClient() {
 
 const prismaClient = globalForPrisma.prisma ?? createPrismaClient();
 
-let prisma: PrismaClient & {
+let prismaInstance: PrismaClient & {
   article?: any;
   category?: any;
   user?: any;
@@ -49,36 +53,37 @@ let prisma: PrismaClient & {
 if (!prismaClient) {
   console.error('[Prisma] Failed to initialize Prisma Client');
   // إنشاء كائن وهمي لتجنب أخطاء البناء
-  prisma = new Proxy({} as any, {
+  prismaInstance = new Proxy({} as any, {
     get: () => {
       throw new Error('Prisma Client is not initialized. Please check your DATABASE_URL.');
     }
   });
 } else {
-  prisma = prismaClient as any;
+  console.log('[Prisma] Using existing or new client');
+  prismaInstance = prismaClient as any;
   
   // إضافة تحويل أسماء النماذج من المفرد إلى الجمع
-  if (!prisma.article) {
-    Object.defineProperty(prisma, 'article', {
-      get() { return prisma.articles; }
+  if (!prismaInstance.article) {
+    Object.defineProperty(prismaInstance, 'article', {
+      get() { return prismaInstance.articles; }
     });
   }
   
-  if (!prisma.category) {
-    Object.defineProperty(prisma, 'category', {
-      get() { return prisma.categories; }
+  if (!prismaInstance.category) {
+    Object.defineProperty(prismaInstance, 'category', {
+      get() { return prismaInstance.categories; }
     });
   }
   
-  if (!prisma.user) {
-    Object.defineProperty(prisma, 'user', {
-      get() { return prisma.users; }
+  if (!prismaInstance.user) {
+    Object.defineProperty(prismaInstance, 'user', {
+      get() { return prismaInstance.users; }
     });
   }
   
-  if (!prisma.comment) {
-    Object.defineProperty(prisma, 'comment', {
-      get() { return prisma.comments; }
+  if (!prismaInstance.comment) {
+    Object.defineProperty(prismaInstance, 'comment', {
+      get() { return prismaInstance.comments; }
     });
   }
   
@@ -87,5 +92,5 @@ if (!prismaClient) {
   }
 }
 
-export { prisma };
-export default prisma; 
+export const prisma = prismaInstance;
+export default prismaInstance; 
