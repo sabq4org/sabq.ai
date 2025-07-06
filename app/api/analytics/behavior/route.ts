@@ -38,18 +38,18 @@ export async function GET(request: NextRequest) {
       interactions
     ] = await Promise.all([
       // الانطباعات - استخدام Interaction بدلاً من impression
-      prisma.interaction.findMany({
+      prisma.interactions.findMany({
         where: {
-          userId,
+          user_id: userId,
           type: 'view',
-          createdAt: { gte: startDate }
+          created_at: { gte: startDate }
         },
         include: {
           article: {
             select: {
               id: true,
               title: true,
-              categoryId: true,
+              category_id: true,
               category: {
                 select: {
                   id: true,
@@ -63,10 +63,10 @@ export async function GET(request: NextRequest) {
       }),
       
       // التفاعلات
-      prisma.interaction.findMany({
+      prisma.interactions.findMany({
         where: {
-          userId,
-          createdAt: { gte: startDate }
+          user_id: userId,
+          created_at: { gte: startDate }
         }
       })
     ]);
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
       overview: {
         totalImpressions: impressions.length,
         totalInteractions: interactions.length,
-        uniqueArticlesRead: new Set(impressions.map((i: any) => i.articleId)).size
+        uniqueArticlesRead: new Set(impressions.map((i: any) => i.article_id)).size
       },
       
       interactionBreakdown: analyzeInteractions(interactions),
@@ -140,7 +140,7 @@ function analyzeCategoryPreferences(impressions: any[]) {
     
     const stats = categoryStats[category.slug];
     stats.impressions++;
-    stats.articles.add(impression.articleId);
+    stats.articles.add(impression.article_id);
   });
   
   // تحويل Set إلى عدد
