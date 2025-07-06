@@ -150,6 +150,10 @@ model articles {
   created_at      DateTime  @default(now())
   updated_at      DateTime
 
+  // Relations
+  interactions    interactions[]
+  category        categories?     @relation(fields: [category_id], references: [id])
+
   @@index([author_id])
   @@index([category_id])
   @@index([slug])
@@ -170,6 +174,9 @@ model categories {
   parent_id     String?
   created_at    DateTime @default(now())
   updated_at    DateTime
+
+  // Relations
+  articles      articles[]
 
   @@index([parent_id])
   @@index([slug])
@@ -407,6 +414,10 @@ model interactions {
   type       interactions_type
   created_at DateTime          @default(now())
 
+  // Relations
+  article    articles          @relation(fields: [article_id], references: [id])
+  user       users             @relation(fields: [user_id], references: [id])
+
   @@unique([user_id, article_id, type])
   @@index([article_id])
   @@index([user_id])
@@ -514,6 +525,9 @@ model users {
   reset_token_expiry DateTime?
   created_at         DateTime  @default(now())
   updated_at         DateTime
+
+  // Relations
+  interactions       interactions[]
 
   @@index([email])
   @@index([role])
