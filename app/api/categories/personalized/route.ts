@@ -53,8 +53,8 @@ export async function GET(request: NextRequest) {
 
     // جلب معرفات المقالات من التفاعلات
     const articleIds = userInteractions
-      .map((interaction: any) => interaction.article_id)
-      .filter((id: any): id is string => !!id);
+      .map((interaction) => interaction.article_id)
+      .filter((id): id is string => !!id);
     
     // جلب مقالات مع تصنيفاتها
     const articlesWithCategories = articleIds.length > 0 ? await prisma.articles.findMany({
