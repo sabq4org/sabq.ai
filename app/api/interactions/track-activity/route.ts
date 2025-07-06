@@ -242,7 +242,7 @@ export async function GET(request: NextRequest) {
     });
 
     // تحويل البيانات للتوافق مع الشكل المتوقع
-    const formattedInteractions = interactions.map(interaction => ({
+    const formattedInteractions = interactions.map((interaction: any) => ({
       id: interaction.id,
       user_id: interaction.userId,
       article_id: interaction.articleId,

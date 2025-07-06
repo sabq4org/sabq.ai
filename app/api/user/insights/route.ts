@@ -56,8 +56,8 @@ export async function GET(request: NextRequest) {
     const allCategories = await prisma.category.count();
     const readCategories = new Set(
       userInteractions
-        .filter(i => i.article?.category)
-        .map(i => i.article!.category!.id)
+        .filter((i: any) => i.article?.category)
+        .map((i: any) => i.article!.category!.id)
     );
 
     // حساب النسب لكل تصنيف

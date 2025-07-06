@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 
 // دالة مساعدة للتحقق من دور المستخدم
 async function getUserRole(userId: string): Promise<string> {
-  const user = await prisma.user.findUnique({
+  const user = await prisma.users.findUnique({
     where: { id: userId },
     select: { role: true }
   });
@@ -52,36 +52,20 @@ export async function GET(request: NextRequest) {
       // إذا كان status === 'all'، لا نضيف أي فلتر للحالة
 
       const [comments, total] = await Promise.all([
-        prisma.comment.findMany({
+        prisma.comments.findMany({
           where,
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                avatar: true
-              }
-            },
-            article: {
-              select: {
-                id: true,
-                title: true
-              }
-            }
-          },
           orderBy: {
-            createdAt: 'desc'
+            created_at: 'desc'
           },
           skip,
           take: limit
         }),
-        prisma.comment.count({ where })
+        prisma.comments.count({ where })
       ]);
 
       return NextResponse.json({
         success: true,
-        comments: comments.map(comment => ({
+        comments: comments.map((comment: any) => ({
           ...comment,
           aiAnalysis: []?.[0] || null
         })),
@@ -96,8 +80,8 @@ export async function GET(request: NextRequest) {
 
     // جلب التعليقات الرئيسية مع الردود
     const where: any = {
-      articleId,
-      parentId: null // فقط التعليقات الرئيسية
+      article_id: articleId,
+      parent_id: null // فقط التعليقات الرئيسية
     };
 
     // إضافة فلتر الحالة للمستخدمين العاديين
@@ -114,52 +98,15 @@ export async function GET(request: NextRequest) {
     }
 
     const [comments, total] = await Promise.all([
-      prisma.comment.findMany({
+      prisma.comments.findMany({
         where,
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true
-            }
-          },
-          replies: {
-            where: user && ['admin', 'moderator'].includes(userRole) 
-              ? {} 
-              : { status: 'approved' },
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  avatar: true
-                }
-              },
-              replies: {
-                where: user && ['admin', 'moderator'].includes(userRole) 
-                  ? {} 
-                  : { status: 'approved' },
-                include: {
-                  user: {
-                    select: {
-                      id: true,
-                      name: true,
-                      avatar: true
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
         orderBy: {
-          createdAt: 'desc'
+          created_at: 'desc'
         },
         skip,
         take: limit
       }),
-      prisma.comment.count({ where })
+      prisma.comments.count({ where })
     ]);
 
     // تنسيق البيانات
@@ -209,7 +156,7 @@ export async function POST(request: NextRequest) {
       where: { id: articleId },
       select: {
         id: true,
-        allowComments: true,
+        allow_comments: true,
       }
     });
 
@@ -234,7 +181,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!article.allowComments) {
+    if (!article.allow_comments) {
       return NextResponse.json(
         { success: false, error: 'التعليقات مغلقة على هذا المقال' },
         { status: 403 }
@@ -381,41 +328,38 @@ export async function POST(request: NextRequest) {
     console.log('Comment status:', commentStatus, 'User role:', userRole);
 
     // إنشاء التعليق
-    const comment = await prisma.comment.create({
+    const comment = await prisma.comments.create({
       data: {
-articleId,
-        userId: user?.id || null,
-        parentId,
+        id: `comment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        article_id: articleId,
+        user_id: user?.id || null,
+        parent_id: parentId,
         content: processedContent,
         status: commentStatus,
-        // // aiScore,
-// // aiClassification,
-// aiAnalyzedAt: ...,
-metadata: {
+        created_at: new Date(),
+        updated_at: new Date(),
+        metadata: {
           guestName: !user ? body.guestName : null,
           requiresModeration,
           ipAddress,
           userAgent,
           aiAnalysis: aiAnalysis || null
         }
-      },
-      select: {
-id: true,
-        content: true,
-        status: true,
-        // aiClassification: true,
-// aiAnalyzedAt: true,
-createdAt: true,
-        metadata: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true
-          }
-        }
       }
     });
+
+    // جلب بيانات المستخدم إذا كان موجوداً
+    let userData = null;
+    if (comment.user_id) {
+      userData = await prisma.users.findUnique({
+        where: { id: comment.user_id },
+        select: {
+          id: true,
+          name: true,
+          avatar: true
+        }
+      });
+    }
 
     // حفظ تحليل الذكاء الاصطناعي إذا كان متاحاً (في الخلفية)
     if (aiAnalysis && !['admin', 'moderator', 'author'].includes(userRole)) {
@@ -441,22 +385,27 @@ createdAt: true,
 
     // إضافة نقاط الولاء للمستخدم (في الخلفية)
     if (user && commentStatus === 'approved') {
-      prisma.loyaltyPoint.create({
+      prisma.loyalty_points.create({
         data: {
-          userId: user.id,
+          id: `loyalty-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          user_id: user.id,
           points: 5,
           action: 'comment_posted',
-          referenceId: comment.id,
-          referenceType: 'comment'
+          reference_id: comment.id,
+          reference_type: 'comment',
+          created_at: new Date()
         }
-      }).catch(error => {
+      }).catch((error: any) => {
         console.error('Error adding loyalty points:', error);
       });
     }
 
     return NextResponse.json({
       success: true,
-      comment: formatComment(comment),
+      comment: {
+        ...formatComment(comment),
+        user: userData
+      },
       message: commentStatus === 'pending' 
         ? 'تم إرسال تعليقك وسيتم نشره بعد المراجعة' 
         : 'تم نشر تعليقك بنجاح',
@@ -489,7 +438,7 @@ function formatComment(comment: any) {
     status: comment.status,
     aiClassification: comment.aiClassification || null,
     aiAnalyzedAt: comment.aiAnalyzedAt,
-    createdAt: comment.createdAt,
+    createdAt: comment.created_at,
     user: comment.user || {
       name: comment.metadata?.guestName || 'زائر',
       avatar: null

@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
 
     // تصفية السلوكيات حسب sessionId إذا تم تحديده
     const filteredBehaviors = sessionId 
-      ? behaviors.filter(b => {
+      ? behaviors.filter((b: any) => {
           const metadata = b.metadata as any;
           return metadata?.sessionId === sessionId;
         })

@@ -5,9 +5,9 @@ generator client {
 }
 
 datasource db {
-  provider     = "mysql"
+  provider     = "postgresql"
   url          = env("DATABASE_URL")
-  relationMode = "prisma"
+  directUrl    = env("DIRECT_URL")
 }
 
 model EmailJob {
@@ -64,7 +64,7 @@ model EmailTemplate {
   id           String   @id
   name         String   @db.VarChar(255)
   subject      String   @db.VarChar(500)
-  html_content String   @db.LongText
+  html_content String   @db.Text
   text_content String?  @db.Text
   metadata     Json?
   created_at   DateTime @default(now())
@@ -83,7 +83,7 @@ model Subscriber {
 }
 
 model activity_logs {
-  id          String   @id @default(uuid())
+  id          String   @id @default(cuid())
   user_id     String?
   action      String
   entity_type String?
@@ -255,7 +255,7 @@ model dose_contents {
 }
 
 model forum_badges {
-  id           String    @id @default(dbgenerated("(uuid())"))
+  id           String    @id @default(cuid())
   name         String    @db.VarChar(255)
   name_ar      String    @db.VarChar(255)
   description  String?   @db.Text
@@ -264,12 +264,12 @@ model forum_badges {
   requirements Json?
   points       Int?      @default(0)
   is_active    Boolean?  @default(true)
-  created_at   DateTime? @default(now()) @db.DateTime(0)
-  updated_at   DateTime? @default(now()) @db.DateTime(0)
+  created_at   DateTime? @default(now()) 
+  updated_at   DateTime? @default(now()) 
 }
 
 model forum_categories {
-  id            String    @id @default(dbgenerated("(uuid())"))
+  id            String    @id @default(cuid())
   name          String    @db.VarChar(255)
   name_ar       String    @db.VarChar(255)
   slug          String    @unique(map: "slug") @db.VarChar(255)
@@ -278,60 +278,60 @@ model forum_categories {
   color         String?   @db.VarChar(50)
   display_order Int?      @default(0)
   is_active     Boolean?  @default(true)
-  created_at    DateTime? @default(now()) @db.DateTime(0)
-  updated_at    DateTime? @default(now()) @db.DateTime(0)
+  created_at    DateTime? @default(now()) 
+  updated_at    DateTime? @default(now()) 
 
-  @@index([display_order], map: "idx_order")
-  @@index([slug], map: "idx_slug")
+  @@index([display_order])
+  @@index([slug])
 }
 
 model forum_follows {
-  id          String                    @id @default(dbgenerated("(uuid())"))
+  id          String                    @id @default(cuid())
   user_id     String
   target_type forum_follows_target_type
   target_id   String
-  created_at  DateTime?                 @default(now()) @db.DateTime(0)
+  created_at  DateTime?                 @default(now()) 
 
-  @@unique([user_id, target_type, target_id], map: "unique_follow")
-  @@index([target_type, target_id], map: "idx_target")
-  @@index([user_id], map: "idx_user")
+  @@unique([user_id, target_type, target_id])
+  @@index([target_type, target_id])
+  @@index([user_id])
 }
 
 model forum_notifications {
-  id          String    @id @default(dbgenerated("(uuid())"))
+  id          String    @id @default(cuid())
   user_id     String
   type        String    @db.VarChar(50)
   target_type String?   @db.VarChar(50)
   target_id   String?
   data        Json?
   is_read     Boolean?  @default(false)
-  created_at  DateTime? @default(now()) @db.DateTime(0)
+  created_at  DateTime? @default(now()) 
 
-  @@index([created_at], map: "idx_created")
-  @@index([user_id, is_read], map: "idx_user_unread")
+  @@index([created_at])
+  @@index([user_id, is_read])
 }
 
 model forum_replies {
-  id          String                @id @default(dbgenerated("(uuid())"))
+  id          String                @id @default(cuid())
   topic_id    String
   parent_id   String?
   author_id   String
   content     String                @db.Text
   is_accepted Boolean?              @default(false)
   status      forum_replies_status? @default(active)
-  edited_at   DateTime?             @db.DateTime(0)
+  edited_at   DateTime?             
   edited_by   String?
-  created_at  DateTime?             @default(now()) @db.DateTime(0)
-  updated_at  DateTime?             @default(now()) @db.DateTime(0)
+  created_at  DateTime?             @default(now()) 
+  updated_at  DateTime?             @default(now()) 
 
-  @@index([author_id], map: "idx_author")
-  @@index([created_at], map: "idx_created")
-  @@index([parent_id], map: "idx_parent")
-  @@index([topic_id], map: "idx_topic")
+  @@index([author_id])
+  @@index([created_at])
+  @@index([parent_id])
+  @@index([topic_id])
 }
 
 model forum_reports {
-  id          String                    @id @default(dbgenerated("(uuid())"))
+  id          String                    @id @default(cuid())
   reporter_id String
   target_type forum_reports_target_type
   target_id   String
@@ -339,30 +339,30 @@ model forum_reports {
   description String?                   @db.Text
   status      forum_reports_status?     @default(pending)
   resolved_by String?
-  resolved_at DateTime?                 @db.DateTime(0)
-  created_at  DateTime?                 @default(now()) @db.DateTime(0)
+  resolved_at DateTime?                 
+  created_at  DateTime?                 @default(now()) 
 
-  @@index([reporter_id], map: "idx_reporter")
-  @@index([status], map: "idx_status")
-  @@index([target_type, target_id], map: "idx_target")
+  @@index([reporter_id])
+  @@index([status])
+  @@index([target_type, target_id])
 }
 
 model forum_reputation {
-  id          String    @id @default(dbgenerated("(uuid())"))
+  id          String    @id @default(cuid())
   user_id     String
   points      Int?      @default(0)
   action_type String    @db.VarChar(50)
   target_type String?   @db.VarChar(50)
   target_id   String?
   description String?   @db.Text
-  created_at  DateTime? @default(now()) @db.DateTime(0)
+  created_at  DateTime? @default(now()) 
 
-  @@index([created_at], map: "idx_created")
-  @@index([user_id], map: "idx_user")
+  @@index([created_at])
+  @@index([user_id])
 }
 
 model forum_topics {
-  id            String               @id @default(dbgenerated("(uuid())"))
+  id            String               @id @default(cuid())
   title         String               @db.VarChar(500)
   content       String               @db.Text
   author_id     String
@@ -372,39 +372,39 @@ model forum_topics {
   is_featured   Boolean?             @default(false)
   status        forum_topics_status? @default(active)
   views         Int?                 @default(0)
-  last_reply_at DateTime?            @db.DateTime(0)
+  last_reply_at DateTime?            
   last_reply_by String?
-  created_at    DateTime?            @default(now()) @db.DateTime(0)
-  updated_at    DateTime?            @default(now()) @db.DateTime(0)
+  created_at    DateTime?            @default(now()) 
+  updated_at    DateTime?            @default(now()) 
 
-  @@index([author_id], map: "idx_author")
-  @@index([category_id], map: "idx_category")
-  @@index([last_reply_at], map: "idx_last_reply")
-  @@index([status, created_at], map: "idx_status_created")
+  @@index([author_id])
+  @@index([category_id])
+  @@index([last_reply_at])
+  @@index([status, created_at])
 }
 
 model forum_user_badges {
-  id        String    @id @default(dbgenerated("(uuid())"))
+  id        String    @id @default(cuid())
   user_id   String
   badge_id  String
-  earned_at DateTime? @default(now()) @db.DateTime(0)
+  earned_at DateTime? @default(now()) 
 
-  @@unique([user_id, badge_id], map: "unique_user_badge")
-  @@index([badge_id], map: "idx_badge")
-  @@index([user_id], map: "idx_user")
+  @@unique([user_id, badge_id])
+  @@index([badge_id])
+  @@index([user_id])
 }
 
 model forum_votes {
-  id          String                  @id @default(dbgenerated("(uuid())"))
+  id          String                  @id @default(cuid())
   user_id     String
   target_type forum_votes_target_type
   target_id   String
   vote_type   forum_votes_vote_type
-  created_at  DateTime?               @default(now()) @db.DateTime(0)
+  created_at  DateTime?               @default(now()) 
 
-  @@unique([user_id, target_type, target_id], map: "unique_vote")
-  @@index([target_type, target_id], map: "idx_target")
-  @@index([user_id], map: "idx_user")
+  @@unique([user_id, target_type, target_id])
+  @@index([target_type, target_id])
+  @@index([user_id])
 }
 
 model interactions {
@@ -635,4 +635,116 @@ enum forum_topics_status {
   pending
   hidden
   deleted
+}
+
+// الجداول الجديدة المضافة للترحيل من JSON
+
+model team_members {
+  id            String   @id
+  name          String   @db.VarChar(255)
+  role          String   @db.VarChar(100)
+  department    String?  @db.VarChar(100)
+  bio           String?  @db.Text
+  avatar        String?  @db.Text
+  email         String?  @unique @db.VarChar(255)
+  phone         String?  @db.VarChar(50)
+  social_links  Json?
+  is_active     Boolean  @default(true)
+  display_order Int      @default(0)
+  created_at    DateTime @default(now())
+  updated_at    DateTime
+
+  @@index([is_active])
+  @@index([department])
+}
+
+model email_verification_codes {
+  id         String   @id
+  email      String   @db.VarChar(255)
+  code       String   @db.VarChar(6)
+  user_id    String?
+  expires_at DateTime
+  used_at    DateTime?
+  created_at DateTime @default(now())
+
+  @@index([email])
+  @@index([code])
+  @@index([expires_at])
+}
+
+model password_reset_tokens {
+  id         String   @id
+  user_id    String
+  token      String   @unique @db.VarChar(255)
+  expires_at DateTime
+  used_at    DateTime?
+  created_at DateTime @default(now())
+
+  @@index([user_id])
+  @@index([token])
+  @@index([expires_at])
+}
+
+model templates {
+  id           String   @id
+  name         String   @db.VarChar(255)
+  slug         String   @unique @db.VarChar(255)
+  description  String?  @db.Text
+  category     String   @db.VarChar(50)
+  content      Json
+  variables    Json?
+  preview_data Json?
+  is_active    Boolean  @default(true)
+  usage_count  Int      @default(0)
+  created_by   String?
+  created_at   DateTime @default(now())
+  updated_at   DateTime
+
+  @@index([slug])
+  @@index([category])
+  @@index([is_active])
+}
+
+model template_previews {
+  id          String   @id
+  template_id String
+  title       String   @db.VarChar(500)
+  content     String   @db.Text
+  metadata    Json?
+  created_at  DateTime @default(now())
+
+  @@index([template_id])
+}
+
+model home_blocks_config {
+  id            String   @id
+  block_type    String   @db.VarChar(50)
+  title         String   @db.VarChar(255)
+  subtitle      String?  @db.VarChar(255)
+  settings      Json
+  display_order Int      @default(0)
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime
+
+  @@index([block_type])
+  @@index([display_order])
+  @@index([is_active])
+}
+
+model smart_blocks {
+  id             String   @id
+  name           String   @db.VarChar(255)
+  type           String   @db.VarChar(50)
+  config         Json
+  ai_config      Json?
+  display_rules  Json?
+  is_active      Boolean  @default(true)
+  last_updated   DateTime?
+  performance    Json?
+  created_at     DateTime @default(now())
+  updated_at     DateTime
+
+  @@index([type])
+  @@index([is_active])
 }

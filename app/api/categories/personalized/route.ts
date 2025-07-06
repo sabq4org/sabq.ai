@@ -24,16 +24,16 @@ export async function GET(request: NextRequest) {
     }
 
     // جلب تفضيلات المستخدم
-    const userPreferences = await prisma.userPreference.findMany({
-      where: { userId },
-      orderBy: { updatedAt: 'desc' }
+    const userPreferences = await prisma.user_preferences.findMany({
+      where: { user_id: userId },
+      orderBy: { updated_at: 'desc' }
     });
 
     // جلب اهتمامات المستخدم من UserPreference
-    const userInterestPreference = await prisma.userPreference.findUnique({
+    const userInterestPreference = await prisma.user_preferences.findUnique({
       where: {
-        userId_key: {
-          userId,
+        user_id_key: {
+          user_id: userId,
           key: 'interests'
         }
       }
@@ -42,53 +42,56 @@ export async function GET(request: NextRequest) {
     const userInterests = userInterestPreference ? (userInterestPreference.value as any[]) || [] : [];
 
     // جلب تفاعلات المستخدم مع المقالات
-    const userInteractions = await prisma.interaction.findMany({
+    const userInteractions = await prisma.interactions.findMany({
       where: { 
-        userId,
+        user_id: userId,
         type: { in: ['like', 'share'] }
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
       take: 50
     });
 
     // جلب معرفات المقالات من التفاعلات
-    const articleIds = userInteractions.map(interaction => interaction.articleId);
+    const articleIds = userInteractions
+      .map((interaction: any) => interaction.article_id)
+      .filter((id: any): id is string => !!id);
     
     // جلب مقالات مع تصنيفاتها
     const articlesWithCategories = articleIds.length > 0 ? await prisma.articles.findMany({
       where: { id: { in: articleIds } },
-      select: { id: true, categoryId: true }
+      select: { id: true, category_id: true }
     }) : [];
     
     const articleCategoryMap = new Map(
-      articlesWithCategories.map(article => [article.id, article.categoryId])
+      articlesWithCategories.map((article: any) => [article.id, article.category_id])
     );
 
     // حساب تفضيلات التصنيفات بناءً على التفاعلات
-    const categoryScores: { [categoryId: string]: number } = {};
+    const categoryScores: { [key: string]: number } = {};
     
     // إضافة نقاط من التفضيلات المباشرة
-    userPreferences.forEach(pref => {
+    userPreferences.forEach((pref: any) => {
       if (pref.key.startsWith('category_')) {
         const categoryId = pref.key.replace('category_', '');
         const value = typeof pref.value === 'string' ? pref.value : String(pref.value);
-        categoryScores[categoryId] = (categoryScores[categoryId] || 0) + parseFloat(value) * 10;
+        categoryScores[categoryId as string] = (categoryScores[categoryId as string] || 0) + parseFloat(value) * 10;
       }
     });
 
     // إضافة نقاط من الاهتمامات
-    userInterests.forEach(interest => {
+    userInterests.forEach((interest: any) => {
       // البحث عن التصنيفات التي تتطابق مع الاهتمام
       const interestName = interest.name || interest;
       if (interestName) {
         // يمكن تحسين هذا المنطق ليكون أكثر دقة
-        categoryScores[interestName] = (categoryScores[interestName] || 0) + (interest.score || 1.0) * 5;
+        categoryScores[interestName as string] = (categoryScores[interestName as string] || 0) + (interest.score || 1.0) * 5;
       }
     });
 
     // إضافة نقاط من التفاعلات
-    userInteractions.forEach((interaction) => {
-      const categoryId = articleCategoryMap.get(interaction.articleId);
+    userInteractions.forEach((interaction: any) => {
+      if (!interaction.article_id) return;
+      const categoryId = articleCategoryMap.get(interaction.article_id);
       if (categoryId) {
         let points = 0;
         
@@ -103,13 +106,13 @@ export async function GET(request: NextRequest) {
             points = 1;
         }
         
-        categoryScores[categoryId] = (categoryScores[categoryId] || 0) + points;
+        categoryScores[categoryId as string] = (categoryScores[categoryId as string] || 0) + points;
       }
     });
 
     // ترتيب التصنيفات حسب النقاط
     const sortedCategoryIds = Object.entries(categoryScores)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a]: [string, number], [, b]: [string, number]) => b - a)
       .map(([categoryId]) => categoryId)
       .slice(0, limit);
 
@@ -117,21 +120,21 @@ export async function GET(request: NextRequest) {
     let personalizedCategories: any[] = [];
     
     if (sortedCategoryIds.length > 0) {
-      personalizedCategories = await prisma.category.findMany({
+      personalizedCategories = await prisma.categories.findMany({
         where: {
           id: { in: sortedCategoryIds },
-          isActive: true
+          is_active: true
         },
         orderBy: {
-          displayOrder: 'asc'
+          display_order: 'asc'
         }
       });
     }
 
     // إذا لم تكن هناك تصنيفات مخصصة، جلب التصنيفات الأكثر شعبية
     if (personalizedCategories.length === 0) {
-      const popularCategories = await prisma.category.findMany({
-        where: { isActive: true },
+      const popularCategories = await prisma.categories.findMany({
+        where: { is_active: true },
         include: {
           _count: {
             select: { articles: true }
@@ -145,18 +148,15 @@ export async function GET(request: NextRequest) {
         take: limit
       });
 
-      personalizedCategories = popularCategories.map(cat => ({
-        ...cat,
-        _count: cat._count
-      }));
+      personalizedCategories = popularCategories;
     }
 
     // حساب عدد المقالات لكل تصنيف
-    const categoryIds = personalizedCategories.map(c => c.id);
+    const categoryIdsWithData = personalizedCategories.map(c => c.id);
     const articleCounts = await prisma.articles.groupBy({
-      by: ['categoryId'],
+      by: ['category_id'],
       where: {
-        categoryId: { in: categoryIds },
+        category_id: { in: categoryIdsWithData },
         status: 'published'
       },
       _count: {
@@ -165,11 +165,11 @@ export async function GET(request: NextRequest) {
     });
 
     const articleCountMap = new Map(
-      articleCounts.map(item => [item.categoryId, item._count.id])
+      articleCounts.map((item: any) => [item.category_id, item._count.id])
     );
 
     // تنسيق البيانات
-    const formattedCategories = personalizedCategories.map(category => {
+    const formattedCategories = personalizedCategories.map((category: any) => {
       const articleCount = articleCountMap.get(category.id) || 0;
       const score = categoryScores[category.id] || 0;
       
@@ -178,7 +178,7 @@ export async function GET(request: NextRequest) {
       let icon = '📁';
       let colorHex = '#6B7280';
       let nameAr = category.name;
-      let nameEn = '';
+      let nameEn = category.name_en || '';
       let descriptionText = '';
       
       if (category.description) {
@@ -214,9 +214,9 @@ export async function GET(request: NextRequest) {
         color_hex: colorHex,
         icon: icon,
         articles_count: articleCount,
-        is_active: category.isActive,
-        created_at: category.createdAt.toISOString(),
-        updated_at: category.updatedAt.toISOString(),
+        is_active: category.is_active,
+        created_at: category.created_at.toISOString(),
+        updated_at: category.updated_at.toISOString(),
         personalization_score: score,
         is_personalized: score > 0,
         metadata: metadata

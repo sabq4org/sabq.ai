@@ -34,7 +34,7 @@ export async function POST(
                      'unknown';
 
     // التحقق من وجود التعليق
-    const comment = await prisma.comment.findUnique({
+    const comment = await prisma.comments.findUnique({
       where: { id: commentId }
     });
 
@@ -63,7 +63,7 @@ export async function POST(
 
     if (reportsCount >= 3) {
       // تغيير حالة التعليق إلى "مبلغ عنه" بعد 3 بلاغات
-      await prisma.comment.update({
+      await prisma.comments.update({
         where: { id: commentId },
         data: { status: 'reported' }
       });

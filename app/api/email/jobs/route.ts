@@ -35,28 +35,29 @@ export async function GET(request: NextRequest) {
     
     const jobs = await prisma.emailJob.findMany({
       where,
-      include: {
-        template: {
-          select: {
-            id: true,
-            name: true,
-            subject: true
-          }
-        },
-        _count: {
-          select: {
-            emailLogs: true
-          }
-        }
-      },
       orderBy: {
-        createdAt: 'desc'
+        created_at: 'desc'
       }
     });
     
+    // جلب بيانات القوالب بشكل منفصل
+    const templateIds = jobs.map(job => job.template_id).filter((id): id is string => id !== null);
+    const templates = templateIds.length > 0 ? await prisma.emailTemplate.findMany({
+      where: { id: { in: templateIds } },
+      select: { id: true, name: true, subject: true }
+    }) : [];
+    
+    const templatesMap = new Map(templates.map(t => [t.id, t]));
+    
+    // إضافة بيانات القالب لكل مهمة
+    const jobsWithTemplates = jobs.map(job => ({
+      ...job,
+      template: job.template_id ? templatesMap.get(job.template_id) : null
+    }));
+    
     return NextResponse.json({
       success: true,
-      data: jobs
+      data: jobsWithTemplates
     });
   } catch (error) {
     console.error('خطأ في جلب المهام:', error);

@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     // التحقق من وجود المستخدم
-    let user = await prisma.user.findUnique({
+    let user = await prisma.users.findUnique({
       where: { id: userId }
     });
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       console.log(`🆕 إنشاء مستخدم جديد: ${userId}`);
       
       // إنشاء مستخدم جديد
-      user = await prisma.user.create({
+      user = await prisma.users.create({
         data: {
           id: userId,
           name: name || 'مستخدم جديد',

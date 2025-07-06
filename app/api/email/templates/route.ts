@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import crypto from 'crypto';
 
 // مخطط التحقق من بيانات القالب
 const templateSchema = z.object({
@@ -30,17 +31,26 @@ export async function GET(request: NextRequest) {
     
     const templates = await prisma.emailTemplate.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        _count: {
-          select: { emailJobs: true }
-        }
-      }
+      orderBy: { created_at: 'desc' }
     });
+    
+    // جلب عدد المهام لكل قالب
+    const templateIds = templates.map(t => t.id);
+    const jobsCounts = templateIds.length > 0 ? await prisma.emailJob.groupBy({
+      by: ['template_id'],
+      where: { template_id: { in: templateIds } },
+      _count: { template_id: true }
+    }) : [];
+    
+    const jobsCountMap = new Map(jobsCounts.map(jc => [jc.template_id, jc._count.template_id]));
+    const templatesWithCounts = templates.map(t => ({
+      ...t,
+      _count: { emailJobs: jobsCountMap.get(t.id) || 0 }
+    }));
     
     return NextResponse.json({
       success: true,
-      data: templates
+      data: templatesWithCounts
     });
   } catch (error) {
     console.error('خطأ في جلب القوالب:', error);
@@ -62,11 +72,13 @@ export async function POST(request: NextRequest) {
     // إنشاء القالب
     const template = await prisma.emailTemplate.create({
       data: {
+        id: crypto.randomUUID(),
         name: validatedData.name,
         subject: validatedData.subject,
-        htmlContent: validatedData.htmlContent,
-        textContent: validatedData.textContent,
-        metadata: validatedData.metadata
+        html_content: validatedData.htmlContent,
+        text_content: validatedData.textContent,
+        metadata: validatedData.metadata,
+        updated_at: new Date()
       }
     });
     

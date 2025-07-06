@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
     });
     
     // حساب عدد المقالات لكل تصنيف
-    const categoryIds = categories.map(c => c.id);
+    const categoryIds = categories.map((c: any) => c.id);
     const articleCounts = await prisma.articles.groupBy({
       by: ['category_id'],
       where: {
@@ -99,17 +99,17 @@ export async function GET(request: NextRequest) {
     
     // إنشاء خريطة لعدد المقالات
     const articleCountMap = new Map(
-      articleCounts.map(item => [item.category_id, item._count.id])
+      articleCounts.map((item: any) => [item.category_id, item._count.id])
     );
     
     // جلب التصنيفات الأب إن وجدت
-    const parentIds = [...new Set(categories.map(c => c.parent_id).filter(Boolean))] as string[];
+    const parentIds = [...new Set(categories.map((c: any) => c.parent_id).filter(Boolean))] as string[];
     const parents = parentIds.length > 0 ? await prisma.categories.findMany({
       where: { id: { in: parentIds } },
       select: { id: true, name: true, slug: true }
     }) : [];
     
-    const parentsMap = new Map(parents.map(p => [p.id, p]));
+    const parentsMap = new Map(parents.map((p: any) => [p.id, p]));
 
     // إذا لم تكن هناك تصنيفات، أنشئ تصنيفاً افتراضياً
     if (categories.length === 0) {
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
     }
     
     // تحويل البيانات للتوافق مع الواجهة
-    const formattedCategories = categories.map(category => {
+    const formattedCategories = categories.map((category: any) => {
       const parent = category.parent_id ? parentsMap.get(category.parent_id) : null;
       const articleCount = articleCountMap.get(category.id) || 0;
       

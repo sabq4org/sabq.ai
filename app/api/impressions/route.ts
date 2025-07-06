@@ -211,8 +211,8 @@ export async function GET(request: NextRequest) {
     // حساب الإحصائيات
     const stats = {
       totalViews: interactions.length,
-      uniqueUsers: new Set(interactions.filter(i => i.userId).map(i => i.userId)).size,
-      totalArticles: new Set(interactions.map(i => i.articleId)).size
+      uniqueUsers: new Set(interactions.filter((i: any) => i.userId).map((i: any) => i.userId)).size,
+      totalArticles: new Set(interactions.map((i: any) => i.articleId)).size
     };
     
     return NextResponse.json({

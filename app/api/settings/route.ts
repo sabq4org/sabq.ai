@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       const allSettings = await prisma.siteSettings.findMany();
       
       const settingsMap: any = {};
-      allSettings.forEach(setting => {
+      allSettings.forEach((setting: any) => {
         settingsMap[setting.section] = setting.data;
       });
       

@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     let articles = await prisma.articles.findMany({
       where: {
         status: 'published',
-        publishedAt: {
+        published_at: {
           gte: since
         }
       },
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       },
       orderBy: [
         { views: 'desc' },
-        { publishedAt: 'desc' }
+        { published_at: 'desc' }
       ],
       take: 20
     });
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
         },
         orderBy: [
           { views: 'desc' },
-          { publishedAt: 'desc' }
+          { published_at: 'desc' }
         ],
         take: 20
       });
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
         const prompt = `أنت محرر ذكي في صحيفة سبق. لديك قائمة بالأخبار المنشورة في فترة ${periodName}.
 
 المقالات:
-${articles.map((a, i) => `${i + 1}. ${a.title} - ${a.category?.name || 'عام'} - ${a.views} مشاهدة`).join('\n')}
+${articles.map((a: any, i: number) => `${i + 1}. ${a.title} - ${a.category?.name || 'عام'} - ${a.views} مشاهدة`).join('\n')}
 
 المطلوب:
 1. اختر أهم 3-4 مقالات مناسبة لفترة ${periodName}
@@ -205,7 +205,7 @@ ${articles.map((a, i) => `${i + 1}. ${a.title} - ${a.category?.name || 'عام'}
             contentType: selection.contentType || 'article',
             title: article.title,
             summary: selection.summary || article.excerpt || '',
-            imageUrl: article.featuredImage,
+            imageUrl: article.featured_image,
             displayOrder: contents.length
           });
         }
@@ -229,7 +229,7 @@ ${articles.map((a, i) => `${i + 1}. ${a.title} - ${a.category?.name || 'عام'}
           contentType: 'article',
           title: article.title,
           summary: article.excerpt || '',
-          imageUrl: article.featuredImage,
+          imageUrl: article.featured_image,
           displayOrder: index
         });
       }

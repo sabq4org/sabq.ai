@@ -45,107 +45,102 @@ export async function GET(request: NextRequest) {
       prisma.articles.findMany({
         where: {
           status: 'published',
-          publishedAt: {
+          published_at: {
             gte: realtime ? last24Hours : last3Days
           }
         },
-        include: {
-          category: true,
-          author: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true
-            }
-          }
-        },
         orderBy: {
-          publishedAt: 'desc'
+          published_at: 'desc'
         },
         take: realtime ? 10 : 20 // تقليل العدد
       }),
 
       // 2. التحليلات العميقة الجديدة
-      realtime ? [] : prisma.deepAnalysis.findMany({
+      realtime ? [] : prisma.deep_analyses.findMany({
         where: {
-          analyzedAt: {
+          analyzed_at: {
             gte: last3Days
           }
         },
-        include: {
-          article: {
-            include: {
-              category: true
-            }
-          }
-        },
         orderBy: {
-          analyzedAt: 'desc'
+          analyzed_at: 'desc'
         },
         take: 10 // تقليل العدد
       }),
 
       // 3. التعليقات الجديدة
-      realtime ? [] : prisma.comment.findMany({
+      realtime ? [] : prisma.comments.findMany({
         where: {
           status: 'approved',
-          createdAt: {
+          created_at: {
             gte: last24Hours
           }
         },
-        include: {
-          article: {
-            select: {
-              id: true,
-              title: true,
-              category: true
-            }
-          },
-          user: {
-            select: {
-              name: true,
-              avatar: true
-            }
-          }
-        },
         orderBy: {
-          createdAt: 'desc'
+          created_at: 'desc'
         },
         take: 20 // تقليل العدد
       }),
 
       // 4. التصنيفات الجديدة
-      realtime ? [] : prisma.category.findMany({
+      realtime ? [] : prisma.categories.findMany({
         where: {
-          createdAt: {
+          created_at: {
             gte: last3Days
           }
         },
         orderBy: {
-          createdAt: 'desc'
+          created_at: 'desc'
         },
         take: 5
       }),
 
       // 5. المؤلفون الجدد
-      realtime ? [] : prisma.user.findMany({
+      realtime ? [] : prisma.users.findMany({
         where: {
           role: 'AUTHOR',
-          createdAt: {
+          created_at: {
             gte: last3Days
           }
         },
         orderBy: {
-          createdAt: 'desc'
+          created_at: 'desc'
         },
         take: 5
       })
     ]);
 
+    // جلب بيانات إضافية للمقالات
+    const categoryIds = [...new Set(recentArticles.map((a: any) => a.category_id).filter(Boolean))];
+    const categoriesMap = new Map();
+    if (categoryIds.length > 0) {
+      const categories = await prisma.categories.findMany({
+        where: { id: { in: categoryIds } }
+      });
+      categories.forEach((cat: any) => {
+        categoriesMap.set(cat.id, cat);
+      });
+    }
+
+    // جلب بيانات المؤلفين
+    const authorIds = [...new Set(recentArticles.map((a: any) => a.author_id).filter(Boolean))];
+    const authorsMap = new Map();
+    if (authorIds.length > 0) {
+      const authors = await prisma.users.findMany({
+        where: { id: { in: authorIds } },
+        select: { id: true, name: true, avatar: true }
+      });
+      authors.forEach((author: any) => {
+        authorsMap.set(author.id, author);
+      });
+    }
+
     // تحويل المقالات لأحداث (بدون استعلامات إضافية)
     for (const article of recentArticles) {
-      const publishedAt = article.publishedAt || article.createdAt;
+      const publishedAt = article.published_at || article.created_at;
       const isNew = publishedAt.getTime() > lastHour.getTime();
+      const category = categoriesMap.get(article.category_id);
+      const author = authorsMap.get(article.author_id);
       
       events.push({
         id: `article-${article.id}`,
@@ -155,16 +150,16 @@ export async function GET(request: NextRequest) {
         timestamp: publishedAt.toISOString(),
         title: article.title,
         description: article.excerpt || '',
-        category: article.category?.name || 'عام',
+        category: category?.name || 'عام',
         categoryColor: '#6B7280',
-        author: article.author?.name || 'الكاتب',
-        authorAvatar: article.author?.avatar,
+        author: author?.name || 'الكاتب',
+        authorAvatar: author?.avatar,
         url: `/article/${article.id}`,
         metadata: {
           views: article.views || 0,
           featured: article.featured,
           breaking: article.breaking,
-          readingTime: article.readingTime,
+          readingTime: article.reading_time,
           comments: 0, // تعيين قيمة افتراضية بدلاً من الاستعلام
           shares: 0
         },
@@ -173,24 +168,64 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // جلب بيانات المقالات للتحليلات
+    const analysisArticleIds = [...new Set(recentAnalyses.map((a: any) => a.article_id).filter(Boolean))];
+    const articlesForAnalysisMap = new Map();
+    if (analysisArticleIds.length > 0) {
+      const articlesForAnalysis = await prisma.articles.findMany({
+        where: { id: { in: analysisArticleIds } }
+      });
+      articlesForAnalysis.forEach((article: any) => {
+        articlesForAnalysisMap.set(article.id, article);
+      });
+    }
+
     // تحويل التحليلات لأحداث
     for (const analysis of recentAnalyses) {
+      const article = articlesForAnalysisMap.get(analysis.article_id);
+      const category = article ? categoriesMap.get(article.category_id) : null;
+      
       events.push({
         id: `analysis-${analysis.id}`,
         type: EVENT_TYPES.ANALYSIS_COMPLETED,
-        timestamp: analysis.analyzedAt.toISOString(),
-        title: `تحليل عميق: ${analysis.article.title}`,
-        description: analysis.aiSummary || '',
-        category: analysis.article.category?.name || 'تحليل',
+        timestamp: analysis.analyzed_at.toISOString(),
+        title: `تحليل عميق: ${article?.title || 'مقال'}`,
+        description: analysis.ai_summary || '',
+        category: category?.name || 'تحليل',
         categoryColor: '#8B5CF6',
-        url: `/insights/deep/${analysis.article.id}`,
+        url: `/insights/deep/${analysis.article_id}`,
         metadata: {
           sentiment: analysis.sentiment,
-          readabilityScore: analysis.readabilityScore,
-          engagementScore: analysis.engagementScore
+          readabilityScore: analysis.readability_score,
+          engagementScore: analysis.engagement_score
         },
-        isNew: analysis.analyzedAt.getTime() > lastHour.getTime(),
+        isNew: analysis.analyzed_at.getTime() > lastHour.getTime(),
         icon: '📊'
+      });
+    }
+
+    // جلب بيانات المقالات والمستخدمين للتعليقات
+    const commentArticleIds = [...new Set(recentComments.map((c: any) => c.article_id).filter(Boolean))];
+    const articlesForCommentsMap = new Map();
+    if (commentArticleIds.length > 0) {
+      const articlesForComments = await prisma.articles.findMany({
+        where: { id: { in: commentArticleIds } },
+        select: { id: true, title: true, category_id: true }
+      });
+      articlesForComments.forEach((article: any) => {
+        articlesForCommentsMap.set(article.id, article);
+      });
+    }
+
+    const commentUserIds = [...new Set(recentComments.map((c: any) => c.user_id).filter(Boolean))];
+    const usersMap = new Map();
+    if (commentUserIds.length > 0) {
+      const users = await prisma.users.findMany({
+        where: { id: { in: commentUserIds } },
+        select: { id: true, name: true, avatar: true }
+      });
+      users.forEach((user: any) => {
+        usersMap.set(user.id, user);
       });
     }
 
@@ -199,22 +234,26 @@ export async function GET(request: NextRequest) {
       const content = comment.content.length > 100 
         ? comment.content.substring(0, 97) + '...' 
         : comment.content;
+      
+      const article = articlesForCommentsMap.get(comment.article_id);
+      const user = usersMap.get(comment.user_id);
+      const category = article ? categoriesMap.get(article.category_id) : null;
         
       events.push({
         id: `comment-${comment.id}`,
         type: EVENT_TYPES.COMMENT_ADDED,
-        timestamp: comment.createdAt.toISOString(),
-        title: `تعليق جديد على: ${comment.article.title}`,
+        timestamp: comment.created_at.toISOString(),
+        title: `تعليق جديد على: ${article?.title || 'مقال'}`,
         description: content,
-        category: comment.article.category?.name || 'تعليقات',
+        category: category?.name || 'تعليقات',
         categoryColor: '#10B981',
-        author: comment.user?.name || 'مستخدم',
-        authorAvatar: comment.user?.avatar,
-        url: `/article/${comment.article.id}#comment-${comment.id}`,
+        author: user?.name || 'مستخدم',
+        authorAvatar: user?.avatar,
+        url: `/article/${comment.article_id}#comment-${comment.id}`,
         metadata: {
           likes: comment.likes || 0
         },
-        isNew: comment.createdAt.getTime() > lastHour.getTime(),
+        isNew: comment.created_at.getTime() > lastHour.getTime(),
         icon: '💬'
       });
     }
@@ -224,14 +263,14 @@ export async function GET(request: NextRequest) {
       events.push({
         id: `category-${category.id}`,
         type: EVENT_TYPES.CATEGORY_CREATED,
-        timestamp: category.createdAt.toISOString(),
+        timestamp: category.created_at.toISOString(),
         title: `تصنيف جديد: ${category.name}`,
         description: category.description || '',
         category: 'نظام',
         categoryColor: '#6B7280',
         url: `/categories/${category.slug}`,
         metadata: {},
-        isNew: category.createdAt.getTime() > lastHour.getTime(),
+        isNew: category.created_at.getTime() > lastHour.getTime(),
         icon: '🗂️'
       });
     }
@@ -241,7 +280,7 @@ export async function GET(request: NextRequest) {
       events.push({
         id: `author-${author.id}`,
         type: EVENT_TYPES.AUTHOR_JOINED,
-        timestamp: author.createdAt.toISOString(),
+        timestamp: author.created_at.toISOString(),
         title: `انضم كاتب جديد: ${author.name}`,
         description: 'كاتب في صحيفة سبق',
         category: 'فريق العمل',
@@ -251,7 +290,7 @@ export async function GET(request: NextRequest) {
         metadata: {
           role: author.role
         },
-        isNew: author.createdAt.getTime() > lastHour.getTime(),
+        isNew: author.created_at.getTime() > lastHour.getTime(),
         icon: '✍️'
       });
     }
@@ -320,11 +359,11 @@ export async function GET(request: NextRequest) {
         prisma.articles.count({ 
           where: { 
             status: 'published',
-            publishedAt: { gte: new Date(now.setHours(0, 0, 0, 0)) }
+            published_at: { gte: new Date(now.setHours(0, 0, 0, 0)) }
           } 
         }),
-        prisma.comment.count({ where: { status: 'approved' } }),
-        prisma.user.count({ where: { isVerified: true } }),
+        prisma.comments.count({ where: { status: 'approved' } }),
+        prisma.users.count({ where: { is_verified: true } }),
         prisma.articles.aggregate({
           _sum: { views: true },
           where: { status: 'published' }

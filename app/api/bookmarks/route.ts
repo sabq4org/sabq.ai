@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
       // It doesn't exist, so create it
       const newInteraction = await prisma.interactions.create({
         data: {
+          id: crypto.randomUUID(),
           user_id: userId,
           article_id: itemId,
           type: interactions_type.save

@@ -56,11 +56,11 @@ export async function GET(
     
     // حساب الإحصائيات
     const stats = {
-      totalArticlesRead: interactions.filter(i => i.type === 'view').length,
-      totalLikes: interactions.filter(i => i.type === 'like').length,
-      totalShares: interactions.filter(i => i.type === 'share').length,
+      totalArticlesRead: interactions.filter((i: any) => i.type === 'view').length,
+      totalLikes: interactions.filter((i: any) => i.type === 'like').length,
+      totalShares: interactions.filter((i: any) => i.type === 'share').length,
       totalSaves: savedArticles.length,
-      totalComments: interactions.filter(i => i.type === 'comment').length,
+              totalComments: interactions.filter((i: any) => i.type === 'comment').length,
       averageReadingTime: calculateAverageReadingTime(interactions),
       streakDays: calculateReadingStreak(interactions)
     };

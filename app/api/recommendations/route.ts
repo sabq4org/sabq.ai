@@ -37,8 +37,8 @@ export async function GET(request: NextRequest) {
     });
     
     const readArticleIds = userInteractions
-      .filter(i => i.type === 'view')
-      .map(i => i.articleId);
+      .filter((i: any) => i.type === 'view')
+      .map((i: any) => i.articleId);
     
     // تحليل الأنماط من التفاعلات
     const patterns = analyzeBehaviorPatterns(userInteractions);
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
       });
       
       recommendedArticles.push(
-        ...categoryArticles.map(article => ({
+        ...categoryArticles.map((article: any) => ({
           article,
           reason: `بناءً على اهتمامك بـ ${article.category?.name || 'هذه الفئة'}`,
           score: calculateRecommendationScore(article, userInterests, patterns)
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
         });
         
         recommendedArticles.push(
-          ...similarArticles.map(article => ({
+          ...similarArticles.map((article: any) => ({
             article,
             reason: 'مشابه لما قرأته مؤخراً',
             score: calculateRecommendationScore(article, userInterests, patterns) * 0.8
@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
     });
     
     recommendedArticles.push(
-      ...trendingArticles.map(article => ({
+      ...trendingArticles.map((article: any) => ({
         article,
         reason: 'محتوى رائج',
         score: calculateRecommendationScore(article, userInterests, patterns) * 0.6

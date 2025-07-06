@@ -22,12 +22,12 @@ export async function GET(request: NextRequest) {
     // تحديث سجلات البريد المرتبطة
     await prisma.emailLog.updateMany({
       where: { 
-        subscriberId,
-        unsubscribedAt: null 
+        subscriber_id: subscriberId,
+        unsubscribed_at: null 
       },
       data: {
         status: 'unsubscribed',
-        unsubscribedAt: new Date()
+        unsubscribed_at: new Date()
       }
     });
 

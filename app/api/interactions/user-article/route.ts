@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     let shared = false;
 
     // البحث عن آخر تفاعل من نوع like
-    const lastLikeInteraction = interactions.find(i => 
+    const lastLikeInteraction = interactions.find((i: any) => 
       i.type === 'like'
     );
     if (lastLikeInteraction) {
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     }
 
     // البحث عن آخر تفاعل من نوع save
-    const lastSaveInteraction = interactions.find(i => 
+    const lastSaveInteraction = interactions.find((i: any) => 
       i.type === 'save'
     );
     if (lastSaveInteraction) {
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     }
 
     // المشاركة لا يمكن إلغاؤها، لذا نبحث فقط عن وجودها
-    shared = interactions.some(i => i.type === 'share');
+    shared = interactions.some((i: any) => i.type === 'share');
 
     // الحالة النهائية
     const interactionState = {

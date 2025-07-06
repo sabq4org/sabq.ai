@@ -20,9 +20,9 @@ export async function GET(request: NextRequest) {
     });
     
     // حساب إجمالي النقاط
-    const totalPoints = loyaltyPoints.reduce((sum, point) => sum + point.points, 0);
-    const earnedPoints = loyaltyPoints.filter(p => p.points > 0).reduce((sum, point) => sum + point.points, 0);
-    const redeemedPoints = loyaltyPoints.filter(p => p.points < 0).reduce((sum, point) => sum + Math.abs(point.points), 0);
+    const totalPoints = loyaltyPoints.reduce((sum: number, point: any) => sum + point.points, 0);
+    const earnedPoints = loyaltyPoints.filter((p: any) => p.points > 0).reduce((sum: number, point: any) => sum + point.points, 0);
+    const redeemedPoints = loyaltyPoints.filter((p: any) => p.points < 0).reduce((sum: number, point: any) => sum + Math.abs(point.points), 0);
     
     // تحديد المستوى
     let tier = 'bronze';
@@ -102,11 +102,11 @@ export async function POST(request: NextRequest) {
     // حساب إحصائيات النقاط
     const stats = {
       total_interactions: interactions.length,
-      points_from_reading: loyaltyPoints.filter(p => p.action === 'read' || p.action === 'view').reduce((sum, p) => sum + p.points, 0),
-      points_from_likes: loyaltyPoints.filter(p => p.action === 'like').reduce((sum, p) => sum + p.points, 0),
-      points_from_shares: loyaltyPoints.filter(p => p.action === 'share').reduce((sum, p) => sum + p.points, 0),
-      points_from_saves: loyaltyPoints.filter(p => p.action === 'save').reduce((sum, p) => sum + p.points, 0),
-      recent_activities: loyaltyPoints.slice(0, 10).map(p => ({
+      points_from_reading: loyaltyPoints.filter((p: any) => p.action === 'read' || p.action === 'view').reduce((sum: number, p: any) => sum + p.points, 0),
+      points_from_likes: loyaltyPoints.filter((p: any) => p.action === 'like').reduce((sum: number, p: any) => sum + p.points, 0),
+      points_from_shares: loyaltyPoints.filter((p: any) => p.action === 'share').reduce((sum: number, p: any) => sum + p.points, 0),
+      points_from_saves: loyaltyPoints.filter((p: any) => p.action === 'save').reduce((sum: number, p: any) => sum + p.points, 0),
+      recent_activities: loyaltyPoints.slice(0, 10).map((p: any) => ({
         type: p.action,
         points: p.points,
         article_id: p.referenceId,
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
       }))
     };
     
-    const currentPoints = loyaltyPoints.reduce((sum, p) => sum + p.points, 0);
+    const currentPoints = loyaltyPoints.reduce((sum: number, p: any) => sum + p.points, 0);
     
     // حساب النقاط المطلوبة للمستوى التالي
     const getNextTierPoints = (points: number) => {
