@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
         const categorySlugs = userPreferences.map((pref: any) => {
           const value = pref.value as any;
           return value?.categorySlug || '';
-        }).filter(slug => slug);
+        }).filter((slug: string) => Boolean(slug));
 
         const categories = await prisma.categories.findMany({
           where: {
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
           select: { id: true }
         });
 
-        categoryIds = categories.map(c => c.id);
+        categoryIds = categories.map((c: { id: string }) => c.id);
       }
     }
 
@@ -96,9 +96,9 @@ export async function GET(request: NextRequest) {
     });
 
     // خلط المقالات بشكل ذكي للتنوع
-    const shuffledArticles = personalizedArticles.sort(() => {
+    const shuffledArticles = personalizedArticles.sort((a: any, b: any) => {
       // الاحتفاظ بالمقالات المميزة في الأعلى
-      if (personalizedArticles.some(a => a.featured)) {
+      if (personalizedArticles.some((a: any) => a.featured)) {
         return personalizedArticles[0].featured ? -1 : 1;
       }
       return Math.random() - 0.5;
