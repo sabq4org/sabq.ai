@@ -80,7 +80,17 @@ export async function GET(request: NextRequest) {
     }
 
     // حساب مجموع نقاط الولاء
-    const totalLoyaltyPoints = user.loyaltyPoints.reduce((total, lp) => total + lp.points, 0);
+    const totalLoyaltyPoints = user.loyaltyPoints.reduce((total: number, lp: { points: number }) => total + lp.points, 0);
+
+    // استخراج اهتمامات المستخدم
+    const interests = {
+      categories: user.preferences
+        .filter((pref: { key: string; }) => pref.key.startsWith('category_'))
+        .map((pref: { value: any; }) => pref.value.name),
+      keywords: user.interests
+        .filter((interest: { type: string; }) => interest.type === 'keyword')
+        .map((interest: { name: any; }) => interest.name)
+    };
 
     // إضافة معلومات إضافية
     const responseUser = {
@@ -90,10 +100,7 @@ export async function GET(request: NextRequest) {
       status: 'active', // قيمة افتراضية
       role: user.role || 'user',
       isVerified: user.isVerified || false,
-      interests: user.preferences.map(pref => {
-        const value = pref.value as any;
-        return value?.categorySlug || '';
-      }).filter(interest => interest) // تحويل التفضيلات إلى array من الأسماء
+      interests: interests.categories.concat(interests.keywords)
     };
 
     return corsResponse({
