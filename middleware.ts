@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { DatabaseProtection } from './lib/database-protection';
+// import { DatabaseProtection } from './lib/database-protection';
 
 // قائمة المسارات المحمية
 const protectedPaths = [
@@ -278,8 +278,17 @@ export function middleware(request: NextRequest) {
     const pathParts = request.nextUrl.pathname.split('/');
     const tableName = pathParts[2]; // /api/[tableName]/...
     
+    // قائمة الجداول المحمية
+    const protectedTables = [
+      'users',
+      'articles',
+      'categories',
+      'roles',
+      'permissions'
+    ];
+    
     // التحقق من الجداول المحمية
-    if (DatabaseProtection.isProtectedTable(tableName)) {
+    if (protectedTables.includes(tableName)) {
       console.error(`⚠️ محاولة حذف محظورة على ${tableName}`);
       
       return NextResponse.json(
