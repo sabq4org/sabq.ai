@@ -187,18 +187,19 @@ export async function POST(request: NextRequest) {
         // تسجيل التفاعل في قاعدة البيانات
         const interaction = await prisma.interactions.upsert({
           where: {
-            userId_articleId_type: {
-              userId,
-              articleId,
+            user_id_article_id_type: {
+              user_id: userId,
+              article_id: articleId,
               type: interactionType
             }
           },
           update: {
-            createdAt: new Date()
+            created_at: new Date()
           },
           create: {
-            userId,
-            articleId,
+            id: `interaction-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            user_id: userId,
+            article_id: articleId,
             type: interactionType
           }
         });
@@ -216,13 +217,15 @@ export async function POST(request: NextRequest) {
         
         if (points > 0 && userId !== 'guest') {
           // تسجيل نقاط الولاء
-          await prisma.loyaltyPoints.create({
+          await prisma.loyalty_points.create({
             data: {
-              userId,
+              id: `loyalty-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              user_id: userId,
               points,
               action: `${interactionType} على المقال`,
-              referenceId: articleId,
-              referenceType: 'article',
+              reference_id: articleId,
+              reference_type: 'article',
+              created_at: new Date(),
               metadata: {
                 source,
                 device: request.headers.get('user-agent') || undefined
@@ -373,7 +376,7 @@ async function updateUserPreferences(userId: string, categoryId: number, interac
     const weight = weights[interactionType] || 0;
     const currentScore = preferences[userId].categories[categoryId] || 0;
     preferences[userId].categories[categoryId] = Math.max(0, Math.min(5, currentScore + weight));
-    preferences[userId].lastUpdated = new Date().toISOString();
+    preferences[userId].last_updated = new Date().toISOString();
 
     await fs.writeFile(prefsPath, JSON.stringify(preferences, null, 2));
   } catch (error) {

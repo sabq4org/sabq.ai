@@ -14,11 +14,11 @@ export async function GET(request: NextRequest) {
       rejected,
       aiFlagged
     ] = await Promise.all([
-      prisma.comment.count(),
-      prisma.comment.count({ where: { status: 'pending' } }),
-      prisma.comment.count({ where: { status: 'approved' } }),
-      prisma.comment.count({ where: { status: 'rejected' } }),
-      prisma.comment.count({ where: { status: 'pending' } }) // التعليقات المعلقة كبديل للـ AI flagged
+      prisma.comments.count(),
+      prisma.comments.count({ where: { status: 'pending' } }),
+      prisma.comments.count({ where: { status: 'approved' } }),
+      prisma.comments.count({ where: { status: 'rejected' } }),
+      prisma.comments.count({ where: { status: 'pending' } }) // التعليقات المعلقة كبديل للـ AI flagged
     ]);
 
     // بيانات وهمية لسجلات الذكاء الاصطناعي (يمكن استبدالها لاحقاً)
@@ -47,25 +47,25 @@ export async function GET(request: NextRequest) {
       todayApproved,
       todayRejected
     ] = await Promise.all([
-      prisma.comment.count({
-        where: { createdAt: { gte: last24Hours } }
+      prisma.comments.count({
+        where: { created_at: { gte: last24Hours } }
       }),
-      prisma.comment.count({
+      prisma.comments.count({
         where: {
           status: 'approved',
-          updatedAt: { gte: last24Hours }
+          updated_at: { gte: last24Hours }
         }
       }),
-      prisma.comment.count({
+      prisma.comments.count({
         where: {
           status: 'rejected',
-          updatedAt: { gte: last24Hours }
+          updated_at: { gte: last24Hours }
         }
       })
     ]);
 
     // تحليلات التصنيف
-    const classificationStats = await prisma.comment.groupBy({
+    const classificationStats = await prisma.comments.groupBy({
       by: ['status'],
       _count: true,
       where: {
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
         approved: todayApproved,
         rejected: todayRejected
       },
-      classifications: classificationStats.reduce((acc, stat) => {
+      classifications: classificationStats.reduce((acc: Record<string, number>, stat: any) => {
         acc[stat['status']!] = stat._count;
         return acc;
       }, {} as Record<string, number>)

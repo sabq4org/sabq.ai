@@ -16,13 +16,13 @@ export async function GET(request: NextRequest) {
       where: { id: logId },
       data: {
         status: 'clicked',
-        clickedAt: new Date(),
+        clicked_at: new Date(),
         meta: {
           clickedUrl: targetUrl,
           clickedAt: new Date().toISOString()
         }
       },
-    }).catch(err => {
+    }).catch((err: any) => {
       console.error('Error updating email log:', err);
     });
 

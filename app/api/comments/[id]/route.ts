@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 // دالة مساعدة للتحقق من دور المستخدم
 async function getUserRole(userId: string): Promise<string> {
-  const user = await prisma.user.findUnique({
+  const user = await prisma.users.findUnique({
     where: { id: userId },
     select: { role: true }
   });
@@ -31,7 +31,7 @@ export async function PUT(
     const { id: commentId } = await params;
 
     // جلب التعليق الحالي
-    const comment = await prisma.comment.findUnique({
+    const comment = await prisma.comments.findUnique({
       where: { id: commentId }
     });
 
@@ -44,7 +44,7 @@ export async function PUT(
 
     // التحقق من الصلاحيات
     const userRole = await getUserRole(user.id);
-    const canEdit = comment.userId === user.id || ['admin', 'moderator'].includes(userRole);
+    const canEdit = comment.user_id === user.id || ['admin', 'moderator'].includes(userRole);
 
     if (!canEdit) {
       return NextResponse.json(
@@ -54,7 +54,7 @@ export async function PUT(
     }
 
     // تحديث التعليق
-    const updatedComment = await prisma.comment.update({
+    const updatedComment = await prisma.comments.update({
       where: { id: commentId },
       data: {
         content,
@@ -62,15 +62,6 @@ export async function PUT(
           ...((comment.metadata as any) || {}),
           editedAt: new Date().toISOString(),
           editedBy: user.id
-        }
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true
-          }
         }
       }
     });
@@ -110,13 +101,8 @@ export async function DELETE(
     const { id: commentId } = await params;
 
     // جلب التعليق
-    const comment = await prisma.comment.findUnique({
-      where: { id: commentId },
-      include: {
-        _count: {
-          select: { replies: true }
-        }
-      }
+    const comment = await prisma.comments.findUnique({
+      where: { id: commentId }
     });
 
     if (!comment) {
@@ -128,7 +114,7 @@ export async function DELETE(
 
     // التحقق من الصلاحيات
     const userRole = await getUserRole(user.id);
-    const canDelete = comment.userId === user.id || ['admin', 'moderator'].includes(userRole);
+    const canDelete = comment.user_id === user.id || ['admin', 'moderator'].includes(userRole);
 
     if (!canDelete) {
       return NextResponse.json(
@@ -138,8 +124,13 @@ export async function DELETE(
     }
 
     // إذا كان للتعليق ردود، نقوم بتغيير المحتوى بدلاً من الحذف
-    if (comment._count.replies > 0) {
-      await prisma.comment.update({
+    // نحتاج للتحقق من وجود ردود بطريقة منفصلة
+    const repliesCount = await prisma.comments.count({
+      where: { parent_id: commentId }
+    });
+
+    if (repliesCount > 0) {
+      await prisma.comments.update({
         where: { id: commentId },
         data: {
           content: '[تم حذف هذا التعليق]',
@@ -148,7 +139,7 @@ export async function DELETE(
       });
     } else {
       // حذف التعليق نهائياً إذا لم يكن له ردود
-      await prisma.comment.delete({
+      await prisma.comments.delete({
         where: { id: commentId }
       });
     }
@@ -158,7 +149,7 @@ export async function DELETE(
       await prisma.$executeRaw`
         UPDATE articles 
         SET comments_count = comments_count - 1
-        WHERE id = ${comment.articleId}
+        WHERE id = ${comment.article_id}
       `;
     }
 

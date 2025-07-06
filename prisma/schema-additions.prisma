@@ -1,0 +1,118 @@
+// هذه الإضافات يجب دمجها مع schema.prisma الرئيسي
+
+// جدول أعضاء الفريق
+model team_members {
+  id            String   @id
+  name          String   @db.VarChar(255)
+  role          String   @db.VarChar(100)
+  department    String?  @db.VarChar(100)
+  bio           String?  @db.Text
+  avatar        String?  @db.Text
+  email         String?  @unique @db.VarChar(255)
+  phone         String?  @db.VarChar(50)
+  social_links  Json?
+  is_active     Boolean  @default(true)
+  display_order Int      @default(0)
+  created_at    DateTime @default(now())
+  updated_at    DateTime
+
+  @@index([is_active])
+  @@index([department])
+}
+
+// جدول رموز التحقق من البريد الإلكتروني
+model email_verification_codes {
+  id         String   @id
+  email      String   @db.VarChar(255)
+  code       String   @db.VarChar(6)
+  user_id    String?
+  expires_at DateTime
+  used_at    DateTime?
+  created_at DateTime @default(now())
+
+  @@index([email])
+  @@index([code])
+  @@index([expires_at])
+}
+
+// جدول رموز إعادة تعيين كلمة المرور
+model password_reset_tokens {
+  id         String   @id
+  user_id    String
+  token      String   @unique @db.VarChar(255)
+  expires_at DateTime
+  used_at    DateTime?
+  created_at DateTime @default(now())
+
+  @@index([user_id])
+  @@index([token])
+  @@index([expires_at])
+}
+
+// جدول القوالب
+model templates {
+  id           String   @id
+  name         String   @db.VarChar(255)
+  slug         String   @unique @db.VarChar(255)
+  description  String?  @db.Text
+  category     String   @db.VarChar(50)
+  content      Json
+  variables    Json?
+  preview_data Json?
+  is_active    Boolean  @default(true)
+  usage_count  Int      @default(0)
+  created_by   String?
+  created_at   DateTime @default(now())
+  updated_at   DateTime
+
+  @@index([slug])
+  @@index([category])
+  @@index([is_active])
+}
+
+// جدول معاينات القوالب
+model template_previews {
+  id          String   @id
+  template_id String
+  title       String   @db.VarChar(500)
+  content     String   @db.Text
+  metadata    Json?
+  created_at  DateTime @default(now())
+
+  @@index([template_id])
+}
+
+// جدول إعدادات كتل الصفحة الرئيسية
+model home_blocks_config {
+  id            String   @id
+  block_type    String   @db.VarChar(50)
+  title         String   @db.VarChar(255)
+  subtitle      String?  @db.VarChar(255)
+  settings      Json
+  display_order Int      @default(0)
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime
+
+  @@index([block_type])
+  @@index([display_order])
+  @@index([is_active])
+}
+
+// جدول الكتل الذكية (موجود في البيانات لكن غير موجود في Schema)
+model smart_blocks {
+  id             String   @id
+  name           String   @db.VarChar(255)
+  type           String   @db.VarChar(50)
+  config         Json
+  ai_config      Json?
+  display_rules  Json?
+  is_active      Boolean  @default(true)
+  last_updated   DateTime?
+  performance    Json?
+  created_at     DateTime @default(now())
+  updated_at     DateTime
+
+  @@index([type])
+  @@index([is_active])
+} 

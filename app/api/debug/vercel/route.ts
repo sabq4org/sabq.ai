@@ -41,7 +41,7 @@ export async function GET() {
     diagnostics.connection.status = '✅ SUCCESS';
 
     console.log('Attempting a query...');
-    const userCount = await prisma.user.count();
+    const userCount = await prisma.users.count();
     diagnostics.connection.data = { userCount };
     console.log(`Query successful. User count: ${userCount}`);
 

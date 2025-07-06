@@ -20,25 +20,7 @@ export async function GET(
   try {
     const { id } = await params;
     const subscriber = await prisma.subscriber.findUnique({
-      where: { id },
-      include: {
-        emailLogs: {
-          orderBy: { eventAt: 'desc' },
-          take: 10,
-          include: {
-            job: {
-              include: {
-                template: {
-                  select: {
-                    name: true,
-                    subject: true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+      where: { id }
     });
     
     if (!subscriber) {
@@ -48,9 +30,43 @@ export async function GET(
       );
     }
     
+    // جلب سجلات البريد الإلكتروني بشكل منفصل
+    const emailLogs = await prisma.emailLog.findMany({
+      where: { subscriber_id: id },
+      orderBy: { event_at: 'desc' },
+      take: 10
+    });
+    
+    // جلب بيانات الوظائف والقوالب
+    const jobIds = emailLogs.map(log => log.job_id).filter((id): id is string => id !== null);
+    const jobs = jobIds.length > 0 ? await prisma.emailJob.findMany({
+      where: { id: { in: jobIds } }
+    }) : [];
+    
+    const templateIds = jobs.map(job => job.template_id).filter((id): id is string => id !== null);
+    const templates = templateIds.length > 0 ? await prisma.emailTemplate.findMany({
+      where: { id: { in: templateIds } },
+      select: { id: true, name: true, subject: true }
+    }) : [];
+    
+    const jobsMap = new Map(jobs.map(job => [job.id, job]));
+    const templatesMap = new Map(templates.map(template => [template.id, template]));
+    
+    // إضافة بيانات الوظائف والقوالب لسجلات البريد
+    const emailLogsWithDetails = emailLogs.map(log => ({
+      ...log,
+      job: log.job_id ? jobsMap.get(log.job_id) : null,
+      template: log.job_id ? (jobsMap.get(log.job_id)?.template_id ? templatesMap.get(jobsMap.get(log.job_id)!.template_id!) : null) : null
+    }));
+    
+    const subscriberWithLogs = {
+      ...subscriber,
+      emailLogs: emailLogsWithDetails
+    };
+    
     return NextResponse.json({
       success: true,
-      data: subscriber
+      data: subscriberWithLogs
     });
   } catch (error) {
     console.error('خطأ في جلب المشترك:', error);

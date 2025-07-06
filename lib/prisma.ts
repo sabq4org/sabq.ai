@@ -1,11 +1,11 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from './generated/prisma'
 import { setupPrismaProtection } from './database-protection'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-// إنشاء PrismaClient مع معالجة الأخطاء
+// إنشاء PrismaClient مع معالجة الأخطاء وإعدادات الأداء المحسّنة
 function createPrismaClient() {
   try {
     console.log('[Prisma] DATABASE_URL exists:', !!process.env.DATABASE_URL);
@@ -19,21 +19,40 @@ function createPrismaClient() {
     }
     
     const client = new PrismaClient({
-      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+      log: process.env.NODE_ENV === 'development' 
+        ? ['query', 'error', 'warn'] 
+        : ['error'],
       datasources: {
         db: {
           url: process.env.DATABASE_URL
         }
-      }
+      },
+      // إعدادات الأداء المحسّنة
+      errorFormat: 'minimal',
     });
 
+    // إعدادات Connection Pool للأداء العالي
+    // يتم تطبيقها تلقائياً من خلال DATABASE_URL parameters:
+    // ?connection_limit=25&connect_timeout=10&pool_timeout=10&socket_timeout=10
+    
     // تفعيل حماية قاعدة البيانات
     if (process.env.ENABLE_DB_PROTECTION === 'true') {
       setupPrismaProtection(client);
       console.log('🔒 تم تفعيل حماية قاعدة البيانات');
     }
 
-    console.log('[Prisma] Client created successfully');
+    // إضافة middleware لقياس الأداء في بيئة التطوير
+    if (process.env.NODE_ENV === 'development') {
+      client.$use(async (params: any, next: any) => {
+        const before = Date.now();
+        const result = await next(params);
+        const after = Date.now();
+        console.log(`[Prisma Query] ${params.model}.${params.action} took ${after - before}ms`);
+        return result;
+      });
+    }
+
+    console.log('[Prisma] Client created successfully with optimized settings');
     return client;
   } catch (error) {
     console.error('[Prisma] Failed to create client:', error);

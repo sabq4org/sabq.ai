@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       data: {
         userId,
         action: 'interests_updated',
-        metadata: { interests: interests.map(i => i.name || i) }
+        metadata: { interests: interests.map((i: any) => i.name || i) }
       }
     });
 

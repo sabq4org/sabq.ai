@@ -10,13 +10,13 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         title: true,
-        featuredImage: true,
-        socialImage: true
+        featured_image: true,
+        social_image: true
       },
       where: {
         OR: [
-          { featuredImage: { not: null } },
-          { socialImage: { not: null } }
+          { featured_image: { not: null } },
+          { social_image: { not: null } }
         ]
       }
     });
@@ -27,14 +27,14 @@ export async function GET(request: NextRequest) {
       const articleResult = {
         id: article.id,
         title: article.title,
-        featuredImage: {
-          original: article.featuredImage,
+        featured_image: {
+          original: article.featured_image,
           exists: false,
           fixed: false,
           newUrl: null as string | null
         },
-        socialImage: {
-          original: article.socialImage,
+        social_image: {
+          original: article.social_image,
           exists: false,
           fixed: false,
           newUrl: null as string | null
@@ -42,37 +42,37 @@ export async function GET(request: NextRequest) {
       };
 
       // التحقق من صورة المقال الرئيسية
-      if (article.featuredImage) {
-        const exists = await checkImageExists(article.featuredImage);
-        articleResult.featuredImage.exists = exists;
+      if (article.featured_image) {
+        const exists = await checkImageExists(article.featured_image);
+        articleResult.featured_image.exists = exists;
         
         if (!exists) {
           // استخدام صورة افتراضية
-          articleResult.featuredImage.newUrl = getDefaultImageUrl('article');
-          articleResult.featuredImage.fixed = true;
+          articleResult.featured_image.newUrl = getDefaultImageUrl('article');
+          articleResult.featured_image.fixed = true;
           
           // تحديث قاعدة البيانات
           await prisma.articles.update({
             where: { id: article.id },
-            data: { featuredImage: getDefaultImageUrl('article') }
+            data: { featured_image: getDefaultImageUrl('article') }
           });
         }
       }
 
       // التحقق من صورة التواصل الاجتماعي
-      if (article.socialImage) {
-        const exists = await checkImageExists(article.socialImage);
-        articleResult.socialImage.exists = exists;
+      if (article.social_image) {
+        const exists = await checkImageExists(article.social_image);
+        articleResult.social_image.exists = exists;
         
         if (!exists) {
           // استخدام صورة افتراضية
-          articleResult.socialImage.newUrl = getDefaultImageUrl('article');
-          articleResult.socialImage.fixed = true;
+          articleResult.social_image.newUrl = getDefaultImageUrl('article');
+          articleResult.social_image.fixed = true;
           
           // تحديث قاعدة البيانات
           await prisma.articles.update({
             where: { id: article.id },
-            data: { socialImage: getDefaultImageUrl('article') }
+            data: { social_image: getDefaultImageUrl('article') }
           });
         }
       }
@@ -82,8 +82,8 @@ export async function GET(request: NextRequest) {
 
     const summary = {
       totalArticles: results.length,
-      articlesWithMissingImages: results.filter(r => !r.featuredImage.exists || !r.socialImage.exists).length,
-      fixedImages: results.filter(r => r.featuredImage.fixed || r.socialImage.fixed).length,
+      articlesWithMissingImages: results.filter(r => !r.featured_image.exists || !r.social_image.exists).length,
+      fixedImages: results.filter(r => r.featured_image.fixed || r.social_image.fixed).length,
       results
     };
 
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
     // التحقق من وجود المقال
     const article = await prisma.articles.findUnique({
       where: { id: articleId },
-      select: { id: true, title: true, featuredImage: true, socialImage: true }
+      select: { id: true, title: true, featured_image: true, social_image: true }
     });
 
     if (!article) {
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
     }
 
     // حذف الصورة القديمة من Cloudinary إذا كانت موجودة
-    const oldImageUrl = imageType === 'featured' ? article.featuredImage : article.socialImage;
+    const oldImageUrl = imageType === 'featured' ? article.featured_image : article.social_image;
     if (oldImageUrl) {
       const publicId = extractPublicIdFromUrl(oldImageUrl);
       if (publicId) {
@@ -141,13 +141,13 @@ export async function POST(request: NextRequest) {
 
     // تحديث الصورة في قاعدة البيانات
     const updateData = imageType === 'featured' 
-      ? { featuredImage: newImageUrl }
-      : { socialImage: newImageUrl };
+      ? { featured_image: newImageUrl }
+      : { social_image: newImageUrl };
 
     const updatedArticle = await prisma.articles.update({
       where: { id: articleId },
       data: updateData,
-      select: { id: true, title: true, featuredImage: true, socialImage: true }
+      select: { id: true, title: true, featured_image: true, social_image: true }
     });
 
     return NextResponse.json({

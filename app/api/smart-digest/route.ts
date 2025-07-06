@@ -101,16 +101,16 @@ export async function GET(request: NextRequest) {
     });
     
     // حساب النقاط وترتيب المقالات
-    const scoredArticles = articles.map(article => ({
+    const scoredArticles = articles.map((article: any) => ({
       ...article,
       score: calculateScore(article, intent)
     }));
     
     // ترتيب حسب النقاط وأخذ أفضل 3
     const topArticles = scoredArticles
-      .sort((a, b) => b.score - a.score)
+      .sort((a: any, b: any) => b.score - a.score)
       .slice(0, 3)
-      .map(({ score, ...article }) => article); // إزالة النقاط من النتيجة النهائية
+      .map(({ score, ...article }: any) => article); // إزالة النقاط من النتيجة النهائية
     
     // إذا لم نجد مقالات كافية، جلب مقالات إضافية
     if (topArticles.length < 3) {
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
         where: {
           status: 'published',
           id: {
-            notIn: topArticles.map(a => a.id)
+            notIn: topArticles.map((a: any) => a.id)
           }
         },
         include: {

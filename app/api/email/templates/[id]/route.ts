@@ -23,13 +23,18 @@ export async function GET(
   try {
     const { id } = await params;
     const template = await prisma.emailTemplate.findUnique({
-      where: { id },
-      include: {
-        _count: {
-          select: { emailJobs: true }
-        }
-      }
+      where: { id }
     });
+    
+    // جلب عدد المهام المرتبطة بهذا القالب
+    const jobsCount = await prisma.emailJob.count({
+      where: { template_id: id }
+    });
+    
+    const templateWithCount = {
+      ...template,
+      _count: { emailJobs: jobsCount }
+    };
     
     if (!template) {
       return NextResponse.json(
@@ -40,7 +45,7 @@ export async function GET(
     
     return NextResponse.json({
       success: true,
-      data: template
+      data: templateWithCount
     });
   } catch (error) {
     console.error('خطأ في جلب القالب:', error);
@@ -101,7 +106,7 @@ export async function DELETE(
     // التحقق من عدم استخدام القالب في مهام نشطة
     const activeJobs = await prisma.emailJob.count({
       where: {
-        templateId: id,
+        template_id: id,
         status: { in: ['queued', 'sending'] }
       }
     });

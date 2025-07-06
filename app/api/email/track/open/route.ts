@@ -26,9 +26,9 @@ export async function GET(request: NextRequest) {
       where: { id: logId },
       data: {
         status: 'opened',
-        openedAt: new Date(),
+        opened_at: new Date(),
       },
-    }).catch(err => {
+    }).catch((err: any) => {
       console.error('Error updating email log:', err);
     });
 

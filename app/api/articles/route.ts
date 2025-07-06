@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { promises as fs } from 'fs'
 import path from 'path'
-import { prisma } from '@/lib/prisma'
+import { PrismaClient } from '@/lib/generated/prisma'
+
+const prisma = new PrismaClient()
 import { filterTestContent, rejectTestContent } from '@/lib/data-protection'
 import jwt from 'jsonwebtoken'
 
@@ -159,11 +161,11 @@ export async function GET(request: NextRequest) {
         name: 'غير مصنف',
         slug: 'uncategorized'
       },
-      featuredImage: article.featured_image,
-      readingTime: article.reading_time,
-      createdAt: article.created_at,
-      updatedAt: article.updated_at,
-      publishedAt: article.published_at
+      featured_image: article.featured_image,
+      reading_time: article.reading_time,
+      created_at: article.created_at,
+      updated_at: article.updated_at,
+      published_at: article.published_at
     }))
     console.timeEnd('🔄 تحويل وتنسيق البيانات')
 
@@ -233,12 +235,13 @@ export async function POST(request: NextRequest) {
     // إنشاء المقال في قاعدة البيانات البعيدة
     const article = await prisma.articles.create({
       data: {
-        title,
-        content,
-        excerpt: excerpt || content.substring(0, 200) + '...',
+        id: crypto.randomUUID(),
+        title: String(title),
+        content: String(content),
+        excerpt: excerpt ? String(excerpt) : content.substring(0, 200) + '...',
         category_id: category_id || null,
-        status,
-        featured_image: featured_image,
+        status: String(status),
+        featured_image: featured_image || null,
         metadata: {
           ...metadata,
           createdAt: new Date().toISOString(),
@@ -249,7 +252,8 @@ export async function POST(request: NextRequest) {
         author_id: author_id || 'default-author-id', // استخدام author_id المرسل أو القيمة الافتراضية
         slug: generateSlug(title),
         views: 0,
-        reading_time: Math.ceil(content.split(' ').length / 200) // تقدير وقت القراءة
+        reading_time: Math.ceil(content.split(' ').length / 200), // تقدير وقت القراءة
+        updated_at: new Date()
       }
     })
 

@@ -27,7 +27,7 @@ export async function POST(
                      'unknown';
 
     // التحقق من وجود التعليق
-    const comment = await prisma.comment.findUnique({
+    const comment = await prisma.comments.findUnique({
       where: { id: commentId }
     });
 

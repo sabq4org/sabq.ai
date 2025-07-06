@@ -32,13 +32,13 @@ export async function GET(
     
     // حساب الإحصائيات
     const stats = {
-      articlesRead: interactions.filter(i => 
+      articlesRead: interactions.filter((i: any) => 
         i.type === 'view'
       ).length,
-      interactions: interactions.filter(i => 
+      interactions: interactions.filter((i: any) => 
         ['like', 'comment', 'save'].includes(i.type)
       ).length,
-      shares: interactions.filter(i => 
+      shares: interactions.filter((i: any) => 
         i.type === 'share'
       ).length
     };

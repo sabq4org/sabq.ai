@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { parse } from 'csv-parse/sync';
+import crypto from 'crypto';
 
 // مخطط التحقق من بيانات المشترك
 const subscriberSchema = z.object({
@@ -53,19 +54,27 @@ export async function GET(request: NextRequest) {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          _count: {
-            select: { emailLogs: true }
-          }
-        }
+        orderBy: { created_at: 'desc' }
       }),
       prisma.subscriber.count({ where })
     ]);
     
+    // جلب عدد سجلات البريد لكل مشترك
+    const subscriberIds = subscribers.map(s => s.id);
+    const logsCounts = subscriberIds.length > 0 ? await prisma.emailLog.groupBy({
+      by: ['subscriber_id'],
+      where: { subscriber_id: { in: subscriberIds } },
+      _count: { subscriber_id: true }
+    }) : [];
+    const logsCountMap = new Map(logsCounts.map(lc => [lc.subscriber_id, lc._count.subscriber_id]));
+    const subscribersWithCounts = subscribers.map(s => ({
+      ...s,
+      emailLogsCount: logsCountMap.get(s.id) || 0
+    }));
+    
     return NextResponse.json({
       success: true,
-      data: subscribers,
+      data: subscribersWithCounts,
       pagination: {
         page,
         limit,
@@ -127,10 +136,12 @@ export async function POST(request: NextRequest) {
     // إنشاء مشترك جديد
     const subscriber = await prisma.subscriber.create({
       data: {
+        id: crypto.randomUUID(),
         email: validatedData.email,
         name: validatedData.name,
         status: validatedData.status || 'active',
-        preferences: validatedData.preferences || undefined
+        preferences: validatedData.preferences || undefined,
+        updated_at: new Date()
       }
     });
     
@@ -207,10 +218,12 @@ export async function PUT(request: NextRequest) {
         // إضافة المشترك
         await prisma.subscriber.create({
           data: {
+            id: crypto.randomUUID(),
             email,
             name,
             status: 'active',
-            metadata: { source: 'csv_import' }
+            metadata: { source: 'csv_import' },
+            updated_at: new Date()
           }
         });
         
