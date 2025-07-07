@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     // جلب معرفات المقالات من التفاعلات
     const articleIds = userInteractions
       .map((interaction: { article_id: string | null }) => interaction.article_id)
-      .filter((id): id is string => !!id);
+      .filter((id: string | null): id is string => !!id);
     
     // جلب مقالات مع تصنيفاتها
     const articlesWithCategories = articleIds.length > 0 ? await prisma.articles.findMany({
