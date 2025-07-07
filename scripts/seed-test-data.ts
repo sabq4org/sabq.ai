@@ -20,7 +20,7 @@ async function main() {
 
     // إنشاء فئات
     const categories = await Promise.all([
-      prisma.category.create({
+      prisma.categories.create({
         data: {
           name: 'أخبار',
           slug: 'news',
@@ -30,7 +30,7 @@ async function main() {
           color: '#FF0000'
         }
       }),
-      prisma.category.create({
+      prisma.categories.create({
         data: {
           name: 'رياضة',
           slug: 'sports',
@@ -40,7 +40,7 @@ async function main() {
           color: '#00FF00'
         }
       }),
-      prisma.category.create({
+      prisma.categories.create({
         data: {
           name: 'تقنية',
           slug: 'tech',

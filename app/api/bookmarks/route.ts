@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 import { interactions_type, interactions } from '@/lib/generated/prisma';
 import jwt from 'jsonwebtoken';
 

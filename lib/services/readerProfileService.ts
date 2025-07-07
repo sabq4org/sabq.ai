@@ -1,5 +1,7 @@
 import { ReaderProfile, ReaderPersonality, ReaderTrait } from '@/types/reader-profile';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 
 // تحديد الشخصية المعرفية بناءً على السلوك
 function determinePersonality(
@@ -155,7 +157,7 @@ export async function buildReaderProfile(userId: string): Promise<ReaderProfile>
     });
 
     // جلب معلومات المقالات والتصنيفات بشكل منفصل
-    const articleIds = [...new Set(interactions.map(i => i.article_id))];
+    const articleIds = [...new Set(interactions.map((i: { article_id: string }) => i.article_id))];
     const articles = await prisma.articles.findMany({
       where: { id: { in: articleIds } },
       select: {
@@ -166,12 +168,12 @@ export async function buildReaderProfile(userId: string): Promise<ReaderProfile>
 
     // إنشاء خريطة للمقالات وتصنيفاتها
     const articleCategoryMap = new Map<string, string | null>();
-    articles.forEach(article => {
+    articles.forEach((article: { id: string, category_id: string | null }) => {
       articleCategoryMap.set(article.id, article.category_id);
     });
 
     // جلب التصنيفات
-    const categoryIds = [...new Set(articles.map(a => a.category_id).filter(id => id !== null))] as string[];
+    const categoryIds = [...new Set(articles.map((a: { category_id: string | null }) => a.category_id).filter((id: string | null): id is string => id !== null))] as string[];
     const categories = await prisma.categories.findMany({
       where: { id: { in: categoryIds } },
       select: {
@@ -182,27 +184,27 @@ export async function buildReaderProfile(userId: string): Promise<ReaderProfile>
 
     // إنشاء خريطة للتصنيفات
     const categoryMap = new Map<string, string>();
-    categories.forEach((category: any) => {
+    categories.forEach((category: { id: string, name: string }) => {
       categoryMap.set(category.id, category.name);
     });
 
     // حساب الإحصائيات
     const totalInteractions = interactions.length;
-    const uniqueArticles = new Set(interactions.map(i => i.article_id)).size;
+    const uniqueArticles = new Set(interactions.map((i: { article_id: string }) => i.article_id)).size;
     
     // حساب التفاعلات حسب النوع
-    const interactionsByType = interactions.reduce((acc, interaction) => {
+    const interactionsByType = interactions.reduce((acc: any, interaction: any) => {
       acc[interaction.type] = (acc[interaction.type] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
     // حساب التفضيلات حسب التصنيف
     const categoryPreferences = interactions
-      .filter(i => {
+      .filter((i: any) => {
         const categoryId = articleCategoryMap.get(i.article_id);
         return categoryId && categoryMap.has(categoryId);
       })
-      .reduce((acc, interaction) => {
+      .reduce((acc: any, interaction: any) => {
         const categoryId = articleCategoryMap.get(interaction.article_id)!;
         const categoryName = categoryMap.get(categoryId)!;
         
@@ -214,8 +216,8 @@ export async function buildReaderProfile(userId: string): Promise<ReaderProfile>
       }, {} as Record<string, { count: number; percentage: number }>);
 
     // حساب النسب المئوية للتصنيفات
-    const totalCategoryInteractions = Object.values(categoryPreferences).reduce((sum, cat) => sum + cat.count, 0);
-    Object.keys(categoryPreferences).forEach(category => {
+    const totalCategoryInteractions = Object.values(categoryPreferences).reduce((sum: number, cat: any) => sum + cat.count, 0);
+    Object.keys(categoryPreferences).forEach((category: string) => {
       categoryPreferences[category].percentage = totalCategoryInteractions > 0 
         ? Math.round((categoryPreferences[category].count / totalCategoryInteractions) * 100)
         : 0;
@@ -232,7 +234,7 @@ export async function buildReaderProfile(userId: string): Promise<ReaderProfile>
     const streakDays = calculateStreakDays(interactions);
 
     // تحضير توزيع التصنيفات للشخصية
-    const categoryDistribution = Object.entries(categoryPreferences).reduce((acc, [name, data]) => {
+    const categoryDistribution = Object.entries(categoryPreferences).reduce((acc: any, [name, data]: [string, any]) => {
       acc[name] = data.count;
       return acc;
     }, {} as Record<string, number>);
@@ -264,11 +266,11 @@ export async function buildReaderProfile(userId: string): Promise<ReaderProfile>
         streakDays,
         loyaltyPoints: loyaltyPoints._sum.points || 0,
         favoriteCategories: Object.entries(categoryPreferences)
-          .sort((a, b) => b[1].count - a[1].count)
+          .sort((a, b) => (b[1] as any).count - (a[1] as any).count)
           .slice(0, 3)
           .map(([name, data]) => ({
             name,
-            percentage: data.percentage
+            percentage: (data as any).percentage
           })),
         interactionBreakdown: {
           views: interactionsByType.view || 0,

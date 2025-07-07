@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { PrismaClient } from '@/lib/generated/prisma'
 import { requirePermission } from '@/lib/auth/permissions'
+
+const prisma = new PrismaClient()
 
 // جلب مستخدم محدد - يتطلب صلاحية users.read
 export async function GET(

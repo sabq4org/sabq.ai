@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { PrismaClient } from '@/lib/generated/prisma'
+
+const prisma = new PrismaClient()
 import { getCurrentUser } from '@/app/lib/auth'
 
 export const runtime = 'nodejs'
@@ -73,14 +75,14 @@ export async function POST(request: NextRequest) {
           description: rest.description,
           color: rest.color || rest.color_hex,
           icon: rest.icon,
-          parentId: rest.parent_id || rest.parentId,
-          displayOrder: rest.order_index || rest.display_order || rest.displayOrder || 0,
-          isActive: rest.is_active !== false && rest.isActive !== false,
+          parent_id: rest.parent_id || rest.parentId,
+          display_order: rest.order_index || rest.display_order || rest.displayOrder || 0,
+          is_active: rest.is_active !== false && rest.isActive !== false,
           metadata: rest.metadata
         }
 
         // البحث عن تصنيف موجود بنفس المعرف أو الـ slug
-        const existingCategory = await prisma.category.findFirst({
+        const existingCategory = await prisma.categories.findFirst({
           where: {
             OR: [
               { id: id },
@@ -90,14 +92,15 @@ export async function POST(request: NextRequest) {
         })
 
         if (existingCategory) {
-          await prisma.category.update({
+          await prisma.categories.update({
             where: { id: existingCategory.id },
             data: data,
           })
           updatedCount++
         } else {
-          await prisma.category.create({
-            data: id ? { ...data, id } : data,
+          const createData = id ? { ...data, id } : data;
+          await prisma.categories.create({
+            data: createData as any,
           })
           createdCount++
         }

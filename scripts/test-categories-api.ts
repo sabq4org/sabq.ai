@@ -6,13 +6,13 @@ async function testCategories() {
     
     // Test database connection
     console.log('Testing database connection...');
-    const count = await prisma.category.count();
+    const count = await prisma.categories.count();
     console.log(`Found ${count} categories in database`);
     
     // Try to create a category
     console.log('\nTrying to create a new category...');
     const timestamp = Date.now();
-    const newCategory = await prisma.category.create({
+    const newCategory = await prisma.categories.create({
       data: {
         name: 'رياضة ' + timestamp,
         nameEn: 'Sports ' + timestamp,
@@ -30,7 +30,7 @@ async function testCategories() {
     
     // List all categories
     console.log('\nListing all categories:');
-    const categories = await prisma.category.findMany();
+    const categories = await prisma.categories.findMany();
     categories.forEach(cat => {
       console.log(`- ${cat.name} (${cat.slug})`);
     });

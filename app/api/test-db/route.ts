@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 
 export const runtime = 'nodejs';
 
@@ -21,12 +23,12 @@ export async function GET(request: NextRequest) {
     
     // اختبار جدول المستخدمين
     console.log('[test-db] Testing users table...');
-    const userCount = await prisma.user.count();
+    const userCount = await prisma.users.count();
     console.log('[test-db] User count:', userCount);
     
     // اختبار جدول الفئات
     console.log('[test-db] Testing categories table...');
-    const categoryCount = await prisma.category.count();
+    const categoryCount = await prisma.categories.count();
     console.log('[test-db] Category count:', categoryCount);
     
     // اختبار جدول المقالات

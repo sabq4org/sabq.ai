@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 import { handleOptions, corsResponse } from '@/lib/cors';
 
 // معالجة طلبات OPTIONS للـ CORS

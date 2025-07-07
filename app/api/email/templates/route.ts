@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 import { z } from 'zod';
 import crypto from 'crypto';
 
@@ -42,7 +44,11 @@ export async function GET(request: NextRequest) {
       _count: { template_id: true }
     }) : [];
     
-    const jobsCountMap = new Map(jobsCounts.map((jc: { template_id: string, _count: { template_id: number } }) => [jc.template_id, jc._count.template_id]));
+    const jobsCountMap = new Map(
+      jobsCounts
+        .filter((jc) => jc.template_id !== null)
+        .map((jc) => [jc.template_id as string, jc._count.template_id])
+    );
     const templatesWithCounts = templates.map((t: { id: string }) => ({
       ...t,
       jobsCount: jobsCountMap.get(t.id) || 0

@@ -54,13 +54,19 @@ export async function GET(request: NextRequest) {
     // بناء شروط البحث
     const where: any = {}
     
-    // فلترة حسب الحالة
+    // فلترة حسب الحالة مع استبعاد المقالات المحذوفة دائماً
     const status = searchParams.get('status')
-    if (status) {
-      where.status = status
+    
+    // إذا كان المطلوب هو المقالات المحذوفة فقط (للوحة التحكم)
+    if (status === 'deleted') {
+      where.status = 'deleted'
     } else {
-      // استبعاد المقالات المحذوفة بشكل افتراضي
-      where.status = { not: 'deleted' }
+      // لجميع الحالات الأخرى، نستبعد المقالات المحذوفة دائماً
+      if (status) {
+        where.status = status
+      }
+      // إضافة شرط لاستبعاد المقالات المحذوفة في جميع الحالات
+      where.NOT = { status: 'deleted' }
     }
 
     // فلترة حسب التصنيف

@@ -32,7 +32,7 @@ async function testDatabase() {
     console.log(`👥 عدد المستخدمين: ${usersCount}`)
     
     // عد التصنيفات
-    const categoriesCount = await prisma.category.count()
+    const categoriesCount = await prisma.categories.count()
     console.log(`📁 عدد التصنيفات: ${categoriesCount}`)
     
   } catch (error) {

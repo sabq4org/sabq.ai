@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production';
@@ -17,18 +19,18 @@ export async function POST(request: NextRequest) {
     }
 
     // التحقق من وجود المستخدم في قاعدة البيانات
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: userId },
       select: {
         id: true,
         email: true,
         name: true,
         role: true,
-        isVerified: true,
-        isAdmin: true,
+        is_verified: true,
+        is_admin: true,
         avatar: true,
-        createdAt: true,
-        updatedAt: true
+        created_at: true,
+        updated_at: true
       }
     });
 
