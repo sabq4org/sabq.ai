@@ -303,4 +303,270 @@
   white-space: nowrap;
   border-left: 3px solid;
   animation: typing 3s steps(30) 1s forwards, blink 1s infinite;
+}
+
+/* تأثيرات شريط الكتّاب المطور */
+.authors-carousel {
+  position: relative;
+}
+
+.authors-carousel::before,
+.authors-carousel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.authors-carousel::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+}
+
+.authors-carousel::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+}
+
+.author-avatar {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.author-avatar::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.author-card:hover .author-avatar::before {
+  opacity: 1;
+  animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* تأثيرات البحث اللحظي */
+.search-suggestion {
+  transition: all 0.2s ease;
+}
+
+.search-suggestion:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+  transform: translateX(4px);
+}
+
+/* تأثيرات الفلاتر */
+.filter-active {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transform: scale(1.05);
+}
+
+/* تأثيرات المشاعر */
+.mood-indicator {
+  position: relative;
+  overflow: hidden;
+}
+
+.mood-indicator::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.mood-indicator:hover::before {
+  left: 100%;
+}
+
+/* تأثيرات نسبة التوافق */
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 20px currentColor;
+  }
+}
+
+.relevance-score {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* تأثيرات البودكاست */
+@keyframes podcast-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.podcast-indicator {
+  animation: podcast-pulse 2s ease-in-out infinite;
+}
+
+/* تأثيرات الترند */
+.trending-indicator {
+  position: relative;
+}
+
+.trending-indicator::after {
+  content: '🔥';
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+/* تأثيرات الحالة المتصلة */
+.online-status {
+  position: relative;
+}
+
+.online-status::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: inherit;
+  animation: ripple 2s infinite;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* تأثيرات الشارات */
+.badge-verified {
+  animation: verified-shine 3s ease-in-out infinite;
+}
+
+@keyframes verified-shine {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.3) drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+  }
+}
+
+/* تأثيرات أزرار التفاعل المطورة */
+.enhanced-interaction-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.enhanced-interaction-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease, height 0.4s ease;
+}
+
+.enhanced-interaction-button:hover::before {
+  width: 200%;
+  height: 200%;
+}
+
+.enhanced-interaction-button:active {
+  transform: scale(0.95);
+}
+
+/* تأثيرات الشريط الجانبي */
+.sidebar-widget {
+  transition: all 0.3s ease;
+}
+
+.sidebar-widget:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* تأثيرات القائمة المنسدلة */
+.dropdown-enter {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.dropdown-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.3s ease;
+}
+
+.dropdown-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.dropdown-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+}
+
+/* تأثيرات المشاركة */
+.share-animation {
+  animation: share-bounce 0.6s ease;
+}
+
+@keyframes share-bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-15px);
+  }
+  60% {
+    transform: translateY(-7px);
+  }
 } 

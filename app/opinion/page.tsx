@@ -7,12 +7,18 @@ import {
   Share2, Volume2, Zap, Podcast, Flame, Star, Award,
   Mic, BookOpen, Timer, BarChart3, Crown, Headphones,
   PlayCircle, PauseCircle, ChevronDown, Brain, Quote,
-  ThumbsUp, ThumbsDown, X, Plus, HeartHandshake
+  ThumbsUp, ThumbsDown, X, Plus, HeartHandshake,
+  CheckCircle, Radio, Activity
 } from 'lucide-react';
 import Link from 'next/link';
 import { getArticleLink } from '@/lib/utils';
 import { formatDateOnly } from '@/lib/date-utils';
 import { generatePlaceholderImage, getValidImageUrl } from '@/lib/cloudinary';
+import AuthorCarousel from '@/components/AuthorCarousel';
+import EnhancedArticleCard from '@/components/EnhancedArticleCard';
+import InstantSearch from '@/components/InstantSearch';
+import PowerBar from '@/components/PowerBar';
+import AskAuthorWidget from '@/components/AskAuthorWidget';
 
 interface OpinionArticle {
   id: string;
@@ -362,213 +368,56 @@ export default function OpinionPage() {
             </div>
           </div>
         </div>
+        
+        {/* شريط الطاقة */}
+        <div className="bg-black/10 backdrop-blur-sm">
+          <div className="container mx-auto px-4 py-4">
+            <PowerBar 
+              articlesCount={articles.length}
+              authorsCount={authors.length}
+              todayArticles={articles.filter(a => {
+                const today = new Date();
+                const articleDate = new Date(a.published_at || a.created_at);
+                return articleDate.toDateString() === today.toDateString();
+              }).length}
+              weekArticles={articles.filter(a => {
+                const weekAgo = new Date();
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                const articleDate = new Date(a.published_at || a.created_at);
+                return articleDate >= weekAgo;
+              }).length}
+              userLevel="gold"
+              userScore={750}
+              className="bg-opacity-90"
+            />
+          </div>
+        </div>
       </header>
 
       {/* شريط الكتّاب المميزين */}
-      <section className="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-4">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white whitespace-nowrap">
-              أبرز الكتّاب
-            </h2>
-            
-            {/* كاروسيل الكتاب */}
-            <div className="relative flex-1">
-              {showLeftArrow && (
-                <button
-                  onClick={() => scrollAuthors('left')}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white dark:bg-gray-700 rounded-full shadow-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-              )}
-              
-              <div
-                ref={authorsCarouselRef}
-                className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-12"
-              >
-                {authors.map((author) => (
-                  <Link
-                    key={author.id}
-                    href={`/author/${author.id}`}
-                    className="flex-shrink-0"
-                  >
-                    <div className="group relative">
-                      <div className="relative">
-                        <img
-                          src={author.avatar || generatePlaceholderImage(author.name)}
-                          alt={author.name}
-                          className="w-20 h-20 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-lg group-hover:scale-110 transition-transform"
-                        />
-                        {author.badge && (
-                          <div className={`absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center ${
-                            author.badge === 'gold' ? 'bg-yellow-400' :
-                            author.badge === 'silver' ? 'bg-gray-300' :
-                            'bg-orange-400'
-                          }`}>
-                            <Award className="w-4 h-4 text-white" />
-                          </div>
-                        )}
-                        {author.latest_article && (
-                          <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
-                            <span className="text-white text-xs font-bold">جديد</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-center mt-2">
-                        <p className="font-medium text-sm text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
-                          {author.name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {author.articles_count || 0} مقال
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-              
-              {showRightArrow && (
-                <button
-                  onClick={() => scrollAuthors('right')}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white dark:bg-gray-700 rounded-full shadow-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
+      <AuthorCarousel 
+        authors={authors.map(author => ({
+          ...author,
+          is_online: Math.random() > 0.5,
+          new_articles_count: Math.random() > 0.7 ? Math.floor(Math.random() * 3) + 1 : 0,
+          weekly_trend: ['up', 'down', 'same'][Math.floor(Math.random() * 3)] as 'up' | 'down' | 'same',
+          weekly_rank_change: Math.floor(Math.random() * 5) + 1,
+          is_guest: Math.random() > 0.8,
+          is_verified: Math.random() > 0.6,
+          has_new_podcast: Math.random() > 0.7
+        }))}
+        onAuthorSelect={(authorId) => updateFilter('author', authorId)}
+      />
 
       {/* البحث والفلترة المتقدمة */}
       <div className="container mx-auto px-4 py-6">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* شريط البحث */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="ابحث عن موضوع، كاتب، أو كلمة مفتاحية..."
-                  className="w-full pl-10 pr-4 py-3 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                  <Brain className="w-5 h-5 text-purple-600 animate-pulse" />
-                  <span className="text-xs text-gray-500">بحث ذكي</span>
-                </div>
-              </div>
-            </div>
-
-            {/* زر الفلترة */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
-            >
-              <Filter className="w-5 h-5" />
-              <span>فلترة متقدمة</span>
-              <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-            </button>
-          </div>
-
-          {/* خيارات الفلترة */}
-          {showFilters && (
-            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                {/* فلتر الكاتب */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    الكاتب
-                  </label>
-                  <select
-                    value={filters.author}
-                    onChange={(e) => updateFilter('author', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="all">جميع الكتّاب</option>
-                    {authors.map(author => (
-                      <option key={author.id} value={author.id}>
-                        {author.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* فلتر الحالة المزاجية */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    الحالة المزاجية
-                  </label>
-                  <select
-                    value={filters.mood}
-                    onChange={(e) => updateFilter('mood', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="all">الكل</option>
-                    <option value="optimistic">متفائل 😊</option>
-                    <option value="critical">نقدي 🤔</option>
-                    <option value="analytical">تحليلي 📊</option>
-                    <option value="controversial">جدلي 🔥</option>
-                  </select>
-                </div>
-
-                {/* فلتر التاريخ */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    الفترة الزمنية
-                  </label>
-                  <select
-                    value={filters.dateRange}
-                    onChange={(e) => updateFilter('dateRange', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="all">كل الأوقات</option>
-                    <option value="today">اليوم</option>
-                    <option value="week">هذا الأسبوع</option>
-                    <option value="month">هذا الشهر</option>
-                  </select>
-                </div>
-
-                {/* فلتر النوع */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    نوع المحتوى
-                  </label>
-                  <select
-                    value={filters.format}
-                    onChange={(e) => updateFilter('format', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="all">الكل</option>
-                    <option value="article">مقال 📝</option>
-                    <option value="podcast">بودكاست 🎙️</option>
-                    <option value="video">فيديو 📹</option>
-                  </select>
-                </div>
-
-                {/* فلتر الترتيب */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    الترتيب حسب
-                  </label>
-                  <select
-                    value={filters.sortBy}
-                    onChange={(e) => updateFilter('sortBy', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="latest">الأحدث</option>
-                    <option value="popular">الأكثر قراءة</option>
-                    <option value="trending">الأكثر تداولاً</option>
-                    <option value="controversial">الأكثر جدلاً</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <InstantSearch 
+          authors={authors}
+          onSearch={(query) => setSearchQuery(query)}
+          onFilterChange={(newFilters) => setFilters(newFilters)}
+          initialFilters={filters}
+          popularTopics={topTrends}
+        />
       </div>
 
       {/* المحتوى الرئيسي */}
@@ -589,7 +438,7 @@ export default function OpinionPage() {
                   </span>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-xl p-6">
-                  <OpinionArticleCard 
+                  <EnhancedArticleCard 
                     article={aiRecommendations[0]} 
                     isRecommended={true}
                     onPlay={handleAudioPlay}
@@ -602,7 +451,7 @@ export default function OpinionPage() {
             {/* قائمة المقالات */}
             <div className="space-y-6">
               {articles.map((article) => (
-                <OpinionArticleCard
+                <EnhancedArticleCard
                   key={article.id}
                   article={article}
                   onPlay={handleAudioPlay}
@@ -628,35 +477,94 @@ export default function OpinionPage() {
                 أفضل 5 كتّاب الأسبوع
               </h3>
               <div className="space-y-3">
-                {authors.slice(0, 5).map((author, index) => (
-                  <Link
-                    key={author.id}
-                    href={`/author/${author.id}`}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <span className={`text-lg font-bold ${
-                      index === 0 ? 'text-yellow-500' :
-                      index === 1 ? 'text-gray-400' :
-                      index === 2 ? 'text-orange-500' :
-                      'text-gray-600'
-                    }`}>
-                      {index + 1}
-                    </span>
-                    <img
-                      src={author.avatar || generatePlaceholderImage(author.name)}
-                      alt={author.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <div className="flex-1">
-                      <p className="font-medium text-sm text-gray-900 dark:text-white">
-                        {author.name}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {author.total_views?.toLocaleString() || 0} مشاهدة
-                      </p>
-                    </div>
-                  </Link>
-                ))}
+                {authors.slice(0, 5).map((author, index) => {
+                  const trend = ['up', 'down', 'same'][Math.floor(Math.random() * 3)];
+                  const trendChange = Math.floor(Math.random() * 3) + 1;
+                  const isOnline = Math.random() > 0.5;
+                  const engagementScore = Math.floor(Math.random() * 50) + 50;
+                  
+                  return (
+                    <Link
+                      key={author.id}
+                      href={`/author/${author.id}`}
+                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={`text-lg font-bold ${
+                          index === 0 ? 'text-yellow-500' :
+                          index === 1 ? 'text-gray-400' :
+                          index === 2 ? 'text-orange-500' :
+                          'text-gray-600'
+                        }`}>
+                          {index + 1}
+                        </span>
+                        
+                        {/* مؤشر الاتجاه */}
+                        <div className="flex flex-col items-center">
+                          {trend === 'up' && (
+                            <div className="flex items-center text-green-500 text-xs">
+                              <TrendingUp className="w-3 h-3" />
+                              <span className="mr-1">+{trendChange}</span>
+                            </div>
+                          )}
+                          {trend === 'down' && (
+                            <div className="flex items-center text-red-500 text-xs">
+                              <Activity className="w-3 h-3 rotate-180" />
+                              <span className="mr-1">-{trendChange}</span>
+                            </div>
+                          )}
+                          {trend === 'same' && (
+                            <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="relative">
+                        <img
+                          src={author.avatar || generatePlaceholderImage(author.name)}
+                          alt={author.name}
+                          className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600 group-hover:scale-110 transition-transform"
+                        />
+                        
+                        {/* مؤشر الحالة */}
+                        <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-800 ${
+                          isOnline ? 'bg-green-500' : 'bg-gray-400'
+                        }`}>
+                          {author.is_featured && (
+                            <CheckCircle className="w-2.5 h-2.5 text-white m-0.5" />
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-sm text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                            {author.name}
+                          </p>
+                          {author.is_featured && (
+                            <CheckCircle className="w-4 h-4 text-blue-500" />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <span>{author.total_views?.toLocaleString() || 0} مشاهدة</span>
+                          <span>•</span>
+                          <div className="flex items-center gap-1">
+                            <Flame className="w-3 h-3 text-orange-500" />
+                            <span>{engagementScore}% تفاعل</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* أيقونة الراديو للبودكاست */}
+                      {Math.random() > 0.6 && (
+                        <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-full text-xs">
+                          <Radio className="w-3 h-3" />
+                          <span>جديد</span>
+                        </div>
+                      )}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
 
@@ -701,19 +609,32 @@ export default function OpinionPage() {
               </div>
             </div>
 
-            {/* اسأل الكاتب */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-6">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <MessageCircle className="w-5 h-5 text-blue-600" />
-                اسأل الكاتب
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                وجّه سؤالك لأي كاتب واحصل على إجابة صوتية أو مكتوبة
-              </p>
-              <button className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                اطرح سؤالك
-              </button>
-            </div>
+            {/* ميزة "اسأل الكاتب" */}
+            <AskAuthorWidget 
+              authors={authors.map(author => ({
+                ...author,
+                is_online: Math.random() > 0.5,
+                response_time: ['30 دقيقة', '1-2 ساعة', '3-5 ساعات'][Math.floor(Math.random() * 3)]
+              }))}
+              popularQuestions={[
+                {
+                  id: '1',
+                  text: 'ما رأيك في التطورات التقنية الأخيرة؟',
+                  author_name: 'أحمد محمد',
+                  created_at: 'منذ 3 ساعات',
+                  likes: 12,
+                  answer: 'أعتقد أن التطورات التقنية تسير بوتيرة سريعة جداً، وهذا يتطلب منا مواكبة مستمرة.',
+                  answer_date: 'منذ ساعة'
+                },
+                {
+                  id: '2', 
+                  text: 'كيف نحقق التوازن بين التقليد والحداثة؟',
+                  author_name: 'فاطمة علي',
+                  created_at: 'أمس',
+                  likes: 8
+                }
+              ]}
+            />
           </div>
         </div>
       </div>
