@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
       message: 'تم حفظ التفضيلات بنجاح',
       data: {
         count: newPreferences.count,
-        interests: categories.map(c => c.slug)
+        interests: categories.map((c: { slug: string }) => c.slug)
       }
     });
 
