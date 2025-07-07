@@ -143,36 +143,36 @@ function determineTraits(stats: any, engagementRate?: number, activeHours?: numb
 export async function buildReaderProfile(userId: string): Promise<ReaderProfile> {
   try {
     // جلب تفاعلات المستخدم
-    const interactions = await prisma.interaction.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' }
+    const interactions = await prisma.interactions.findMany({
+      where: { user_id: userId },
+      orderBy: { created_at: 'desc' }
     });
 
     // جلب نقاط الولاء
-    const loyaltyPoints = await prisma.loyaltyPoint.aggregate({
-      where: { userId },
+    const loyaltyPoints = await prisma.loyalty_points.aggregate({
+      where: { user_id: userId },
       _sum: { points: true }
     });
 
     // جلب معلومات المقالات والتصنيفات بشكل منفصل
-    const articleIds = [...new Set(interactions.map(i => i.articleId))];
+    const articleIds = [...new Set(interactions.map(i => i.article_id))];
     const articles = await prisma.articles.findMany({
       where: { id: { in: articleIds } },
       select: {
         id: true,
-        categoryId: true
+        category_id: true
       }
     });
 
     // إنشاء خريطة للمقالات وتصنيفاتها
     const articleCategoryMap = new Map<string, string | null>();
     articles.forEach(article => {
-      articleCategoryMap.set(article.id, article.categoryId);
+      articleCategoryMap.set(article.id, article.category_id);
     });
 
     // جلب التصنيفات
-    const categoryIds = [...new Set(articles.map(a => a.categoryId).filter(id => id !== null))] as string[];
-    const categories = await prisma.category.findMany({
+    const categoryIds = [...new Set(articles.map(a => a.category_id).filter(id => id !== null))] as string[];
+    const categories = await prisma.categories.findMany({
       where: { id: { in: categoryIds } },
       select: {
         id: true,
@@ -182,13 +182,13 @@ export async function buildReaderProfile(userId: string): Promise<ReaderProfile>
 
     // إنشاء خريطة للتصنيفات
     const categoryMap = new Map<string, string>();
-    categories.forEach(category => {
+    categories.forEach((category: any) => {
       categoryMap.set(category.id, category.name);
     });
 
     // حساب الإحصائيات
     const totalInteractions = interactions.length;
-    const uniqueArticles = new Set(interactions.map(i => i.articleId)).size;
+    const uniqueArticles = new Set(interactions.map(i => i.article_id)).size;
     
     // حساب التفاعلات حسب النوع
     const interactionsByType = interactions.reduce((acc, interaction) => {
@@ -199,11 +199,11 @@ export async function buildReaderProfile(userId: string): Promise<ReaderProfile>
     // حساب التفضيلات حسب التصنيف
     const categoryPreferences = interactions
       .filter(i => {
-        const categoryId = articleCategoryMap.get(i.articleId);
+        const categoryId = articleCategoryMap.get(i.article_id);
         return categoryId && categoryMap.has(categoryId);
       })
       .reduce((acc, interaction) => {
-        const categoryId = articleCategoryMap.get(interaction.articleId)!;
+        const categoryId = articleCategoryMap.get(interaction.article_id)!;
         const categoryName = categoryMap.get(categoryId)!;
         
         if (!acc[categoryName]) {
@@ -223,7 +223,7 @@ export async function buildReaderProfile(userId: string): Promise<ReaderProfile>
 
     // حساب معدل القراءة اليومي
     const firstInteractionDate = interactions.length > 0 
-      ? new Date(interactions[interactions.length - 1].createdAt)
+      ? new Date(interactions[interactions.length - 1].created_at)
       : new Date();
     const daysSinceFirstInteraction = Math.max(1, Math.ceil((Date.now() - firstInteractionDate.getTime()) / (1000 * 60 * 60 * 24)));
     const dailyReadingAverage = Math.round(uniqueArticles / daysSinceFirstInteraction * 10) / 10;
@@ -318,7 +318,7 @@ export async function buildReaderProfile(userId: string): Promise<ReaderProfile>
 function calculateStreakDays(interactions: any[]): number {
   if (interactions.length === 0) return 0;
 
-  const dates = interactions.map(i => new Date(i.createdAt).toDateString());
+  const dates = interactions.map(i => new Date(i.created_at).toDateString());
   const uniqueDates = [...new Set(dates)].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
   
   let streak = 1;
