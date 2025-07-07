@@ -35,15 +35,31 @@ export default function UserDropdown({ user, onClose, onLogout, anchorElement }:
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [position, setPosition] = useState({ top: 64, right: 16 });
+  const [position, setPosition] = useState({ top: 64, left: 0 });
 
   // حساب موقع القائمة
   useEffect(() => {
     if (!isMobile && anchorElement) {
       const rect = anchorElement.getBoundingClientRect();
+      const dropdownWidth = 320; // عرض القائمة المنسدلة
+      
+      // حساب الموقع الأمثل للقائمة المنسدلة
+      // نبدأ من اليمين (محاذاة مع الزر) ثم نعدل حسب الحاجة
+      let leftPosition = rect.right - dropdownWidth;
+      
+      // التأكد من أن القائمة لا تخرج من حدود الشاشة اليسرى
+      if (leftPosition < 16) {
+        leftPosition = 16;
+      }
+      
+      // التأكد من أن القائمة لا تخرج من حدود الشاشة اليمنى
+      if (leftPosition + dropdownWidth > window.innerWidth - 16) {
+        leftPosition = window.innerWidth - dropdownWidth - 16;
+      }
+      
       setPosition({
         top: rect.bottom + 8,
-        right: window.innerWidth - rect.right
+        left: leftPosition
       });
     }
   }, [anchorElement, isMobile]);
@@ -146,10 +162,10 @@ export default function UserDropdown({ user, onClose, onLogout, anchorElement }:
         bg-white dark:bg-gray-800 shadow-xl dark:shadow-gray-900/50 
         border border-gray-100 dark:border-gray-700 overflow-hidden z-[1000]
         ${isMobile ? 'overflow-y-auto' : ''}
-      `} 
+      `      } 
       style={!isMobile ? { 
         top: `${position.top}px`, 
-        right: `${position.right}px` 
+        left: `${position.left}px` 
       } : undefined}
       >
         {/* زر الإغلاق للموبايل */}
@@ -168,17 +184,6 @@ export default function UserDropdown({ user, onClose, onLogout, anchorElement }:
         {/* رأس القائمة - معلومات المستخدم */}
         <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-700 dark:via-gray-800 dark:to-gray-700 p-6 pointer-events-none">
           <div className="space-y-3">
-            {/* الاسم */}
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white/80 dark:bg-gray-700/80 rounded-xl shadow-sm dark:shadow-gray-900/50">
-                <User className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-              </div>
-              <div>
-                <p className="font-bold text-gray-900 dark:text-white text-lg">{user.name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">مرحباً بك في سبق الذكية</p>
-              </div>
-            </div>
-
             {/* المستوى */}
             {loyaltyLevel && (
               <div className="flex items-center gap-3">
@@ -232,7 +237,10 @@ export default function UserDropdown({ user, onClose, onLogout, anchorElement }:
             }}
           >
             <User className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-            <span>الملف الشخصي</span>
+            <div className="flex flex-col">
+              <span className="font-medium">{user.name}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">الملف الشخصي</span>
+            </div>
           </Link>
 
           <Link

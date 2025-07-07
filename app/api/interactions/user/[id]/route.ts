@@ -8,19 +8,10 @@ export async function GET(
   try {
     const { id: userId } = await context.params;
     
-    // جلب التفاعلات من قاعدة البيانات
+    // جلب التفاعلات من قاعدة البيانات - مبسط
     const interactions = await prisma.interactions.findMany({
       where: { user_id: userId },
-      include: {
-        article: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            featured_image: true
-          }
-        }
-      },
+      // include: { article: { ... } }, // معطل مؤقتاً
       orderBy: { created_at: 'desc' },
       take: 50
     });

@@ -97,6 +97,38 @@ export async function GET(request: NextRequest) {
       where.breaking = true
     }
 
+    // فلترة حسب نوع المقال (OPINION أو غيره)
+    const type = searchParams.get('type')
+    if (type === 'OPINION') {
+      // جلب معرف تصنيف الرأي من قاعدة البيانات
+      const opinionCategory = await prisma.categories.findFirst({
+        where: { 
+          OR: [
+            { slug: 'opinion' },
+            { name: 'رأي' }
+          ]
+        },
+        select: { id: true }
+      })
+      if (opinionCategory) {
+        where.category_id = opinionCategory.id
+      }
+    } else if (type && type !== 'OPINION') {
+      // لأنواع أخرى من المقالات، استبعاد مقالات الرأي
+      const opinionCategory = await prisma.categories.findFirst({
+        where: { 
+          OR: [
+            { slug: 'opinion' },
+            { name: 'رأي' }
+          ]
+        },
+        select: { id: true }
+      })
+      if (opinionCategory) {
+        where.category_id = { not: opinionCategory.id }
+      }
+    }
+
     // الترتيب
     const sort = searchParams.get('sort') || 'oldest'
     const order = (searchParams.get('order') || 'desc') as 'asc' | 'desc'
@@ -195,7 +227,8 @@ export async function GET(request: NextRequest) {
         category_id: searchParams.get('category_id'),
         search: searchParams.get('search'),
         featured: searchParams.get('featured'),
-        breaking: searchParams.get('breaking')
+        breaking: searchParams.get('breaking'),
+        type: searchParams.get('type')
       }
     })
   } catch (error) {

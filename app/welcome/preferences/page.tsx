@@ -160,7 +160,20 @@ export default function PreferencesPage() {
       if (currentUserData) {
         const user = JSON.parse(currentUserData);
         user.interests = selectedCategoryIds;
+        user.preferences = selectedCategoryIds; // للتوافق مع الإصدارات السابقة
         localStorage.setItem('user', JSON.stringify(user));
+        console.log('✅ تم تحديث localStorage بالاهتمامات:', selectedCategoryIds);
+      } else {
+        // إنشاء مستخدم جديد إذا لم يكن موجود
+        const guestUser = {
+          id: userId,
+          name: 'ضيف',
+          email: null,
+          interests: selectedCategoryIds,
+          preferences: selectedCategoryIds
+        };
+        localStorage.setItem('user', JSON.stringify(guestUser));
+        console.log('✅ تم إنشاء مستخدم جديد في localStorage:', guestUser);
       }
       
       toast.success('تم حفظ اهتماماتك بنجاح! 🎉');

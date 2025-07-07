@@ -1,122 +1,51 @@
 [
   {
-    "user_id": "test-user-123",
-    "category_id": "1",
-    "created_at": "2025-06-30T12:48:12.933Z"
-  },
-  {
-    "user_id": "test-user-123",
-    "category_id": "2",
-    "created_at": "2025-06-30T12:48:12.934Z"
-  },
-  {
-    "user_id": "test-user-123",
-    "category_id": "3",
-    "created_at": "2025-06-30T12:48:12.934Z"
-  },
-  {
-    "user_id": "test-user-456",
-    "category_id": "94604730-5d3b-43f2-ab8d-fab7b1114f6b",
-    "source": "manual",
-    "created_at": "2025-07-02T07:34:18.167Z",
-    "updated_at": "2025-07-02T07:34:18.167Z"
-  },
-  {
-    "user_id": "test-user-456",
-    "category_id": "1bde8162-d255-4e70-a623-4c87ac03ce01",
-    "source": "manual",
-    "created_at": "2025-07-02T07:34:18.167Z",
-    "updated_at": "2025-07-02T07:34:18.167Z"
-  },
-  {
-    "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
-    "category_id": "94604730-5d3b-43f2-ab8d-fab7b1114f6b",
-    "source": "manual",
-    "created_at": "2025-07-02T09:22:21.225Z",
-    "updated_at": "2025-07-02T09:22:21.225Z"
-  },
-  {
-    "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
-    "category_id": "656fb26d-ba59-4b1d-bb89-899abf61e6a3",
-    "source": "manual",
-    "created_at": "2025-07-02T09:22:21.225Z",
-    "updated_at": "2025-07-02T09:22:21.225Z"
-  },
-  {
-    "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
-    "category_id": "1bde8162-d255-4e70-a623-4c87ac03ce01",
-    "source": "manual",
-    "created_at": "2025-07-02T09:22:21.225Z",
-    "updated_at": "2025-07-02T09:22:21.225Z"
-  },
-  {
-    "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
-    "category_id": "cf47cbd2-4f55-44d3-8b14-36d415424f9d",
-    "source": "manual",
-    "created_at": "2025-07-02T09:22:21.225Z",
-    "updated_at": "2025-07-02T09:22:21.225Z"
-  },
-  {
-    "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
-    "category_id": "85165437-e2d6-4208-a7f3-2e3f82fb34c9",
-    "source": "manual",
-    "created_at": "2025-07-02T09:22:21.225Z",
-    "updated_at": "2025-07-02T09:22:21.225Z"
-  },
-  {
-    "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
-    "category_id": "05ef071c-db4f-432f-82b4-8117914edc89",
-    "source": "manual",
-    "created_at": "2025-07-02T09:22:21.225Z",
-    "updated_at": "2025-07-02T09:22:21.225Z"
-  },
-  {
-    "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
-    "category_id": "a806adbd-ead7-4242-8117-b316d120e7a6",
-    "source": "manual",
-    "created_at": "2025-07-02T09:22:21.225Z",
-    "updated_at": "2025-07-02T09:22:21.225Z"
-  },
-  {
-    "user_id": "49c01941-aa47-441c-9e02-dbafde8af505",
-    "category_id": "1454b562-63e6-40f5-8f74-bb9c156d5a3a",
-    "source": "manual",
-    "created_at": "2025-07-02T09:22:21.225Z",
-    "updated_at": "2025-07-02T09:22:21.225Z"
-  },
-  {
-    "user_id": "122d322a-184b-4a89-a45b-c1eb27891016",
-    "category_id": "94604730-5d3b-43f2-ab8d-fab7b1114f6b",
-    "source": "manual",
-    "created_at": "2025-07-02T20:27:28.725Z",
-    "updated_at": "2025-07-02T20:27:28.725Z"
-  },
-  {
-    "user_id": "122d322a-184b-4a89-a45b-c1eb27891016",
-    "category_id": "a806adbd-ead7-4242-8117-b316d120e7a6",
-    "source": "manual",
-    "created_at": "2025-07-02T20:27:28.725Z",
-    "updated_at": "2025-07-02T20:27:28.725Z"
-  },
-  {
-    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+    "user_id": "test-user",
     "category_id": "category-tech",
     "source": "manual",
-    "created_at": "2025-07-05T19:20:55.781Z",
-    "updated_at": "2025-07-05T19:20:55.781Z"
+    "created_at": "2025-07-07T07:08:58.983Z",
+    "updated_at": "2025-07-07T07:08:58.983Z"
   },
   {
-    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
+    "user_id": "test-user",
     "category_id": "category-sports",
     "source": "manual",
-    "created_at": "2025-07-05T19:20:55.781Z",
-    "updated_at": "2025-07-05T19:20:55.781Z"
+    "created_at": "2025-07-07T07:08:58.983Z",
+    "updated_at": "2025-07-07T07:08:58.983Z"
   },
   {
-    "user_id": "3a02d49c-16ca-48ee-a083-e4a44a03e07f",
-    "category_id": "category-economy",
+    "user_id": "27e3bdc6-68a5-459a-9f11-15ddd9a46aac",
+    "category_id": "category-tech",
     "source": "manual",
-    "created_at": "2025-07-05T19:20:55.781Z",
-    "updated_at": "2025-07-05T19:20:55.781Z"
+    "created_at": "2025-07-07T07:12:22.378Z",
+    "updated_at": "2025-07-07T07:12:22.378Z"
+  },
+  {
+    "user_id": "27e3bdc6-68a5-459a-9f11-15ddd9a46aac",
+    "category_id": "category-sports",
+    "source": "manual",
+    "created_at": "2025-07-07T07:12:22.378Z",
+    "updated_at": "2025-07-07T07:12:22.378Z"
+  },
+  {
+    "user_id": "27e3bdc6-68a5-459a-9f11-15ddd9a46aac",
+    "category_id": "category-culture",
+    "source": "manual",
+    "created_at": "2025-07-07T07:12:22.378Z",
+    "updated_at": "2025-07-07T07:12:22.378Z"
+  },
+  {
+    "user_id": "27e3bdc6-68a5-459a-9f11-15ddd9a46aac",
+    "category_id": "category-opinion",
+    "source": "manual",
+    "created_at": "2025-07-07T07:12:22.378Z",
+    "updated_at": "2025-07-07T07:12:22.378Z"
+  },
+  {
+    "user_id": "27e3bdc6-68a5-459a-9f11-15ddd9a46aac",
+    "category_id": "category-politics",
+    "source": "manual",
+    "created_at": "2025-07-07T07:12:22.378Z",
+    "updated_at": "2025-07-07T07:12:22.378Z"
   }
 ]

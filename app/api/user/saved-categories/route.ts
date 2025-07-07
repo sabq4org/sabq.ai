@@ -13,71 +13,52 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // جلب التصنيفات المحفوظة من UserPreference
-    const savedPreference = await prisma.userPreference.findUnique({
-      where: {
-        userId_key: {
-          userId,
-          key: 'selected_categories'
-        }
-      }
-    });
-
-    if (savedPreference && savedPreference.value) {
-      // التأكد من أن القيمة مصفوفة
-      const categoryIds = Array.isArray(savedPreference.value) 
-        ? savedPreference.value 
-        : [];
+    // جلب التصنيفات المحفوظة من ملف JSON
+    try {
+      const fs = await import('fs').then(m => m.promises);
+      const path = await import('path');
       
+      const preferencesFile = path.join(process.cwd(), 'data', 'user_preferences.json');
+      
+      // التأكد من وجود الملف
+      try {
+        await fs.access(preferencesFile);
+        const fileContent = await fs.readFile(preferencesFile, 'utf-8');
+        const preferences = JSON.parse(fileContent);
+        
+        if (Array.isArray(preferences)) {
+          // البحث عن تفضيلات المستخدم
+          const userPrefs = preferences.filter((pref: any) => pref.user_id === userId);
+          
+          if (userPrefs.length > 0) {
+            const categoryIds = userPrefs.map((pref: any) => pref.category_id);
+            return NextResponse.json({ 
+              success: true,
+              categoryIds,
+              source: 'json_file'
+            });
+          }
+        }
+      } catch (fileError) {
+        console.log('ملف التفضيلات غير موجود أو فارغ');
+      }
+      
+      // إذا لم نجد في الملف، نحاول localStorage simulation
+      // إرجاع مصفوفة فارغة بدلاً من تصنيفات افتراضية
       return NextResponse.json({ 
         success: true,
-        categoryIds,
-        source: 'database'
+        categoryIds: [],
+        source: 'none'
+      });
+      
+    } catch (error) {
+      console.error('خطأ في قراءة التفضيلات:', error);
+      return NextResponse.json({ 
+        success: true,
+        categoryIds: [],
+        source: 'error'
       });
     }
-
-    // إذا لم نجد في UserPreference، نحاول من اهتمامات المستخدم
-    const userInterestPreference = await prisma.userPreference.findUnique({
-      where: {
-        userId_key: {
-          userId,
-          key: 'interests'
-        }
-      }
-    });
-
-    if (userInterestPreference && userInterestPreference.value) {
-      const interests = Array.isArray(userInterestPreference.value) 
-        ? userInterestPreference.value 
-        : [];
-      
-      const interestNames = interests.map((i: any) => i.name || i);
-      
-      if (interestNames.length > 0) {
-        // جلب التصنيفات بناءً على الـ slug
-        const categories = await prisma.category.findMany({
-          where: {
-            slug: { in: interestNames }
-          },
-          select: { id: true }
-        });
-
-        const categoryIds = categories.map(c => c.id);
-        
-        return NextResponse.json({ 
-          success: true,
-          categoryIds,
-          source: 'interests'
-        });
-      }
-    }
-
-    // لا توجد تفضيلات محفوظة
-    return NextResponse.json({ 
-      success: true,
-      categoryIds: [],
-      source: 'none'
-    });
 
   } catch (error) {
     console.error('Error fetching saved categories:', error);

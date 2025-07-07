@@ -228,7 +228,7 @@ export default function Header() {
 
   return (
     <header className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-black/50 sticky top-0 z-50 transition-colors duration-300 h-16 safe-area-top">
-      <div className="w-full max-w-full mx-0 px-0 sm:px-4 lg:px-8 h-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
         <div className="flex items-center justify-between h-full">
           {/* Mobile Layout */}
           <div className="flex lg:hidden items-center justify-between w-full">
@@ -246,12 +246,13 @@ export default function Header() {
               <span className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">سبق</span>
             </Link>
 
-            {/* أزرار التحكم على اليسار */}
-            <div className="flex items-center gap-2">
+            {/* أزرار التحكم على اليسار - مبسطة */}
+            <div className="flex items-center gap-1">
+              {/* زر الوضع الليلي - مخفي في الموبايل لتوفير المساحة */}
               {mounted && (
                 <button
                   onClick={toggleDarkMode}
-                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg hidden sm:block"
                   aria-label="تبديل الوضع الليلي"
                 >
                   {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -265,21 +266,21 @@ export default function Header() {
                   <button
                     ref={mobileButtonRef}
                     onClick={() => setShowDropdown(!showDropdown)}
-                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     aria-label="قائمة المستخدم"
                   >
                     {user.avatar ? (
                       <img 
                         src={user.avatar} 
                         alt={user.name}
-                        className="w-8 h-8 rounded-full object-cover shadow-md"
+                        className="w-8 h-8 rounded-full object-cover shadow-sm border border-gray-200 dark:border-gray-700"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                           e.currentTarget.nextElementSibling?.classList.remove('hidden');
                         }}
                       />
                     ) : (
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-xs shadow-md">
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-xs shadow-sm border border-gray-200 dark:border-gray-700">
                         {getInitials(user.name)}
                       </div>
                     )}
@@ -300,7 +301,7 @@ export default function Header() {
                   className="p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                   aria-label="تسجيل الدخول"
                 >
-                  <User className="w-6 h-6" />
+                  <User className="w-5 h-5" />
                 </Link>
               )}
             </div>
@@ -308,10 +309,12 @@ export default function Header() {
 
           {/* Desktop Layout */}
           <div className="hidden lg:flex items-center justify-between w-full">
+            {/* الشعار */}
             <Link href="/" className="flex-shrink-0 min-w-[120px]">
               <span className="text-2xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">سبق</span>
             </Link>
 
+            {/* التنقل الرئيسي */}
             <nav className="flex items-center gap-8 flex-1 justify-center">
               {navigationItems.map((item) => (
                 <Link 
@@ -336,20 +339,9 @@ export default function Header() {
               ))}
             </nav>
 
-            <div className="flex items-center gap-4 flex-shrink-0">
-              {/* رابط اللحظة بلحظة مع تنبيه */}
-              <Link
-                href="/moment-by-moment"
-                className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                {newEventsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                    {newEventsCount > 9 ? '9+' : newEventsCount}
-                  </span>
-                )}
-              </Link>
-
+            {/* أدوات التحكم - مبسطة ومتناسقة */}
+            <div className="flex items-center gap-2 min-w-[120px] justify-end">
+              {/* زر الوضع الليلي */}
               {mounted && (
                 <button
                   onClick={toggleDarkMode}
@@ -367,26 +359,24 @@ export default function Header() {
                   <button
                     ref={desktopButtonRef}
                     onClick={() => setShowDropdown(!showDropdown)}
-                    className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     aria-label="قائمة المستخدم"
                   >
                     {user.avatar ? (
                       <img 
                         src={user.avatar} 
                         alt={user.name}
-                        className="w-10 h-10 rounded-full object-cover shadow-md"
+                        className="w-9 h-9 rounded-full object-cover shadow-sm border border-gray-200 dark:border-gray-700"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                           e.currentTarget.nextElementSibling?.classList.remove('hidden');
                         }}
                       />
                     ) : null}
-                    <div className={`w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm shadow-md ${user.avatar ? 'hidden' : ''}`}>
+                    <div className={`w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm shadow-sm border border-gray-200 dark:border-gray-700 ${user.avatar ? 'hidden' : ''}`}>
                       {getInitials(user.name)}
                     </div>
-                    <ChevronDown className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${
-                      showDropdown ? 'rotate-180' : ''
-                    }`} />
+                    {/* إزالة السهم لتقليل التشتيت */}
                   </button>
 
                   {showDropdown && (
@@ -401,9 +391,9 @@ export default function Header() {
               ) : (
                 <Link
                   href="/login"
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg font-medium hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 transform hover:scale-[1.02] shadow-md text-base"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
-                  <LogIn className="w-5 h-5" />
+                  <LogIn className="w-4 h-4" />
                   <span>تسجيل الدخول</span>
                 </Link>
               )}
@@ -411,14 +401,15 @@ export default function Header() {
           </div>
         </div>
 
+        {/* Mobile Menu */}
         {showMobileMenu && (
-          <div className="lg:hidden py-4 border-t border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 absolute top-full left-0 right-0 shadow-lg mobile-menu">
-            <nav className="flex flex-col gap-2 px-6 max-h-[70vh] overflow-y-auto hide-scrollbar">
+          <div className="lg:hidden absolute top-full left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-lg z-40">
+            <nav className="px-4 py-4 space-y-2">
               {navigationItems.map((item) => (
                 <Link
                   key={item.url}
                   href={item.url}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-medium ${
+                  className={`flex items-center gap-2 px-4 py-3 rounded-lg transition-all font-medium ${
                     item.highlight
                       ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30'
                       : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400'
@@ -437,6 +428,22 @@ export default function Header() {
                   )}
                 </Link>
               ))}
+              
+              {/* إضافة زر الوضع الليلي في قائمة الموبايل */}
+              {mounted && (
+                <button
+                  onClick={() => {
+                    toggleDarkMode();
+                    setShowMobileMenu(false);
+                  }}
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg transition-all font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 w-full text-right"
+                >
+                  {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                  <span className="flex-1">
+                    {darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}
+                  </span>
+                </button>
+              )}
             </nav>
           </div>
         )}

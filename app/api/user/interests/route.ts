@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,42 +10,52 @@ export async function GET(request: NextRequest) {
 
     if (!userId) {
       return NextResponse.json(
-        { error: 'User ID is required' },
+        { success: false, error: 'معرف المستخدم مطلوب' },
         { status: 400 }
       );
     }
 
-    // جلب اهتمامات المستخدم من UserPreference
-    const userPreference = await prisma.userPreference.findUnique({
-      where: {
-        userId_key: {
-          userId,
-          key: 'interests'
+    // جلب التفضيلات من ملف JSON
+    const preferencesFile = path.join(process.cwd(), 'data', 'user_preferences.json');
+    
+    try {
+      await fs.access(preferencesFile);
+      const fileContent = await fs.readFile(preferencesFile, 'utf-8');
+      const preferences = JSON.parse(fileContent);
+      
+      if (Array.isArray(preferences)) {
+        // البحث عن تفضيلات المستخدم
+        const userPrefs = preferences.filter((pref: any) => pref.user_id === userId);
+        
+        if (userPrefs.length > 0) {
+          const categoryIds = userPrefs.map((pref: any) => pref.category_id);
+          
+          return NextResponse.json({ 
+            success: true,
+            categoryIds,
+            preferences: userPrefs,
+            source: 'json_file',
+            count: categoryIds.length
+          });
         }
       }
-    });
-
-    const interests = userPreference ? (userPreference.value as any[]) || [] : [];
-
-    // جلب الفئات المتاحة للاهتمامات
-    const categories = await prisma.category.findMany({
-      where: { isActive: true },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        // color: true
-      }
-    });
-
+    } catch (fileError) {
+      console.log('ملف التفضيلات غير موجود أو فارغ');
+    }
+    
+    // إرجاع مصفوفة فارغة إذا لم نجد تفضيلات
     return NextResponse.json({ 
-      interests,
-      availableCategories: categories
+      success: true,
+      categoryIds: [],
+      preferences: [],
+      source: 'none',
+      count: 0
     });
+
   } catch (error) {
-    console.error('Error fetching interests:', error);
+    console.error('خطأ في جلب اهتمامات المستخدم:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch interests' },
+      { success: false, error: 'حدث خطأ في جلب الاهتمامات' },
       { status: 500 }
     );
   }
