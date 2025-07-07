@@ -97,7 +97,8 @@ export async function GET(request: NextRequest) {
       where.breaking = true
     }
 
-    // فلترة حسب نوع المقال (OPINION أو غيره)
+    /*
+    // فلترة حسب نوع المقال (OPINION أو غيره) - معطل مؤقتاً للتشخيص
     const type = searchParams.get('type')
     if (type === 'OPINION') {
       // جلب معرف تصنيف الرأي من قاعدة البيانات
@@ -128,6 +129,7 @@ export async function GET(request: NextRequest) {
         where.category_id = { not: opinionCategory.id }
       }
     }
+    */
 
     // الترتيب
     const sort = searchParams.get('sort') || 'oldest'
