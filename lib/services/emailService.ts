@@ -221,8 +221,8 @@ export class EmailService {
       }
 
       // استبدال المتغيرات
-      let html = template.htmlContent;
-      let text = template.textContent || '';
+      let html = template.html_content;
+      let text = template.text_content || '';
       let subject = template.subject;
 
       // إضافة متغيرات افتراضية
