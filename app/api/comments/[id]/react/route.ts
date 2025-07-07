@@ -7,11 +7,11 @@ const prisma = new PrismaClient();
 // إضافة أو تحديث تفاعل على تعليق
 export async function POST(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const { reactionType } = await request.json();
-    const { id: commentId } = context.params;
+    const { id: commentId } = await context.params;
 
     if (!['like', 'dislike', 'love', 'angry', 'sad', 'wow'].includes(reactionType)) {
       return NextResponse.json(
@@ -89,10 +89,10 @@ export async function POST(
 // حذف تفاعل
 export async function DELETE(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: commentId } = context.params;
+    const { id: commentId } = await context.params;
     const user = await getCurrentUser();
     const ipAddress = request.headers.get('x-forwarded-for') || 
                      request.headers.get('x-real-ip') || 

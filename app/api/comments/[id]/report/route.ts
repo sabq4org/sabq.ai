@@ -7,11 +7,11 @@ const prisma = new PrismaClient();
 // الإبلاغ عن تعليق
 export async function POST(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const { reason, details } = await request.json();
-    const { id: commentId } = context.params;
+    const { id: commentId } = await context.params;
 
     if (!['spam', 'offensive', 'misleading', 'harassment', 'other'].includes(reason)) {
       return NextResponse.json(

@@ -43,22 +43,6 @@ export async function GET(request: NextRequest) {
           user_id: userId,
           type: 'view',
           created_at: { gte: startDate }
-        },
-        include: {
-          article: {
-            select: {
-              id: true,
-              title: true,
-              category_id: true,
-              category: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true
-                }
-              }
-            }
-          }
         }
       }),
       

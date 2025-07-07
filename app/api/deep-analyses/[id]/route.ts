@@ -27,10 +27,10 @@ async function writeAnalyses(analyses: DeepAnalysis[]): Promise<void> {
 // GET - جلب تحليل محدد
 export async function GET(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const analyses = await readAnalyses();
     const analysis = analyses.find(a => a.id === id);
     
@@ -59,10 +59,10 @@ export async function GET(
 // PUT - تحديث تحليل
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const body: UpdateAnalysisRequest = await request.json();
     const analyses = await readAnalyses();
     
@@ -126,10 +126,10 @@ export async function PUT(
 // PATCH - تحديث جزئي للتحليل
 export async function PATCH(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const body = await request.json();
     const analyses = await readAnalyses();
     
@@ -167,10 +167,10 @@ export async function PATCH(
 // DELETE - حذف تحليل
 export async function DELETE(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const analyses = await readAnalyses();
     
     const analysisIndex = analyses.findIndex(a => a.id === id);

@@ -5,10 +5,10 @@ export const runtime = 'nodejs';
 
 export async function GET(
   request: NextRequest,
-  context: { params: { categorySlug: string } }
+  context: { params: Promise<{ categorySlug: string }> }
 ) {
   try {
-    const { categorySlug } = context.params;
+    const { categorySlug } = await context.params;
     const category = await prisma.category.findUnique({
       where: { slug: categorySlug },
       include: {

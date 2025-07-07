@@ -3,10 +3,10 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: userId } = context.params;
+    const { id: userId } = await context.params;
     
     // جلب التفاعلات من قاعدة البيانات
     const interactions = await prisma.interactions.findMany({

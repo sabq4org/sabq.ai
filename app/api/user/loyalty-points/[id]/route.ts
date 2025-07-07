@@ -9,10 +9,10 @@ const prisma = new PrismaClient();
 
 export async function GET(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: userId } = context.params;
+    const { id: userId } = await context.params;
 
     // في بيئة الإنتاج، استخدم قاعدة البيانات
     if (process.env.NODE_ENV === 'production' || process.env.USE_DATABASE === 'true') {

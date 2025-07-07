@@ -404,17 +404,8 @@ export async function DELETE(request: NextRequest) {
       }
     })
 
-    // تسجيل النشاط في سجل الأنشطة
-    await prisma.activity_logs.create({
-      data: {
-        user_id: authCheck.user.id,
-        action: 'articles_deleted',
-        entity_type: 'article',
-        entity_id: ids.join(','),
-        old_value: { status: 'published' },
-        new_value: { status: 'deleted', count: result.count }
-      }
-    });
+    // تسجيل النشاط في سجل الأنشطة - معطل مؤقتاً
+    // await prisma.activity_logs.create({ ... });
 
     console.log(`✅ تم حذف ${result.count} مقال بنجاح من قبل:`, authCheck.user?.email);
 

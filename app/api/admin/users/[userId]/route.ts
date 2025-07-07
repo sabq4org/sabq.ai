@@ -5,13 +5,13 @@ import { requirePermission } from '@/lib/auth/permissions'
 // جلب مستخدم محدد - يتطلب صلاحية users.read
 export async function GET(
   request: NextRequest,
-  context: { params: { userId: string } }
+  context: { params: Promise<{ userId: string }> }
 ) {
   const authResult = await requirePermission(request, 'users', 'read')
   if (authResult instanceof NextResponse) return authResult
   
   try {
-    const { userId } = context.params
+    const { userId } = await context.params
     const user = await prisma.users.findUnique({
       where: { id: userId },
       select: {
@@ -49,13 +49,13 @@ export async function GET(
 // تحديث مستخدم - يتطلب صلاحية users.update
 export async function PUT(
   request: NextRequest,
-  context: { params: { userId: string } }
+  context: { params: Promise<{ userId: string }> }
 ) {
   const authResult = await requirePermission(request, 'users', 'update')
   if (authResult instanceof NextResponse) return authResult
   
   try {
-    const { userId } = context.params
+    const { userId } = await context.params
     const body = await request.json()
     const {
       name,
@@ -109,13 +109,13 @@ export async function PUT(
 // حذف مستخدم - يتطلب صلاحية users.delete
 export async function DELETE(
   request: NextRequest,
-  context: { params: { userId: string } }
+  context: { params: Promise<{ userId: string }> }
 ) {
   const authResult = await requirePermission(request, 'users', 'delete')
   if (authResult instanceof NextResponse) return authResult
   
   try {
-    const { userId } = context.params
+    const { userId } = await context.params
 
     // التحقق من وجود المستخدم
     const existingUser = await prisma.users.findUnique({

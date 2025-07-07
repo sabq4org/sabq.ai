@@ -25,10 +25,10 @@ async function saveTeamMembers(members: TeamMember[]): Promise<void> {
 // GET: جلب بيانات عضو محدد
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const members = await getTeamMembers();
     const member = members.find(m => m.id === id);
     
@@ -58,10 +58,10 @@ export async function GET(
 // PATCH: تحديث بيانات عضو
 export async function PATCH(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const body: UpdateTeamMemberInput = await request.json();
     const members = await getTeamMembers();
     const memberIndex = members.findIndex(m => m.id === id);
@@ -158,10 +158,10 @@ export async function PATCH(
 // DELETE: حذف عضو
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const members = await getTeamMembers();
     const memberIndex = members.findIndex(m => m.id === id);
     

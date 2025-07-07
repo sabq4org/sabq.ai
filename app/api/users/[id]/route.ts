@@ -5,9 +5,9 @@ import bcrypt from 'bcryptjs';
 export const runtime = 'nodejs';
 
 // GET /api/users/[id] - الحصول على بيانات مستخدم محدد
-export async function GET(request: NextRequest, context: { params: { id: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     
     // جلب المستخدم مع جميع البيانات المرتبطة
     const user = await prisma.user.findUnique({
@@ -115,9 +115,9 @@ export async function GET(request: NextRequest, context: { params: { id: string 
 }
 
 // PUT /api/users/[id] - تحديث بيانات مستخدم
-export async function PUT(request: NextRequest, context: { params: { id: string } }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const body = await request.json();
     const { name, status, role, isVerified, newPassword, avatar } = body;
     
@@ -200,9 +200,9 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
 }
 
 // DELETE /api/users/[id] - حذف مستخدم
-export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     
     // التحقق من وجود المستخدم
     const user = await prisma.user.findUnique({
@@ -258,9 +258,9 @@ export async function DELETE(request: NextRequest, context: { params: { id: stri
 }
 
 // PATCH /api/users/[id] - تحديث حالة المستخدم (تعليق/تفعيل)
-export async function PATCH(request: NextRequest, context: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const body = await request.json();
     const { status, reason } = body;
     

@@ -5,10 +5,10 @@ import path from 'path';
 // تحديث حالة المستخدم
 export async function PATCH(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: userId } = context.params;
+    const { id: userId } = await context.params;
     const body = await request.json();
     const { status } = body;
 

@@ -6,7 +6,7 @@ export const runtime = 'nodejs';
 
 export async function GET(
   request: Request,
-  context: { params: { path: string[] } }
+  context: { params: Promise<{ path: string[] }> }
 ) {
   try {
     const resolvedParams = context.params;

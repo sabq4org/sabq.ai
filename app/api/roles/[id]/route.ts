@@ -9,9 +9,9 @@ const ROLES_FILE = path.join(process.cwd(), 'data', 'roles.json');
 
 
 // GET /api/roles/[id] - الحصول على تفاصيل دور محدد
-export async function GET(request: NextRequest, context: { params: { id: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     
     // قراءة الأدوار الحالية
     const data = await fs.readFile(ROLES_FILE, 'utf-8');
@@ -54,10 +54,10 @@ export async function GET(request: NextRequest, context: { params: { id: string 
 // PATCH - تحديث دور
 export async function PATCH(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const body = await request.json();
     const { name, description, permissions, color } = body;
     
@@ -115,10 +115,10 @@ export async function PATCH(
 // DELETE - حذف دور
 export async function DELETE(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     
     // قراءة الأدوار الحالية
     const data = await fs.readFile(ROLES_FILE, 'utf-8');

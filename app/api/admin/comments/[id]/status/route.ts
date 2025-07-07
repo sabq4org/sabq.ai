@@ -25,10 +25,10 @@ async function checkAdminPermission(userId: string): Promise<boolean> {
 
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params
+    const { id } = await context.params
     const body = await request.json()
     const { status, reason } = body
 

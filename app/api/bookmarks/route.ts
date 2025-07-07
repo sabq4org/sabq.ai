@@ -41,14 +41,7 @@ export async function POST(request: NextRequest) {
         where: { id: existingInteraction.id }
       });
       
-      await prisma.activity_logs.create({
-        data: {
-          user_id: userId,
-          action: 'unsaved_article',
-          entity_type: 'article',
-          entity_id: itemId
-        }
-      });
+      // await prisma.activity_logs.create({ ... }); // معطل مؤقتاً
 
       return NextResponse.json({ success: true, status: 'removed', message: 'Save removed' });
     } else {
@@ -62,14 +55,7 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      await prisma.activity_logs.create({
-        data: {
-          user_id: userId,
-          action: 'saved_article',
-          entity_type: 'article',
-          entity_id: itemId
-        }
-      });
+      // await prisma.activity_logs.create({ ... }); // معطل مؤقتاً
 
       return NextResponse.json({ success: true, status: 'created', message: 'Article saved', data: newInteraction });
     }
@@ -169,15 +155,7 @@ export async function DELETE(request: NextRequest) {
       where: { id: interactionId }
     });
     
-    await prisma.activity_logs.create({
-      data: {
-        user_id: userId,
-        action: 'deleted_save_by_id',
-        entity_type: 'interaction',
-        entity_id: interactionId,
-        metadata: { article_id: savedItem.article_id }
-      }
-    });
+    // await prisma.activity_logs.create({ ... }); // معطل مؤقتاً
 
     return NextResponse.json({ success: true, message: 'Saved item deleted successfully' });
   } catch (error) {

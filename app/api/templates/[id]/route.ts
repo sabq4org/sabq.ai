@@ -7,10 +7,10 @@ import path from 'path'
 // GET /api/templates/[id]
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const templateId = parseInt(id)
     
     const dataPath = path.join(process.cwd(), 'data', 'templates.json')
@@ -39,11 +39,11 @@ export async function GET(
 // PATCH /api/templates/[id]
 export async function PATCH(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requirePermission('templates.update')
-    const { id } = context.params;
+    const { id } = await context.params;
     const data = await request.json()
     
     const updatedTemplate = await templateService.updateTemplate(
@@ -74,11 +74,11 @@ export async function PATCH(
 // DELETE /api/templates/[id]
 export async function DELETE(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requirePermission('templates.delete')
-    const { id } = context.params;
+    const { id } = await context.params;
     
     const success = await templateService.deleteTemplate(parseInt(id))
     
@@ -103,10 +103,10 @@ export async function DELETE(
 
 export async function PUT(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const templateId = parseInt(id)
     const updatedData = await request.json()
     
