@@ -5,7 +5,7 @@ export const runtime = 'nodejs';
 
 // GET - جلب مقال واحد
 export async function GET(
-  request: Request,
+  request: NextRequest,
   context: { params: { id: string } }
 ) {
   try {
@@ -29,7 +29,7 @@ export async function GET(
 
 // PATCH - تحديث مقال
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   context: { params: { id: string } }
 ) {
   try {
@@ -47,7 +47,7 @@ export async function PATCH(
 
 // DELETE - حذف مقال
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   context: { params: { id: string } }
 ) {
   try {

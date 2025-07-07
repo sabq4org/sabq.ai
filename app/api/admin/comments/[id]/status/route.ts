@@ -24,15 +24,19 @@ async function checkAdminPermission(userId: string): Promise<boolean> {
 }
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   context: { params: { id: string } }
 ) {
   try {
+    const { id } = context.params
+    const body = await request.json()
+    const { status, reason } = body
+
     // التحقق من المستخدم
     const user = await getCurrentUser();
-    if (!user) {
+    if (!user || !user.isAdmin) {
       return NextResponse.json(
-        { success: false, error: 'يجب تسجيل الدخول' },
+        { error: 'Unauthorized' },
         { status: 401 }
       );
     }
@@ -46,9 +50,6 @@ export async function PUT(
       );
     }
 
-    const { id: commentId } = context.params;
-    const { status, reason } = await request.json();
-
     if (!['pending', 'approved', 'rejected', 'reported', 'archived'].includes(status)) {
       return NextResponse.json(
         { success: false, error: 'حالة غير صالحة' },
@@ -58,7 +59,7 @@ export async function PUT(
 
     // جلب التعليق الحالي
     const comment = await prisma.comments.findUnique({
-      where: { id: commentId },
+      where: { id: id },
       select: {
         status: true,
         article_id: true
@@ -74,7 +75,7 @@ export async function PUT(
 
     // تحديث حالة التعليق
     const updatedComment = await prisma.comments.update({
-      where: { id: commentId },
+      where: { id: id },
       data: { status }
     });
 

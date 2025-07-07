@@ -1,19 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
-type Params = {
-  params: Promise<{ id: string }>
-}
-
 export async function GET(
-  request: Request,
-  context: Params
+  request: NextRequest,
+  context: { params: { id: string } }
 ) {
   try {
     const { id: userId } = context.params;
 
     // جلب جميع التفاعلات
-    const interactions = await prisma.interaction.findMany({
+    const interactions = await prisma.interactions.findMany({
       where: { userId: userId },
       include: {
         article: {

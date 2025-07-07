@@ -3,10 +3,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Share2, Eye, Clock, Calendar,
   User, MessageCircle, TrendingUp, Hash, ChevronRight, Home,
   Twitter, Copy, Check, X, Menu, Heart, Bookmark
 } from 'lucide-react';
+import { Metadata } from 'next'
+import { notFound } from 'next/navigation'
+import MobileOptimizer from '@/components/mobile/MobileOptimizer'
+import MobileHeader from '@/components/mobile/MobileHeader'
+import { Article } from '@/types'
 
 import { useDarkModeContext } from '@/contexts/DarkModeContext';
 import { formatFullDate, formatRelativeDate } from '@/lib/date-utils';
@@ -15,6 +21,9 @@ import ArticleJsonLd from '@/components/ArticleJsonLd';
 import Footer from '@/components/Footer';
 import { marked } from 'marked';
 import Header from '@/components/Header';
+import CommentsSection from '@/components/comments/CommentsSection';
+import { ArticleMobileLayout } from '@/components/mobile/MobileLayout';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 // تعريف نوع twttr لتويتر
 declare global {
@@ -103,6 +112,7 @@ interface Article {
   seo_keywords?: string | string[];
   related_articles?: RelatedArticle[];
   ai_summary?: string;
+  allow_comments?: boolean;
 }
 
 interface RelatedArticle {
@@ -130,6 +140,7 @@ interface PageProps {
 
 export default function ArticlePage({ params }: PageProps) {
   const router = useRouter();
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const { darkMode, toggleDarkMode } = useDarkModeContext();
   const [article, setArticle] = useState<Article | null>(null);
@@ -788,575 +799,125 @@ export default function ArticlePage({ params }: PageProps) {
   }
 
   return (
-    <div className="bg-white text-gray-900 dark:bg-gray-900 dark:text-white">
-      {article && <ArticleJsonLd article={article} />}
+    <MobileOptimizer>
+      <MobileHeader />
       
-      {/* أنماط CSS مخصصة لأزرار "لا أرغب بهذا النوع" */}
-      <style jsx>{`
-        .no-thanks-button {
-          position: absolute;
-          top: 8px;
-          left: 8px;
-          width: 36px;
-          height: 36px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background-color: rgba(239, 68, 68, 0.9);
-          color: white;
-          border-radius: 50%;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-          opacity: 0;
-          transform: scale(0.8);
-          transition: all 0.3s ease;
-          z-index: 30;
-          cursor: pointer;
-          border: none;
-        }
-        
-        .group:hover .no-thanks-button {
-          opacity: 1;
-          transform: scale(1);
-        }
-        
-        .no-thanks-button:hover {
-          background-color: rgb(220, 38, 38);
-          transform: scale(1.1);
-        }
-        
-        @media (max-width: 768px) {
-          .no-thanks-button {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        /* إزالة خلفيات محتوى المقال */
-        .prose :global(pre) {
-          background: transparent !important;
-          background-color: transparent !important;
-        }
-        
-        .prose :global(blockquote) {
-          background: transparent !important;
-          background-color: transparent !important;
-        }
-        
-        .prose :global(code) {
-          background: transparent !important;
-          background-color: transparent !important;
-        }
-        
-        .prose :global(.highlight) {
-          background: transparent !important;
-          background-color: transparent !important;
-        }
-        
-        .prose :global(.code-block) {
-          background: transparent !important;
-          background-color: transparent !important;
-        }
-
-        .prose :global(table) {
-          background: transparent !important;
-          background-color: transparent !important;
-        }
-
-        .prose :global(th) {
-          background: transparent !important;
-          background-color: transparent !important;
-        }
-
-        .prose :global(td) {
-          background: transparent !important;
-          background-color: transparent !important;
-        }
-
-        .prose :global(tr) {
-          background: transparent !important;
-          background-color: transparent !important;
-        }
-
-        .prose :global(.table-container) {
-          background: transparent !important;
-          background-color: transparent !important;
-        }
-
-        /* إزالة خلفيات إضافية */
-        .prose :global(*) {
-          background-color: transparent !important;
-        }
-
-        /* الحفاظ على خلفية الصور فقط */
-        .prose :global(img) {
-          background-color: initial !important;
-        }
-
-        .prose :global(figure) {
-          background-color: transparent !important;
-        }
-      `}</style>
-      
-      {/* Header */}
-      <Header />
-
-      {/* مؤشر تقدم القراءة */}
-      <div className="fixed top-0 left-0 w-full h-1 bg-gray-200 dark:bg-gray-700 z-50">
-        <div 
-          className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300"
-          style={{ width: `${readProgress}%` }}
-        />
-      </div>
-
-      {/* Hero Image + Meta */}
-      <section className="relative hero-image-container">
-        <div className="w-full h-[50vh] md:h-[60vh] overflow-hidden">
-          {isNewArticle && (
-            <div className="new-badge z-10">
-              جديد
-            </div>
-          )}
-          <img
-            src={getImageUrl(article.featured_image) || generatePlaceholderImage(article.title)}
-            alt={article.featured_image_alt || article.title}
-            className="w-full h-full object-cover hero-image"
-            onError={(e) => {
-              e.currentTarget.src = generatePlaceholderImage(article.title);
-            }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-        </div>
-      </section>
-
-      {/* Article Title & Meta */}
-      <section className="px-4 md:px-8 py-6 max-w-5xl mx-auto">
-        <h1 className="text-3xl md:text-4xl font-bold leading-tight article-title">
-          {article.title}
-        </h1>
-        {article.subtitle && (
-          <p className="text-xl text-gray-600 dark:text-gray-400 mb-4">
-            {article.subtitle}
-          </p>
-        )}
-        
-        {/* ملخص AI - جديد */}
-        {(article.summary || article.ai_summary) && (
-          <div className="my-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 p-2 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
-                  <span>📎 ملخص AI</span>
-                  <span className="text-xs font-normal text-gray-500 dark:text-gray-400">TL;DR</span>
-                </h3>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                  {article.summary || article.ai_summary}
-                </p>
-              </div>
-            </div>
+      <article className="min-h-screen bg-white dark:bg-gray-900">
+        {/* صورة المقال */}
+        {article.featured_image && (
+          <div className="relative w-full h-48 sm:h-64 md:h-96">
+            <img
+              src={getImageUrl(article.featured_image) || generatePlaceholderImage(article.title)}
+              alt={article.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           </div>
         )}
         
-        {/* معلومات المقال */}
-        <div className="article-meta-info">
-          <div className="article-meta-item">
-            <span
-              className="px-3 py-1 rounded-full text-xs font-medium text-white"
-              style={{ backgroundColor: getCategoryColor(article.category) }}
-            >
-              {article.category?.name_ar || (article.category as any)?.name || article.category_name || 'غير مصنف'}
-            </span>
-          </div>
-          <div className="article-meta-item">
-            <User className="w-5 h-5" />
-            <Link href={`/author/${article.author_id || (article.author as any)?.id || ''}`} className="hover:text-blue-600">{article.author_name || (article.author && (article.author as any).name) || '—'}</Link>
-          </div>
-          <div className="article-meta-item">
-            <Calendar className="w-5 h-5" />
-            <span>{formatFullDate(article.published_at || article.created_at)}</span>
-          </div>
-          <div className="article-meta-item">
-            <Clock className="w-5 h-5" />
-            <span>{calculateReadingTime(article.content)} دقائق قراءة</span>
-          </div>
-          <div className="article-meta-item">
-            <Eye className="w-5 h-5" />
-            <span>{article.views_count || 0} مشاهدة</span>
-          </div>
-        </div>
-
-        {/* الكلمات المفتاحية */}
-        {article.seo_keywords && Array.isArray(article.seo_keywords) && article.seo_keywords.length > 0 && (
-          <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-2 mb-3">
-              <Hash className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">الكلمات المفتاحية</h3>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {article.seo_keywords.map((keyword, index) => (
-                <span
-                  key={index}
-                  className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded-full border border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors cursor-pointer"
-                  title={`البحث عن: ${keyword}`}
-                  onClick={() => {
-                    // يمكن إضافة وظيفة البحث هنا
-                    console.log(`البحث عن: ${keyword}`);
+        {/* محتوى المقال */}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="max-w-4xl mx-auto">
+            {/* معلومات المقال */}
+            <div className="mb-6">
+              {article.category && (
+                <span 
+                  className="inline-block px-3 py-1 text-xs sm:text-sm font-medium rounded-full mb-3"
+                  style={{ 
+                    backgroundColor: `${getCategoryColor(article.category)}20`,
+                    color: getCategoryColor(article.category) 
                   }}
                 >
-                  {keyword}
+                  {article.category.name_ar || (article.category as any)?.name || article.category_name || 'غير مصنف'}
                 </span>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {/* شريط التفاعل السريع */}
-        <div className="quick-interaction-bar">
-          {/* زر الإعجاب */}
-          <button 
-            onClick={handleLike}
-            className={`quick-interaction-button ripple-effect ${
-              interaction.liked ? 'text-red-500 bg-red-50 dark:bg-red-900/20' : ''
-            }`}
-            title={interaction.liked ? 'إلغاء الإعجاب' : 'أعجبني'}
-          >
-            <Heart className={`w-5 h-5 ${interaction.liked ? 'fill-current' : ''}`} />
-            <span>{interaction.liked ? 'أعجبني' : 'أعجبني'}</span>
-            {interaction.likesCount > 0 && (
-              <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-                {interaction.likesCount}
-              </span>
-            )}
-          </button>
-
-          {/* زر الحفظ */}
-          <button 
-            onClick={handleSave}
-            className={`quick-interaction-button ripple-effect ${
-              interaction.saved ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
-            }`}
-            title={interaction.saved ? 'إلغاء الحفظ' : 'حفظ المقال'}
-          >
-            <Bookmark className={`w-5 h-5 ${interaction.saved ? 'fill-current' : ''}`} />
-            <span>{interaction.saved ? 'محفوظ' : 'حفظ'}</span>
-            {interaction.savesCount > 0 && (
-              <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-                {interaction.savesCount}
-              </span>
-            )}
-          </button>
-
-          {/* زر المشاركة */}
-          <button 
-            title="شارك هذا المقال"
-            onClick={() => setShowShareMenu(!showShareMenu)}
-            className="quick-interaction-button ripple-effect relative"
-          >
-            <Share2 className="w-5 h-5" />
-            <span>مشاركة</span>
-            {interaction.sharesCount > 0 && (
-              <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-                {interaction.sharesCount}
-              </span>
-            )}
-            
-            {/* قائمة المشاركة */}
-            {showShareMenu && (
-              <div className="absolute top-full mt-2 left-0 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 min-w-[200px] z-10">
-                <button
-                  onClick={() => handleShare('twitter')}
-                  className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                  <Twitter className="w-4 h-4" />
-                  <span>تويتر</span>
-                </button>
-                <button
-                  onClick={() => handleShare('whatsapp')}
-                  className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  <span>واتساب</span>
-                </button>
-                <button
-                  onClick={() => handleShare('copy')}
-                  className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                  {copySuccess ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-                  <span>{copySuccess ? 'تم النسخ!' : 'نسخ الرابط'}</span>
-                </button>
-              </div>
-            )}
-          </button>
-        </div>
-      </section>
-
-      {/* Main Content Area */}
-      <div className="max-w-7xl mx-auto px-4 md:px-8 pb-12" ref={contentRef}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Article Content */}
-          <section className="lg:col-span-2">
-            <div className="prose prose-lg max-w-none prose-headings:text-gray-900 dark:prose-headings:text-white prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-strong:text-gray-900 dark:prose-strong:text-white prose-code:text-gray-900 dark:prose-code:text-white prose-pre:bg-transparent prose-blockquote:bg-transparent">
-              {renderArticleContent(article.content)}
-            </div>
-          </section>
-
-          {/* Sidebar */}
-          <aside className="lg:col-span-1 space-y-6">
-            {/* Article Stats */}
-            <div className="sidebar-card">
-              <div className="trend-badge text-sm text-green-600 mb-2">↑ نمو كبير اليوم</div>
-              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-blue-600" />
-                إحصائيات المقال
-              </h3>
-              <div className="article-info-grid">
-                <div className="article-info-item">
-                  <Eye className="w-5 h-5" />
-                  <div>
-                    <div className="article-info-label">المشاهدات</div>
-                    <div className="article-info-value">{article.views_count || 0}</div>
-                  </div>
-                </div>
-                <div className="article-info-item">
-                  <Clock className="w-5 h-5" />
-                  <div>
-                    <div className="article-info-label">وقت القراءة</div>
-                    <div className="article-info-value">{calculateReadingTime(article.content)} دقائق</div>
-                  </div>
-                </div>
-
-                <div className="article-info-item">
-                  <MessageCircle className="w-5 h-5" />
-                  <div>
-                    <div className="article-info-label">التعليقات</div>
-                    <div className="article-info-value">{article.stats?.comments || 0}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* فهرس المحتويات */}
-            {tableOfContents.length > 0 && (
-              <div className="sidebar-card sticky top-20">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <Hash className="w-5 h-5 text-blue-600" />
-                  فهرس المحتويات
-                </h3>
-                <nav className="space-y-2">
-                  {tableOfContents.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => scrollToSection(item.id)}
-                      className={`block w-full text-right py-2 px-3 rounded-lg transition-all ${
-                        activeSection === item.id
-                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-4 border-blue-600'
-                          : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
-                      } ${item.level === 3 ? 'mr-4 text-sm' : ''}`}
-                    >
-                      {item.title}
-                    </button>
-                  ))}
-                </nav>
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    تقدم القراءة: {Math.round(readProgress)}%
-                  </div>
-                  <div className="mt-2 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-blue-600 transition-all duration-300"
-                      style={{ width: `${readProgress}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* مساعد AI - جديد */}
-            <div className="sidebar-card bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-800">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">🤖 مساعد AI</h3>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">اسأل عن محتوى المقال</p>
-                </div>
-              </div>
+              )}
               
-              <div className="space-y-3">
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                  لديك سؤال حول المقال؟ اسألني وسأساعدك في فهم المحتوى بشكل أفضل.
-                </p>
-                
-                {/* أمثلة على الأسئلة */}
-                <div className="space-y-2">
-                  <button 
-                    onClick={() => handleAiQuestion('ما هي النقاط الرئيسية؟')}
-                    className="w-full text-right text-xs bg-white dark:bg-gray-800 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    💡 ما هي النقاط الرئيسية؟
-                  </button>
-                  <button 
-                    onClick={() => handleAiQuestion('اشرح لي هذا الموضوع ببساطة')}
-                    className="w-full text-right text-xs bg-white dark:bg-gray-800 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    🔍 اشرح لي هذا الموضوع ببساطة
-                  </button>
-                  <button 
-                    onClick={() => handleAiQuestion('ما هي الإحصائيات المذكورة؟')}
-                    className="w-full text-right text-xs bg-white dark:bg-gray-800 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    📊 ما هي الإحصائيات المذكورة؟
-                  </button>
-                </div>
-                
-                {/* عرض الاستجابة */}
-                {(aiResponse || isAiLoading) && (
-                  <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                    {isAiLoading ? (
-                      <div className="flex items-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">جاري التفكير...</span>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                        {aiResponse}
-                      </p>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 leading-tight">
+                {article.title}
+              </h1>
+              
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-600 dark:text-gray-400">
+                {article.author && (
+                  <div className="flex items-center gap-2">
+                    {typeof article.author === 'object' && article.author.avatar && (
+                      <img
+                        src={article.author.avatar}
+                        alt={article.author.name}
+                        className="w-8 h-8 rounded-full"
+                      />
                     )}
+                    <span>{article.author_name || (article.author && typeof article.author === 'object' ? article.author.name : article.author) || '—'}</span>
                   </div>
                 )}
                 
-                <div className="mt-4 pt-4 border-t border-purple-200 dark:border-purple-700">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={aiQuestion}
-                      onChange={(e) => setAiQuestion(e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          handleAiQuestion(aiQuestion);
-                          setAiQuestion('');
-                        }
-                      }}
-                      placeholder="اكتب سؤالك هنا..."
-                      className="flex-1 px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
-                    <button 
-                      onClick={() => {
-                        handleAiQuestion(aiQuestion);
-                        setAiQuestion('');
-                      }}
-                      disabled={!aiQuestion.trim() || isAiLoading}
-                      className="p-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                      </svg>
-                    </button>
-                  </div>
+                <span>•</span>
+                
+                <time>{formatFullDate(article.published_at || article.created_at)}</time>
+                
+                {article.reading_time && (
+                  <>
+                    <span>•</span>
+                    <span>{article.reading_time} دقيقة قراءة</span>
+                  </>
+                )}
+                
+                {article.views_count !== undefined && (
+                  <>
+                    <span>•</span>
+                    <span>{article.views_count} مشاهدة</span>
+                  </>
+                )}
+              </div>
+            </div>
+            
+            {/* المحتوى */}
+            <div className="prose prose-sm sm:prose-base md:prose-lg dark:prose-invert max-w-none">
+              {renderArticleContent(article.content)}
+            </div>
+            
+            {/* أزرار المشاركة والتفاعل */}
+            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+                    </svg>
+                    <span>إعجاب</span>
+                  </button>
+                  
+                  <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                    </svg>
+                    <span>حفظ</span>
+                  </button>
                 </div>
-              </div>
-            </div>
-
-
-
-
-          </aside>
-        </div>
-      </div>
-
-      {/* الأزرار العائمة */}
-      {showFloatingActions && (
-        <div className="floating-actions">
-          <button 
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="floating-action-button"
-            title="العودة للأعلى"
-          >
-            <ChevronRight className="w-6 h-6 rotate-90" />
-          </button>
-          <button 
-            onClick={() => setShowShareMenu(!showShareMenu)}
-            className="floating-action-button"
-            title="مشاركة"
-          >
-            <Share2 className="w-6 h-6" />
-          </button>
-          {tableOfContents.length > 0 && (
-            <button 
-              onClick={() => setShowMobileToc(!showMobileToc)}
-              className="floating-action-button lg:hidden"
-              title="فهرس المحتويات"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Modal فهرس المحتويات للموبايل */}
-      {showMobileToc && (
-        <div className="lg:hidden fixed inset-0 z-50 overflow-y-auto">
-          <div 
-            className="fixed inset-0 bg-black/50" 
-            onClick={() => setShowMobileToc(false)} 
-          />
-          <div className={`relative min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
-            <div className={`sticky top-0 p-4 border-b ${darkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white'}`}>
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-lg">فهرس المحتويات</h3>
+                
                 <button 
-                  onClick={() => setShowMobileToc(false)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: article.title,
+                        text: article.summary || article.title,
+                        url: window.location.href
+                      })
+                    }
+                  }}
                 >
-                  <X className="w-6 h-6" />
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m9.032 4.026a3 3 0 10-5.432-2.684m5.432 2.684l-3.276 4.408a4.5 4.5 0 01-7.364 0l-3.276-4.408a3 3 0 10-5.432 2.684m15.464 0A3 3 0 0118 12c0 .482-.114.938-.316 1.342" />
+                  </svg>
+                  <span>مشاركة</span>
                 </button>
-              </div>
-            </div>
-            <nav className="p-4 space-y-2">
-              {tableOfContents.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => scrollToSection(item.id)}
-                  className={`block w-full text-right py-3 px-4 rounded-lg ${
-                    activeSection === item.id
-                      ? darkMode 
-                        ? 'bg-blue-900/30 text-blue-400' 
-                        : 'bg-blue-50 text-blue-600'
-                      : darkMode
-                        ? 'text-gray-300 hover:bg-gray-800'
-                        : 'text-gray-700 hover:bg-gray-100'
-                  } ${item.level === 3 ? 'mr-4 text-sm' : ''}`}
-                >
-                  {item.title}
-                </button>
-              ))}
-            </nav>
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-              <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                تقدم القراءة: {Math.round(readProgress)}%
-              </div>
-              <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-blue-600 transition-all duration-300"
-                  style={{ width: `${readProgress}%` }}
-                />
               </div>
             </div>
           </div>
         </div>
-      )}
-
-      {/* Footer */}
-      <Footer />
-    </div>
-  );
+      </article>
+    </MobileOptimizer>
+  )
 }
 
 // دوال مساعدة

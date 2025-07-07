@@ -1,70 +1,238 @@
-# ملفات التطوير
-__dev__/
-*.log
+# Vercel ignore file
+# Updated: 2025-01-07 - Force rebuild
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output/
+
+# Next.js
+.next/
+out/
+
+# Production
+build/
+dist/
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Local env files
+.env*.local
 .env.local
-.env.development
+.env.development.local
+.env.test.local
+.env.production.local
 
-# ملفات النسخ الاحتياطي
-backups/
-*.backup
-*.backup.*
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# ملفات الاختبار
-test/
-tests/
+# OS
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+
+# Documentation  
+docs/
+
+# Scripts
+scripts/
+
+# Logs
+logs/
+*.log
+
+# Cache
+.cache/
+.turbo/
+
+# Build artifacts
+.vercel/
+
+# Test files
 __tests__/
 *.test.js
 *.test.ts
 *.spec.js
 *.spec.ts
 
-# ملفات الأدوات
-# scripts/ - نحتاج scripts/vercel-build-optimization.js للبناء
-docs/
-reports/
+# Storybook
+.storybook/
+storybook-static/
 
-# ملفات البيانات المحلية
-data/
-uploads/
-public/uploads/
+# Backup files
+*.backup
+*.bak
+backups/
 
-# ملفات النظام
-.DS_Store
-Thumbs.db
-
-# ملفات Git
-.git/
-.gitignore
-
-# ملفات IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# ملفات Node.js
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# ملفات البناء
-.next/
-out/
-dist/
-
-# ملفات Prisma
-prisma/migrations/
+# Database files
 *.db
 *.sqlite
+*.sqlite3
 
-# ملفات أخرى
+# Generated files
+generated/
+
+# Custom
+data/
+reports/
+analysis/
+
+# Certificates
+certs/
+*.pem
+*.crt
+*.key
+
+# Shell scripts (except specific ones)
+*.sh
+!start-sabq.sh
+!run-sabq.sh
+
+# Configuration files
+*.config.js
+!next.config.js
+!tailwind.config.js
+!postcss.config.js
+
+# Markdown files (except main README)
 *.md
-README.md
-LICENSE
+!README.md
+!SETUP_GUIDE.md
 
-# استثناءات - ملفات مطلوبة للبناء
-!scripts/vercel-build-optimization.js
-!scripts/digitalocean-build.js
-!scripts/fix-prisma-generation.js
-!scripts/test-build.js
+# JSON files (except essential ones)
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!vercel.json
+!.stylelintrc.json
+!.eslintrc.json
+
+# Log files
+*.log
+dev.log
+build.log
+
+# Temporary solution files
+SOLUTION_*.md
+QUICK_*.md
+FIX_*.md
+*_GUIDE.md
+*_REPORT.md
+*_SETUP.md
+
+# Development tools
+.eslintcache
+.stylelintcache
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Ruby
+*.gem
+*.rbc
+.bundle/
+vendor/bundle/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Rust
+target/
+Cargo.lock
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Ansible
+*.retry
+
+# Vagrant
+.vagrant/
+
+# Docker
+docker-compose.override.yml
+
+# Kubernetes
+*.kubeconfig
+
+# Helm
+charts/*/charts/
+charts/*/requirements.lock
+
+# macOS
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
