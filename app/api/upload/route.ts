@@ -59,11 +59,7 @@ export async function POST(request: NextRequest) {
       // رفع الملف إلى Cloudinary
       const result = await uploadToCloudinary(file, {
         folder,
-        publicId: `${Date.now()}-${file.name.replace(/\.[^/.]+$/, "")}`,
-        transformation: [
-          { quality: 'auto:good' },
-          { fetch_format: 'auto' }
-        ]
+        fileName: file.name
       });
 
       console.log('✅ تم رفع الملف إلى Cloudinary:', result.url);
