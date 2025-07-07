@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 export const runtime = 'nodejs';
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   context: { params: { id: string } }
 ) {
   try {

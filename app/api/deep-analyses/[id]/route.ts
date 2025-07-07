@@ -58,7 +58,7 @@ export async function GET(
 
 // PUT - تحديث تحليل
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   context: { params: { id: string } }
 ) {
   try {

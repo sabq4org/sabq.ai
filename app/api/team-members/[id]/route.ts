@@ -6,7 +6,6 @@ import { TeamMember, UpdateTeamMemberInput } from '@/types/team';
 
 export const runtime = 'nodejs';
 
-
 const TEAM_MEMBERS_FILE = path.join(process.cwd(), 'data', 'team-members.json');
 
 async function getTeamMembers(): Promise<TeamMember[]> {
@@ -25,8 +24,8 @@ async function saveTeamMembers(members: TeamMember[]): Promise<void> {
 
 // GET: جلب بيانات عضو محدد
 export async function GET(
-  request: Request,
-  { params }: RouteParams
+  request: NextRequest,
+  context: { params: { id: string } }
 ) {
   try {
     const { id } = context.params;
@@ -58,8 +57,8 @@ export async function GET(
 
 // PATCH: تحديث بيانات عضو
 export async function PATCH(
-  request: Request,
-  { params }: RouteParams
+  request: NextRequest,
+  context: { params: { id: string } }
 ) {
   try {
     const { id } = context.params;
@@ -158,8 +157,8 @@ export async function PATCH(
 
 // DELETE: حذف عضو
 export async function DELETE(
-  request: Request,
-  { params }: RouteParams
+  request: NextRequest,
+  context: { params: { id: string } }
 ) {
   try {
     const { id } = context.params;

@@ -9,7 +9,7 @@ const ROLES_FILE = path.join(process.cwd(), 'data', 'roles.json');
 
 
 // GET /api/roles/[id] - الحصول على تفاصيل دور محدد
-export async function GET(request: Request, context: { params: { [key: string]: string } }) {
+export async function GET(request: NextRequest, context: { params: { id: string } }) {
   try {
     const { id } = context.params;
     

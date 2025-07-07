@@ -6,7 +6,7 @@ import path from 'path'
 
 // GET /api/templates/[id]
 export async function GET(
-  request: Request,
+  request: NextRequest,
   context: { params: { id: string } }
 ) {
   try {
@@ -38,7 +38,7 @@ export async function GET(
 
 // PATCH /api/templates/[id]
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   context: { params: { id: string } }
 ) {
   try {

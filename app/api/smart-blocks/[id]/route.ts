@@ -53,7 +53,7 @@ async function writeBlocks(blocks: SmartBlock[]) {
 
 // GET - جلب بلوك واحد
 export async function GET(
-  request: Request,
+  request: NextRequest,
   context: { params: { id: string } }
 ) {
   try {
