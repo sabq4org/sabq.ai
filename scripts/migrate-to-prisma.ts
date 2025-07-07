@@ -55,7 +55,7 @@ async function migrateCategories() {
   
   for (const category of categories) {
     try {
-      await prisma.category.upsert({
+      await prisma.categories.upsert({
         where: { slug: category.slug },
         update: {
           name: category.name,
@@ -159,7 +159,7 @@ async function migrateArticles() {
 
       // محاولة إيجاد الفئة بال slug
       if (article.category_slug && !categoryId) {
-        const category = await prisma.category.findUnique({
+        const category = await prisma.categories.findUnique({
           where: { slug: article.category_slug }
         })
         categoryId = category?.id

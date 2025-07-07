@@ -145,9 +145,9 @@ async function cleanDatabase() {
     const adminIds = adminUsers.map(u => u.id);
     
     try {
-      const deletedLoyaltyPoints = await prisma.loyaltyPoint.deleteMany({
-        where: { userId: { notIn: adminIds } }
-      });
+      const deletedLoyaltyPoints = await prisma.loyalty_points.deleteMany({
+          where: { user_id: { notIn: adminIds } }
+        });
       log(`✅ تم حذف ${deletedLoyaltyPoints.count} سجل نقاط ولاء`, 'success');
     } catch (error) {
       log('⚠️ لا توجد نقاط ولاء أو تم حذفها مسبقاً', 'warning');

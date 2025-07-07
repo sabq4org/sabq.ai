@@ -69,7 +69,7 @@ async function main() {
 
     // إنشاء بعض المقالات للمحرر
     if (userData.role === 'editor') {
-      const categories = await prisma.category.findMany()
+      const categories = await prisma.categories.findMany()
       
       for (let i = 1; i <= 3; i++) {
         await prisma.articles.create({

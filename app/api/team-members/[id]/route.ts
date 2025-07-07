@@ -6,10 +6,6 @@ import { TeamMember, UpdateTeamMemberInput } from '@/types/team';
 
 export const runtime = 'nodejs';
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
 const TEAM_MEMBERS_FILE = path.join(process.cwd(), 'data', 'team-members.json');
 
 async function getTeamMembers(): Promise<TeamMember[]> {
@@ -29,10 +25,10 @@ async function saveTeamMembers(members: TeamMember[]): Promise<void> {
 // GET: جلب بيانات عضو محدد
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     const members = await getTeamMembers();
     const member = members.find(m => m.id === id);
     
@@ -62,10 +58,10 @@ export async function GET(
 // PATCH: تحديث بيانات عضو
 export async function PATCH(
   request: NextRequest,
-  { params }: RouteParams
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     const body: UpdateTeamMemberInput = await request.json();
     const members = await getTeamMembers();
     const memberIndex = members.findIndex(m => m.id === id);
@@ -162,10 +158,10 @@ export async function PATCH(
 // DELETE: حذف عضو
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteParams
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     const members = await getTeamMembers();
     const memberIndex = members.findIndex(m => m.id === id);
     

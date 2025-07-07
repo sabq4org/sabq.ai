@@ -87,6 +87,7 @@ import {
 import { useTheme } from '@/contexts/ThemeContext';
 import { getCookie, setCookie } from '@/lib/cookies';
 import { generatePlaceholderImage, getValidImageUrl } from '@/lib/cloudinary';
+import { getArticleLink } from '@/lib/utils';
 
 import CategoryBadge from './components/CategoryBadge';
 import Header from '../components/Header';
@@ -97,15 +98,16 @@ import { useReaderProfile } from '@/hooks/useReaderProfile';
 import SmartDigestBlock from '@/components/smart-blocks/SmartDigestBlock';
 import SmartContextWidget from '@/components/home/SmartContextWidget';
 import InteractiveArticle from '@/components/InteractiveArticle';
+import TodayOpinionsSection from '@/components/TodayOpinionsSection';
 
 // 🚀 إضافة المكونات المحسنة للموبايل
 import MobileLayout from '@/components/mobile/MobileLayout';
 import MobileArticleCard from '@/components/mobile/MobileArticleCard';
 import { useDarkModeContext } from '@/contexts/DarkModeContext';
 import { Suspense } from 'react'
-import { MobileOptimizer, MobileStats } from '@/components/mobile/MobileOptimizer'
-import { MobileArticlesList } from '@/components/mobile/MobileArticleCard'
-import { MobileHeader } from '@/components/mobile/MobileHeader'
+// import { MobileOptimizer, MobileStats } from '@/components/mobile/MobileOptimizer'
+// import { MobileArticlesList } from '@/components/mobile/MobileArticleCard'
+// import { MobileHeader } from '@/components/mobile/MobileHeader'
 
 // دالة تشخيص المصادقة
 function DebugAuth() {
@@ -372,7 +374,7 @@ function NewspaperHomePage(): React.ReactElement {
 
   // مكون بطاقة الأخبار
   const NewsCard = ({ news }: { news: any }) => (
-    <Link href={`/article/${news.id}`} className="group block">
+    <Link href={getArticleLink(news)} className="group block">
       <article className={`h-full rounded-3xl overflow-hidden shadow-xl dark:shadow-gray-900/50 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700'}`}>
         {/* صورة المقال */}
         <div className="relative h-40 sm:h-48 overflow-hidden">
@@ -567,12 +569,12 @@ function NewspaperHomePage(): React.ReactElement {
       )}
 
       {/* Smart Blocks - Below Header - أول بلوك أسفل الهيدر مباشرة */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SmartSlot position="below_header" />
       </div>
 
       {/* Smart Blocks - Top Banner (للتوافق مع النظام القديم) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SmartSlot position="topBanner" />
       </div>
 
@@ -585,12 +587,12 @@ function NewspaperHomePage(): React.ReactElement {
       )}
 
       {/* Smart Blocks - قبل المحتوى المخصص (محتوى مخصص لك) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SmartSlot position="beforePersonalization" />
       </div>
 
       {/* Smart Blocks - Below Deep Analysis */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SmartSlot position="below_deep_analysis" />
       </div>
 
@@ -725,7 +727,7 @@ function NewspaperHomePage(): React.ReactElement {
                       {/* Grid Layout for Cards */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                         {categoryArticles.map((article: any) => (
-                          <Link key={article.id} href={`/article/${article.id}`} className="group">
+                          <Link key={article.id} href={getArticleLink(article)} className="group">
                             <article className={`h-full rounded-3xl overflow-hidden shadow-xl dark:shadow-gray-900/50 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700'}`}>
                               {/* صورة المقال */}
                               <div className="relative h-40 sm:h-48 overflow-hidden">
@@ -1032,6 +1034,9 @@ function NewspaperHomePage(): React.ReactElement {
           <SmartContextWidget />
         </section>
 
+        {/* قسم رأي اليوم */}
+        <TodayOpinionsSection darkMode={darkMode} />
+
         {/* المقالات التفاعلية - التصميم الجديد */}
         <section className="mb-16">
           <div className="max-w-7xl mx-auto px-6">
@@ -1291,18 +1296,18 @@ function NewspaperHomePage(): React.ReactElement {
       </main>
 
       {/* Smart Blocks - Below Personalized Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <SmartSlot position="below_personalized" />
       </div>
 
       {/* Smart Blocks - Above Footer */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SmartSlot position="above_footer" />
       </div>
 
       {/* Footer Section */}
       <footer className={`mt-20 py-12 border-t ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {/* Logo Section */}
           <div className="mb-8">
             <div className="inline-flex items-center gap-4">

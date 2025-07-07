@@ -1,419 +1,611 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, FileText, Award, TrendingUp, Eye, Heart, Clock, Twitter, Linkedin, Mail, User, Loader2, ChevronRight, Sparkles, BookOpen } from 'lucide-react';
-import Header from '../../../components/Header';
-import Footer from '@/components/Footer';
-import { formatDateOnly } from '@/lib/date-utils';
-import './author-styles.css';
+import { 
+  Star, Calendar, Eye, Heart, Share2, MessageSquare, Clock, 
+  TrendingUp, BarChart3, Brain, Headphones, Quote, Copy,
+  Sparkles, Activity, BookOpen, Users, Zap, Award,
+  ChevronLeft, ChevronRight, Volume2, PieChart
+} from 'lucide-react';
+import { useDarkModeContext } from '@/contexts/DarkModeContext';
+import { formatDateOnly, formatRelativeDate } from '@/lib/date-utils';
 
+// Types
 interface Author {
   id: string;
   name: string;
-  title?: string;
-  bio?: string;
-  avatar?: string;
-  joinDate?: string;
-  articlesCount?: number;
-  viewsCount?: number;
-  likesCount?: number;
-  specialization?: string[];
-  awards?: string[];
-  social?: {
-    twitter?: string;
-    linkedin?: string;
-    email?: string;
-  };
+  avatar: string;
+  bio: string;
+  specialization: string;
+  club: 'platinum' | 'gold' | 'silver' | 'bronze' | 'default';
+  yearsOfExperience: number;
+  totalArticles: number;
+  totalViews: number;
+  totalLikes: number;
+  joinDate: string;
+  achievements: string[];
+  isVerified: boolean;
+  backgroundImage?: string;
+  coverImage?: string;
 }
 
 interface Article {
   id: string;
   title: string;
-  summary?: string;
-  category: string;
-  category_id?: number;
-  date: string;
-  image?: string;
-  views?: number;
-  likes?: number;
-  comments?: number;
-  readTime?: string;
-  is_breaking?: boolean;
-  is_featured?: boolean;
+  excerpt: string;
+  featured_image?: string;
+  published_at: string;
+  reading_time: number;
+  views_count: number;
+  likes_count: number;
+  comments_count: number;
+  plays_count: number;
+  category_name: string;
+  is_trending?: boolean;
 }
 
-export default function AuthorPage() {
+interface ActivityData {
+  mostActiveHours: { hour: number; count: number }[];
+  topicsDistribution: { topic: string; count: number; color: string }[];
+  engagementTrend: { month: string; engagement: number }[];
+  averageEngagement: number;
+}
+
+interface Quote {
+  id: string;
+  text: string;
+  articleTitle: string;
+  articleId: string;
+  timestamp: string;
+  likes: number;
+}
+
+const AuthorProfilePage = () => {
   const params = useParams();
+  const { darkMode } = useDarkModeContext();
+  
+  const id = params?.id;
+  
   const [author, setAuthor] = useState<Author | null>(null);
   const [articles, setArticles] = useState<Article[]>([]);
+  const [activityData, setActivityData] = useState<ActivityData | null>(null);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'latest' | 'popular'>('latest');
+  const [currentArticleIndex, setCurrentArticleIndex] = useState(0);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
 
+  // نوادي الكتاب والألوان
+  const writerClubColors = {
+    platinum: 'from-gray-400 to-gray-600',
+    gold: 'from-yellow-400 to-yellow-600',
+    silver: 'from-gray-300 to-gray-500',
+    bronze: 'from-amber-600 to-amber-800',
+    default: 'from-blue-400 to-blue-600'
+  };
+
+  const writerClubBorders = {
+    platinum: 'border-gray-400',
+    gold: 'border-yellow-400',
+    silver: 'border-gray-300',
+    bronze: 'border-amber-600',
+    default: 'border-blue-400'
+  };
+
+  const writerClubNames = {
+    platinum: 'بلاتينيوم',
+    gold: 'ذهبي',
+    silver: 'فضي', 
+    bronze: 'برونزي',
+    default: 'عضو'
+  };
+
+  // جلب بيانات الكاتب
   useEffect(() => {
-    if (params?.id) {
-      fetchAuthorData();
-    }
-  }, [params?.id]);
+    const fetchAuthorData = async () => {
+      try {
+        const authorId = typeof id === 'string' ? id : 'dr-mohammed-ahmad';
+        
+        // جلب بيانات الكاتب من API
+        const response = await fetch(`/api/authors/${authorId}`);
+        
+        if (!response.ok) {
+          throw new Error('فشل في جلب بيانات الكاتب');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          setAuthor(data.author);
+          setArticles(data.articles || []);
+          setActivityData(data.activityData);
+          setQuotes(data.quotes || []);
+          
+          // رسائل chat افتراضية
+          setChatMessages([
+            {
+              id: '1',
+              type: 'bot',
+              message: `مرحباً! أنا مساعد ${data.author.name} الذكي. يمكنني الإجابة على أسئلتك حول آرائه ومقالاته.`,
+              timestamp: new Date().toISOString()
+            }
+          ]);
+        } else {
+          throw new Error(data.error || 'حدث خطأ غير معروف');
+        }
 
-  const fetchAuthorData = async () => {
-    try {
-      const authorId = params?.id as string;
-      
-      // جلب بيانات المؤلف من API
-      const response = await fetch(`/api/authors/${authorId}`);
-      
-      if (!response.ok) {
-        throw new Error('Author not found');
+      } catch (error) {
+        console.error('خطأ في جلب بيانات الكاتب:', error);
+      } finally {
+        setLoading(false);
       }
+    };
+
+    fetchAuthorData();
+  }, [id]);
+
+  // معالج Chat AI
+  const handleChatSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+
+    const userMessage = {
+      id: Date.now().toString(),
+      type: 'user',
+      message: chatInput,
+      timestamp: new Date().toISOString()
+    };
+
+    setChatMessages(prev => [...prev, userMessage]);
+    setChatInput('');
+    setIsTyping(true);
+
+    // محاكاة استجابة AI
+    setTimeout(() => {
+      const responses = [
+        'د. محمد يؤمن بأن الذكاء الاصطناعي سيغير مستقبل التعليم بشكل جذري، لكن دور المعلم سيبقى محورياً.',
+        'من خلال مقالاته، يركز د. محمد على أهمية التوازن بين التكنولوجيا والعنصر البشري في التعليم.',
+        'يرى د. محمد أن أمن البيانات في التعليم الرقمي أولوية قصوى لحماية خصوصية الطلاب.',
+        'بحسب آراء د. محمد، الواقع المعزز سيجعل التعلم أكثر تفاعلية وإثارة للاهتمام.'
+      ];
       
-      const data = await response.json();
-      
-      setAuthor(data.author);
-      setArticles(data.articles);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching author data:', error);
-      setLoading(false);
-    }
+      const botMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'bot',
+        message: responses[Math.floor(Math.random() * responses.length)],
+        timestamp: new Date().toISOString()
+      };
+
+      setChatMessages(prev => [...prev, botMessage]);
+      setIsTyping(false);
+    }, 2000);
   };
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
-    } else if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}K`;
+  // دالة مشاركة الاقتباس
+  const shareQuote = (quote: Quote) => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'اقتباس من د. محمد الأحمد',
+        text: `"${quote.text}" - من مقال: ${quote.articleTitle}`,
+        url: `${window.location.origin}/opinion/${quote.articleId}`
+      });
+    } else {
+      navigator.clipboard.writeText(`"${quote.text}" - ${author?.name}`);
     }
-    return num.toString();
-  };
-
-  // توليد صورة بديلة
-  const generatePlaceholderImage = (title: string) => {
-    const colors = ['#8B5CF6', '#10B981', '#3B82F6', '#EF4444', '#F59E0B'];
-    const colorIndex = title.charCodeAt(0) % colors.length;
-    return `data:image/svg+xml,${encodeURIComponent(`
-      <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:${colors[colorIndex]};stop-opacity:1" />
-            <stop offset="100%" style="stop-color:${colors[(colorIndex + 1) % colors.length]};stop-opacity:1" />
-          </linearGradient>
-        </defs>
-        <rect width="400" height="300" fill="url(#grad)"/>
-        <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle" dominant-baseline="middle" opacity="0.8">
-          ${title.substring(0, 20)}
-        </text>
-      </svg>
-    `)}`;
   };
 
   if (loading) {
     return (
-      <>
-        <Header />
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="w-12 h-12 animate-spin text-blue-500 mb-4 mx-auto" />
-            <p className="text-gray-500 dark:text-gray-400">جاري تحميل بيانات المراسل...</p>
-          </div>
-        </div>
-        <Footer />
-      </>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
     );
   }
 
   if (!author) {
     return (
-      <>
-        <Header />
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full mb-6">
-              <User className="w-12 h-12 text-gray-400 dark:text-gray-500" />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">عذراً، لم نتمكن من العثور على المراسل</h1>
-            <p className="text-gray-500 dark:text-gray-400 mb-6">تحقق من الرابط وحاول مرة أخرى</p>
-            <Link href="/" className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              العودة للرئيسية
-              <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">الكاتب غير موجود</h2>
+          <Link href="/" className="text-blue-600 hover:text-blue-700">
+            العودة إلى الرئيسية
+          </Link>
         </div>
-        <Footer />
-      </>
+      </div>
     );
   }
 
-  const sortedArticles = activeTab === 'popular' 
-    ? [...articles].sort((a, b) => (b.views || 0) - (a.views || 0))
-    : articles;
-
-  // بطاقة المقال - نفس تصميم صفحة الأخبار
-  const ArticleCard = ({ article }: { article: Article }) => (
-    <Link href={`/article/${article.id}`}>
-      <div className="group h-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm dark:shadow-gray-900/50 hover:shadow-2xl dark:hover:shadow-gray-900/70 transition-all duration-500 overflow-hidden border border-gray-100 dark:border-gray-700 hover:border-transparent transform hover:-translate-y-1">
-        {/* صورة المقال */}
-        <div className="relative overflow-hidden h-56">
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10" />
-          <img
-            src={article.image || generatePlaceholderImage(article.title)}
-            alt={article.title}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-          />
-          
-          {/* شارات */}
-          <div className="absolute top-4 right-4 flex flex-col gap-2 z-20">
-            {article.is_breaking && (
-              <div className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full animate-pulse flex items-center gap-1">
-                <Sparkles className="w-3 h-3" />
-                عاجل
-              </div>
-            )}
-            {article.is_featured && (
-              <div className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold rounded-full flex items-center gap-1">
-                <Award className="w-3 h-3" />
-                مميز
-              </div>
-            )}
-          </div>
-
-          {/* التصنيف */}
-          <div className="absolute bottom-4 right-4 z-20">
-            <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs font-bold rounded-full shadow-lg">
-              <BookOpen className="w-3 h-3" />
-              {typeof article.category === 'string' ? article.category : ((article.category as any)?.name_ar || (article.category as any)?.name || 'عام')}
-            </span>
-          </div>
-        </div>
-
-        {/* محتوى المقال */}
-        <div className="p-6">
-          {/* العنوان */}
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight">
-            {article.title}
-          </h3>
-
-          {/* الملخص */}
-          {article.summary && (
-            <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
-              {article.summary}
-            </p>
-          )}
-
-          {/* معلومات إضافية */}
-          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-4 border-t border-gray-100 dark:border-gray-700">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                <span>{formatDateOnly(article.date)}</span>
-              </div>
-              {article.readTime && (
-                <div className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  <span>{article.readTime}</span>
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
-                <Eye className="w-3 h-3" />
-                <span>{formatNumber(article.views || 0)}</span>
-              </div>
-              {article.likes && (
-                <div className="flex items-center gap-1">
-                  <Heart className="w-3 h-3" />
-                  <span>{formatNumber(article.likes)}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </Link>
-  );
-
   return (
-    <>
-      <Header />
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        {/* Hero Section - تصميم بسيط وأنيق مثل صفحة الأخبار */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div className="max-w-7xl mx-auto px-6 py-12">
-            <div className="flex flex-col md:flex-row items-center gap-8">
-              {/* صورة المؤلف */}
-              <div className="flex-shrink-0">
-                {author.avatar ? (
-                  <img 
-                    src={author.avatar} 
-                    alt={author.name}
-                    className="w-32 h-32 rounded-full object-cover shadow-xl"
-                  />
-                ) : (
-                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-xl">
-                    <span className="text-4xl font-bold text-white">
-                      {author.name.charAt(0)}
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      {/* Header شخصي مع خلفية ذكية */}
+      <section className="relative h-96 overflow-hidden">
+        {/* خلفية متدرجة مع صورة */}
+        <div className="absolute inset-0">
+          <img 
+            src={author.backgroundImage || author.coverImage}
+            alt="خلفية الكاتب"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30"></div>
+        </div>
+
+        {/* محتوى Header */}
+        <div className="relative h-full flex items-end">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 w-full">
+            <div className="flex items-end gap-6">
+              {/* صورة الكاتب */}
+              <div className="relative">
+                <img 
+                  src={author.avatar}
+                  alt={author.name}
+                  className={`w-32 h-32 rounded-full object-cover border-4 ${writerClubBorders[author.club]} shadow-xl`}
+                />
+                <div className={`absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-gradient-to-r ${writerClubColors[author.club]} flex items-center justify-center border-4 border-white`}>
+                  <Star className="w-5 h-5 text-white" />
+                </div>
+                {author.isVerified && (
+                  <div className="absolute -top-1 -right-1 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
+                    <Sparkles className="w-4 h-4 text-white" />
+                  </div>
+                )}
+              </div>
+
+              {/* معلومات الكاتب */}
+              <div className="flex-1 text-white">
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-4xl font-bold">{author.name}</h1>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r ${writerClubColors[author.club]} text-white shadow-lg`}>
+                    نادي {writerClubNames[author.club]}
+                  </span>
+                </div>
+                
+                <p className="text-xl mb-3 text-gray-200">{author.specialization}</p>
+                
+                <div className="flex items-center gap-6 text-sm">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    <span>{author.totalArticles} مقال</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Eye className="w-4 h-4" />
+                    <span>{(author.totalViews / 1000000).toFixed(1)}M مشاهدة</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Heart className="w-4 h-4" />
+                    <span>{(author.totalLikes / 1000).toFixed(0)}K إعجاب</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    <span>{author.yearsOfExperience} سنوات خبرة</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* المحتوى الرئيسي */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* العمود الأيسر - Bio والإنجازات */}
+          <div className="lg:col-span-1 space-y-6">
+            
+            {/* Bio ذكي */}
+            <div className={`rounded-2xl p-6 ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg`}>
+              <div className="flex items-center gap-2 mb-4">
+                <Brain className={`w-5 h-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>نبذة ذكية</h3>
+                <span className="text-xs bg-gradient-to-r from-blue-500 to-purple-500 text-white px-2 py-1 rounded-full">AI</span>
+              </div>
+              <p className={`text-sm leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                {author.bio}
+              </p>
+            </div>
+
+            {/* الإنجازات */}
+            <div className={`rounded-2xl p-6 ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg`}>
+              <div className="flex items-center gap-2 mb-4">
+                <Award className={`w-5 h-5 ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`} />
+                <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>الإنجازات</h3>
+              </div>
+              <div className="space-y-3">
+                {author.achievements.map((achievement, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {achievement}
                     </span>
                   </div>
-                )}
-              </div>
-              
-              {/* معلومات المؤلف */}
-              <div className="flex-1 text-center md:text-right">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{author.name}</h1>
-                {author.title && (
-                  <p className="text-lg text-blue-600 dark:text-blue-400 mb-3">{author.title}</p>
-                )}
-                {author.bio && (
-                  <p className="text-gray-600 dark:text-gray-400 max-w-3xl mb-4 leading-relaxed">
-                    {author.bio}
-                  </p>
-                )}
-                
-                {/* وسائل التواصل */}
-                {author.social && (
-                  <div className="flex items-center justify-center md:justify-start gap-3 mt-4">
-                    {author.social.twitter && (
-                      <a 
-                        href={author.social.twitter} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
-                      >
-                        <Twitter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                      </a>
-                    )}
-                    {author.social.linkedin && (
-                      <a 
-                        href={author.social.linkedin} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
-                      >
-                        <Linkedin className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                      </a>
-                    )}
-                    {author.social.email && (
-                      <a 
-                        href={`mailto:${author.social.email}`} 
-                        className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
-                      >
-                        <Mail className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                      </a>
-                    )}
-                  </div>
-                )}
-              </div>
-              
-              {/* الإحصائيات */}
-              <div className="flex flex-row md:flex-col gap-6 text-center">
-                <div>
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white">{author.articlesCount}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">مقال</div>
-                </div>
-                <div className="w-px md:w-full h-10 md:h-px bg-gray-300 dark:bg-gray-600" />
-                <div>
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white">{formatNumber(author.viewsCount || 0)}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">مشاهدة</div>
-                </div>
-                <div className="w-px md:w-full h-10 md:h-px bg-gray-300 dark:bg-gray-600" />
-                <div>
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white">{formatNumber(author.likesCount || 0)}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">إعجاب</div>
-                </div>
+                ))}
               </div>
             </div>
-            
-            {/* التخصصات والجوائز */}
-            <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex flex-wrap gap-8">
-                {author.specialization && author.specialization.length > 0 && (
-                  <div className="flex-1">
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">التخصصات</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {author.specialization.map((spec, index) => (
-                        <span 
-                          key={index} 
-                          className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm rounded-full"
-                        >
-                          {spec}
-                        </span>
-                      ))}
+
+            {/* مساعد الكاتب AI */}
+            <div className={`rounded-2xl p-6 ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg`}>
+              <div className="flex items-center gap-2 mb-4">
+                <Zap className={`w-5 h-5 ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
+                <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>مساعد الكاتب</h3>
+                <span className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full">AI</span>
+              </div>
+              
+              {/* منطقة Chat */}
+              <div className="space-y-4">
+                <div className="h-48 overflow-y-auto space-y-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  {chatMessages.map((msg) => (
+                    <div key={msg.id} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-xs px-3 py-2 rounded-lg text-sm ${
+                        msg.type === 'user' 
+                          ? 'bg-blue-500 text-white' 
+                          : darkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-200 text-gray-800'
+                      }`}>
+                        {msg.message}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  ))}
+                  {isTyping && (
+                    <div className="flex justify-start">
+                      <div className={`px-3 py-2 rounded-lg text-sm ${darkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-200 text-gray-800'}`}>
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 
-                {author.awards && author.awards.length > 0 && (
-                  <div className="flex-1">
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                      <Award className="w-4 h-4 text-yellow-500" />
-                      الجوائز والإنجازات
-                    </h3>
+                <form onSubmit={handleChatSubmit} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="اسأل عن آراء الكاتب..."
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm border ${
+                      darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
+                    } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg text-sm font-medium hover:from-purple-600 hover:to-pink-600 transition-all"
+                  >
+                    إرسال
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          {/* العمود الأوسط - خريطة النشاط والمقالات */}
+          <div className="lg:col-span-2 space-y-8">
+            
+            {/* خريطة النشاط */}
+            {activityData && (
+              <div className={`rounded-2xl p-6 ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg`}>
+                <div className="flex items-center gap-2 mb-6">
+                  <Activity className={`w-5 h-5 ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
+                  <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>خريطة النشاط</h3>
+                  <span className="text-xs bg-gradient-to-r from-green-500 to-teal-500 text-white px-2 py-1 rounded-full">AI Analytics</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  
+                  {/* أنشط الفترات */}
+                  <div>
+                    <h4 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>أنشط فترات الكتابة</h4>
                     <div className="space-y-2">
-                      {author.awards.map((award, index) => (
-                        <div key={index} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                          <TrendingUp className="w-4 h-4 text-green-500" />
-                          <span>{award}</span>
+                      {activityData.mostActiveHours.map((hour, index) => (
+                        <div key={hour.hour} className="flex items-center gap-3">
+                          <span className={`text-xs w-12 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {hour.hour}:00
+                          </span>
+                          <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div 
+                              className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
+                              style={{ width: `${(hour.count / 15) * 100}%` }}
+                            ></div>
+                          </div>
+                          <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {hour.count}
+                          </span>
                         </div>
                       ))}
                     </div>
                   </div>
-                )}
+
+                  {/* توزيع المواضيع */}
+                  <div>
+                    <h4 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>المواضيع الأكثر تناولاً</h4>
+                    <div className="space-y-2">
+                      {activityData.topicsDistribution.map((topic, index) => (
+                        <div key={topic.topic} className="flex items-center gap-3">
+                          <div 
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: topic.color }}
+                          ></div>
+                          <span className={`text-xs flex-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                            {topic.topic}
+                          </span>
+                          <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {topic.count}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* مستوى التفاعل الإجمالي */}
+                <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>متوسط التفاعل</span>
+                      <div className="text-2xl font-bold text-blue-600">{activityData.averageEngagement}%</div>
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-green-500" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* أحدث المقالات - كاروسيل */}
+            <div className={`rounded-2xl p-6 ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg`}>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <BookOpen className={`w-5 h-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                  <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>أحدث المقالات</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentArticleIndex(prev => prev > 0 ? prev - 1 : articles.length - 1)}
+                    className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
+                  >
+                    <ChevronRight className={`w-5 h-5 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+                  </button>
+                  <button
+                    onClick={() => setCurrentArticleIndex(prev => prev < articles.length - 1 ? prev + 1 : 0)}
+                    className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
+                  >
+                    <ChevronLeft className={`w-5 h-5 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+                  </button>
+                </div>
+              </div>
+
+              {articles.length > 0 && (
+                <div className="relative overflow-hidden">
+                  <div 
+                    className="flex transition-transform duration-300 ease-in-out"
+                    style={{ transform: `translateX(${currentArticleIndex * -100}%)` }}
+                  >
+                    {articles.map((article, index) => (
+                      <div key={article.id} className="w-full flex-shrink-0">
+                        <Link href={`/opinion/${article.id}`} className="block group">
+                          <div className="flex gap-4">
+                            <img 
+                              src={article.featured_image}
+                              alt={article.title}
+                              className="w-24 h-24 object-cover rounded-lg group-hover:scale-105 transition-transform"
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
+                                  {article.category_name}
+                                </span>
+                                {article.is_trending && (
+                                  <span className="text-xs px-2 py-1 bg-red-500 text-white rounded">
+                                    ترند
+                                  </span>
+                                )}
+                              </div>
+                              <h4 className={`font-bold mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                                {article.title}
+                              </h4>
+                              <p className={`text-sm mb-3 line-clamp-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                {article.excerpt}
+                              </p>
+                              
+                              {/* إحصائيات التفاعل */}
+                              <div className="flex items-center gap-4 text-xs">
+                                <div className="flex items-center gap-1">
+                                  <Eye className="w-3 h-3" />
+                                  <span>{article.views_count.toLocaleString()}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Heart className="w-3 h-3" />
+                                  <span>{article.likes_count}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <MessageSquare className="w-3 h-3" />
+                                  <span>{article.comments_count}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Volume2 className="w-3 h-3" />
+                                  <span>{article.plays_count}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{article.reading_time} د</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* مؤشرات الكاروسيل */}
+              <div className="flex justify-center mt-4 gap-2">
+                {articles.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentArticleIndex(index)}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      index === currentArticleIndex 
+                        ? 'bg-blue-500 w-6' 
+                        : darkMode ? 'bg-gray-600' : 'bg-gray-300'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* جدارية الاقتباسات */}
+            <div className={`rounded-2xl p-6 ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} shadow-lg`}>
+              <div className="flex items-center gap-2 mb-6">
+                <Quote className={`w-5 h-5 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`} />
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>اقتباسات مختارة</h3>
+                <span className="text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-1 rounded-full">AI Extracted</span>
+              </div>
+
+              <div className="grid gap-4">
+                {quotes.map((quote, index) => (
+                  <div key={quote.id} className={`p-4 rounded-lg border-l-4 border-amber-500 ${darkMode ? 'bg-gray-700/50' : 'bg-amber-50'} group hover:shadow-lg transition-all`}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <blockquote className={`text-lg italic mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                          "{quote.text}"
+                        </blockquote>
+                        <div className="flex items-center gap-4 text-sm">
+                          <Link href={`/opinion/${quote.articleId}`} className={`hover:text-blue-600 transition-colors ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                            من مقال: {quote.articleTitle}
+                          </Link>
+                          <span className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {formatRelativeDate(quote.timestamp)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => shareQuote(quote)}
+                          className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-200'} transition-colors`}
+                          title="مشاركة الاقتباس"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                        <div className="flex items-center gap-1 text-xs">
+                          <Heart className="w-3 h-3" />
+                          <span>{quote.likes}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        </div>
-        
-        {/* قسم المقالات */}
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          {/* العنوان والتبويبات */}
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">المواد التحريرية</h2>
-            
-            {/* التبويبات */}
-            <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-              <button
-                onClick={() => setActiveTab('latest')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  activeTab === 'latest' 
-                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' 
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                الأحدث
-              </button>
-              <button
-                onClick={() => setActiveTab('popular')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  activeTab === 'popular' 
-                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' 
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                الأكثر قراءة
-              </button>
-            </div>
-          </div>
-          
-          {/* شبكة المقالات */}
-          {sortedArticles.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {sortedArticles.map((article) => (
-                <ArticleCard key={article.id} article={article} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-20">
-              <div className="inline-flex items-center justify-center w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full mb-6">
-                <FileText className="w-12 h-12 text-gray-400 dark:text-gray-500" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">لا توجد مقالات متاحة</h3>
-              <p className="text-gray-500 dark:text-gray-400">لم يتم نشر أي مقالات بعد</p>
-            </div>
-          )}
         </div>
       </div>
-      <Footer />
-    </>
+    </div>
   );
-} 
+};
+
+export default AuthorProfilePage;

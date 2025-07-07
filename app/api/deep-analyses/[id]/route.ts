@@ -23,19 +23,14 @@ async function writeAnalyses(analyses: DeepAnalysis[]): Promise<void> {
   await fs.writeFile(DATA_PATH, JSON.stringify(analyses, null, 2));
 }
 
-interface RouteParams {
-  params: Promise<{
-    id: string;
-  }>;
-}
 
 // GET - جلب تحليل محدد
 export async function GET(
-  request: NextRequest,
-  { params }: RouteParams
+  request: Request,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     const analyses = await readAnalyses();
     const analysis = analyses.find(a => a.id === id);
     
@@ -64,10 +59,10 @@ export async function GET(
 // PUT - تحديث تحليل
 export async function PUT(
   request: NextRequest,
-  { params }: RouteParams
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     const body: UpdateAnalysisRequest = await request.json();
     const analyses = await readAnalyses();
     
@@ -130,11 +125,11 @@ export async function PUT(
 
 // PATCH - تحديث جزئي للتحليل
 export async function PATCH(
-  request: NextRequest,
-  { params }: RouteParams
+  request: Request,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     const body = await request.json();
     const analyses = await readAnalyses();
     
@@ -171,11 +166,11 @@ export async function PATCH(
 
 // DELETE - حذف تحليل
 export async function DELETE(
-  request: NextRequest,
-  { params }: RouteParams
+  request: Request,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     const analyses = await readAnalyses();
     
     const analysisIndex = analyses.findIndex(a => a.id === id);

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     // التحقق من أن العضو موجود
-    const member = await prisma.user.findUnique({
+    const member = await prisma.users.findUnique({
       where: { id: memberId }
     });
 
@@ -25,7 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     // تحديث صورة العضو
-    const updatedMember = await prisma.user.update({
+    const updatedMember = await prisma.users.update({
       where: { id: memberId },
       data: { avatar: avatarUrl }
     });

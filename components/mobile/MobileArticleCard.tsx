@@ -9,6 +9,7 @@ import { getValidImageUrl, generatePlaceholderImage } from '@/lib/cloudinary';
 import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { getArticleLink } from '@/lib/utils';
 
 interface Article {
   id: string;
@@ -132,14 +133,14 @@ export default function MobileArticleCard({
         await navigator.share({
           title: article.title,
           text: article.excerpt || article.title,
-          url: `/article/${article.id}`
+          url: getArticleLink(article)
         });
       } catch (error) {
         console.error('Error sharing:', error);
       }
     } else {
       // نسخ الرابط للحافظة
-      navigator.clipboard.writeText(`${window.location.origin}/article/${article.id}`);
+      navigator.clipboard.writeText(`${window.location.origin}${getArticleLink(article)}`);
     }
   };
 
@@ -148,7 +149,7 @@ export default function MobileArticleCard({
   // الوضع المضغوط
   if (viewMode === 'compact') {
     return (
-      <Link href={`/article/${article.id}`}>
+      <Link href={getArticleLink(article)}>
         <div className="mobile-article-card-compact bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
           <div className="flex gap-3 p-3">
             {/* صورة مصغرة */}
@@ -210,7 +211,7 @@ export default function MobileArticleCard({
 
   // الوضع المفصل
   return (
-    <Link href={`/article/${article.id}`}>
+    <Link href={getArticleLink(article)}>
       <div className="mobile-article-card bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
         {/* صورة المقال */}
         <div className="relative w-full h-48 overflow-hidden">

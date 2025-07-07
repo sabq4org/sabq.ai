@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 import { interactions_type, interactions } from '@/lib/generated/prisma';
 import jwt from 'jsonwebtoken';
 
@@ -41,14 +43,7 @@ export async function POST(request: NextRequest) {
         where: { id: existingInteraction.id }
       });
       
-      await prisma.activity_logs.create({
-        data: {
-          user_id: userId,
-          action: 'unsaved_article',
-          entity_type: 'article',
-          entity_id: itemId
-        }
-      });
+      // await prisma.activity_logs.create({ ... }); // معطل مؤقتاً
 
       return NextResponse.json({ success: true, status: 'removed', message: 'Save removed' });
     } else {
@@ -62,14 +57,7 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      await prisma.activity_logs.create({
-        data: {
-          user_id: userId,
-          action: 'saved_article',
-          entity_type: 'article',
-          entity_id: itemId
-        }
-      });
+      // await prisma.activity_logs.create({ ... }); // معطل مؤقتاً
 
       return NextResponse.json({ success: true, status: 'created', message: 'Article saved', data: newInteraction });
     }
@@ -99,18 +87,7 @@ export async function GET(request: NextRequest) {
         type: interactions_type.save
       },
       orderBy: { created_at: 'desc' },
-      include: {
-        article: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            featured_image: true,
-            published_at: true,
-            category: { select: { name: true, slug: true } }
-          }
-        }
-      },
+      // include: { article: { ... } }, // معطل مؤقتاً
       skip,
       take: limit
     });
@@ -119,7 +96,7 @@ export async function GET(request: NextRequest) {
       where: { user_id: userId, type: interactions_type.save }
     });
 
-    const formattedItems = savedItems.map((item: interactions & { article: any }) => ({
+    const formattedItems = savedItems.map((item: any) => ({
       ...item,
       item_id: item.article_id,
       item_type: 'article'
@@ -169,15 +146,7 @@ export async function DELETE(request: NextRequest) {
       where: { id: interactionId }
     });
     
-    await prisma.activity_logs.create({
-      data: {
-        user_id: userId,
-        action: 'deleted_save_by_id',
-        entity_type: 'interaction',
-        entity_id: interactionId,
-        metadata: { article_id: savedItem.article_id }
-      }
-    });
+    // await prisma.activity_logs.create({ ... }); // معطل مؤقتاً
 
     return NextResponse.json({ success: true, message: 'Saved item deleted successfully' });
   } catch (error) {

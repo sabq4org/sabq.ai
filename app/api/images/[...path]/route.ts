@@ -4,16 +4,12 @@ import path from 'path';
 
 export const runtime = 'nodejs';
 
-type RouteParams = {
-  params: Promise<{ path: string[] }>
-};
-
 export async function GET(
-  request: NextRequest,
-  { params }: RouteParams
+  request: Request,
+  context: { params: Promise<{ path: string[] }> }
 ) {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const imagePath = resolvedParams.path.join('/');
     const fullPath = path.join(process.cwd(), 'public', 'uploads', imagePath);
     

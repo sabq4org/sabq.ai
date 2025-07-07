@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { PrismaClient } from '@/lib/generated/prisma'
+
+const prisma = new PrismaClient()
 import { getCurrentUser } from '@/app/lib/auth'
 
 export const runtime = 'nodejs'
@@ -19,9 +21,9 @@ export async function GET() {
     // في المستقبل، يمكننا التحقق من صلاحيات المستخدم هنا
     // if (user.role !== 'admin' && user.role !== 'superadmin') { ... }
 
-    const categories = await prisma.category.findMany({
+    const categories = await prisma.categories.findMany({
       orderBy: {
-        createdAt: 'asc',
+        created_at: 'asc',
       },
     })
 

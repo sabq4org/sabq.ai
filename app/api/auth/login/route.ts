@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -43,7 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     // البحث عن المستخدم في قاعدة البيانات
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { email: email.toLowerCase() },
       select: {
         id: true,
@@ -95,7 +97,8 @@ export async function POST(request: NextRequest) {
       // التأكد من وجود جميع الحقول المطلوبة
       loyaltyPoints: 0, // قيمة افتراضية
       status: 'active', // قيمة افتراضية
-      role: user.role || 'regular',
+      role: user.role || 'مستخدم',
+      roleId: user.role,
       isVerified: user.is_verified || false,
       isAdmin: user.is_admin || false
     };
@@ -105,7 +108,8 @@ export async function POST(request: NextRequest) {
       { 
         id: user.id, 
         email: user.email, 
-        role: user.role,
+        roleId: user.role,
+        role: user.role || 'user',
         is_admin: responseUser.is_admin
       },
       JWT_SECRET,

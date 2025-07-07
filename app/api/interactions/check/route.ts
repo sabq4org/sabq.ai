@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 
 export const runtime = 'nodejs';
 
@@ -17,19 +19,19 @@ export async function GET(request: NextRequest) {
     }
 
     // التحقق من الإعجاب
-    const liked = await prisma.interaction.findFirst({
+    const liked = await prisma.interactions.findFirst({
       where: {
-        userId,
-        articleId,
+        user_id: userId,
+        article_id: articleId,
         type: 'like'
       }
     });
 
     // التحقق من الحفظ
-    const saved = await prisma.interaction.findFirst({
+    const saved = await prisma.interactions.findFirst({
       where: {
-        userId,
-        articleId,
+        user_id: userId,
+        article_id: articleId,
         type: 'save'
       }
     });

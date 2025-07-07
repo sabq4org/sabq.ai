@@ -32,6 +32,7 @@ interface UserProfile {
   status?: string;
   isVerified?: boolean;
   preferences?: any[];
+  interests?: string[];
 }
 
 interface LoyaltyData {
@@ -213,44 +214,53 @@ export default function ProfilePage() {
       const allCategories = categoriesResult.status === 'fulfilled' && categoriesResult.value ? 
         (categoriesResult.value.categories || categoriesResult.value || []) : [];
 
-      // معالجة التفضيلات
-      if (user.id && user.id.startsWith('guest-')) {
-        // للمستخدمين الضيوف
-        if (user.preferences && user.preferences.length > 0 && allCategories.length > 0) {
-          const userCategories = allCategories
-            .filter((cat: any) => user.preferences?.includes(cat.id))
-            .map((cat: any) => ({
-              category_id: cat.id,
-              category_name: cat.name || cat.name_ar,
-              category_icon: cat.icon || '📌',
-              category_color: cat.color || '#6B7280'
-            }));
-          setPreferences(userCategories);
-        }
+      // معالجة التفضيلات بطريقة موحدة
+      let userCategoryIds: string[] = [];
+      
+      console.log('🔍 تحليل مصادر الاهتمامات:', {
+        userId: user.id,
+        interestsAPI: interestsResult.status === 'fulfilled' ? interestsResult.value : null,
+        userPreferences: user.preferences,
+        userInterests: user.interests
+      });
+      
+      // 1. أولاً جرب من API الاهتمامات
+      if (interestsResult.status === 'fulfilled' && interestsResult.value?.success && interestsResult.value?.categoryIds?.length > 0) {
+        userCategoryIds = interestsResult.value.categoryIds;
+        console.log('✅ تم جلب الاهتمامات من API:', userCategoryIds);
+      }
+      // 2. إذا لم نجد، جرب من localStorage preferences
+      else if (user.preferences && user.preferences.length > 0) {
+        userCategoryIds = user.preferences;
+        console.log('✅ تم جلب الاهتمامات من user.preferences:', userCategoryIds);
+      }
+      // 3. إذا لم نجد، جرب من interests في user object
+      else if (user.interests && user.interests.length > 0) {
+        userCategoryIds = user.interests;
+        console.log('✅ تم جلب الاهتمامات من user.interests:', userCategoryIds);
+      }
+      
+      // تحويل IDs إلى بيانات التصنيفات
+      if (userCategoryIds.length > 0 && allCategories.length > 0) {
+        const userCategories = allCategories
+          .filter((cat: any) => {
+            // محاولة المطابقة بالـ ID أو الـ slug
+            return userCategoryIds.includes(cat.id) || 
+                   userCategoryIds.includes(cat.slug) ||
+                   userCategoryIds.includes(String(cat.id));
+          })
+          .map((cat: any) => ({
+            category_id: cat.id,
+            category_name: cat.name || cat.name_ar,
+            category_icon: cat.icon || '📌',
+            category_color: cat.color || '#6B7280'
+          }));
+        
+        console.log('✅ تم تحويل الاهتمامات إلى تصنيفات:', userCategories);
+        setPreferences(userCategories);
       } else {
-        // للمستخدمين المسجلين
-        if (interestsResult.status === 'fulfilled' && interestsResult.value?.success && interestsResult.value?.categoryIds?.length > 0) {
-          const userCategories = allCategories
-            .filter((cat: any) => interestsResult.value.categoryIds.includes(cat.id))
-            .map((cat: any) => ({
-              category_id: cat.id,
-              category_name: cat.name || cat.name_ar,
-              category_icon: cat.icon || '📌',
-              category_color: cat.color || '#6B7280'
-            }));
-          setPreferences(userCategories);
-        } else if (user.preferences && user.preferences.length > 0 && allCategories.length > 0) {
-          // استخدام localStorage كخيار احتياطي
-          const userCategories = allCategories
-            .filter((cat: any) => user.preferences?.includes(cat.id) || user.preferences?.includes(cat.slug))
-            .map((cat: any) => ({
-              category_id: cat.id,
-              category_name: cat.name || cat.name_ar,
-              category_icon: cat.icon || '📌',
-              category_color: cat.color || '#6B7280'
-            }));
-          setPreferences(userCategories);
-        }
+        console.log('❌ لم يتم العثور على اهتمامات للمستخدم');
+        setPreferences([]);
       }
 
       // معالجة التفاعلات

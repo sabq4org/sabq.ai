@@ -7,14 +7,11 @@ export const runtime = 'nodejs';
 
 const ROLES_FILE = path.join(process.cwd(), 'data', 'roles.json');
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
 
 // GET /api/roles/[id] - الحصول على تفاصيل دور محدد
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     
     // قراءة الأدوار الحالية
     const data = await fs.readFile(ROLES_FILE, 'utf-8');
@@ -56,7 +53,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 // PATCH - تحديث دور
 export async function PATCH(
-  request: NextRequest,
+  request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -117,7 +114,7 @@ export async function PATCH(
 
 // DELETE - حذف دور
 export async function DELETE(
-  request: NextRequest,
+  request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
   try {

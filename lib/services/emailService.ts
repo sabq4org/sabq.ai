@@ -1,5 +1,7 @@
 import nodemailer from 'nodemailer';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 import { SendEmailCommand, SESClient } from '@aws-sdk/client-ses';
 
 // أنواع مزودي البريد
@@ -221,8 +223,8 @@ export class EmailService {
       }
 
       // استبدال المتغيرات
-      let html = template.htmlContent;
-      let text = template.textContent || '';
+      let html = template.html_content;
+      let text = template.text_content || '';
       let subject = template.subject;
 
       // إضافة متغيرات افتراضية

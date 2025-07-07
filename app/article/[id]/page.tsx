@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Share2, Eye, Clock, Calendar,
@@ -130,6 +130,8 @@ interface PageProps {
 
 export default function ArticlePage({ params }: PageProps) {
   const router = useRouter();
+  const resolvedParams = use(params);
+  const articleId = resolvedParams.id;
 
   const { darkMode, toggleDarkMode } = useDarkModeContext();
   const [article, setArticle] = useState<Article | null>(null);
@@ -144,8 +146,6 @@ export default function ArticlePage({ params }: PageProps) {
   });
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
-  const [articleId, setArticleId] = useState<string>('');
-
   const [userId, setUserId] = useState<string | null>(null);
   const [readProgress, setReadProgress] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -188,16 +188,12 @@ export default function ArticlePage({ params }: PageProps) {
 
   useEffect(() => {
     async function loadArticle() {
-      const resolvedParams = await params;
-      
-      if (resolvedParams?.id) {
-        const cleanArticleId = resolvedParams.id.trim();
-        setArticleId(cleanArticleId);
-        fetchArticle(cleanArticleId);
+      if (articleId) {
+        fetchArticle(articleId);
       }
     }
     loadArticle();
-  }, []);
+  }, [articleId]);
 
   // تتبع المشاهدة والقراءة
   useEffect(() => {

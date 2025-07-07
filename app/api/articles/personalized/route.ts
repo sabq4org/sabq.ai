@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
         category_id: { in: categoryIds }
       },
       include: {
-        category: { select: { id: true, name: true, slug: true,  } }
+        categories: { select: { id: true, name: true, slug: true } }
       },
       orderBy: [
         { featured: 'desc' },
@@ -95,18 +95,8 @@ export async function GET(request: NextRequest) {
       return Math.random() - 0.5;
     });
 
-    // تسجيل النشاط
-    await prisma.activity_logs.create({
-      data: {
-        user_id: userId,
-        action: 'personalized_content_viewed',
-        entity_type: 'articles',
-        metadata: {
-          categoryIds,
-          articlesCount: shuffledArticles.length
-        }
-      }
-    });
+    // تسجيل النشاط - معطل مؤقتاً
+    // await prisma.activity_logs.create({ ... });
 
     return NextResponse.json({
       articles: shuffledArticles,

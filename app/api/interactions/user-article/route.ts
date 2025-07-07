@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,13 +31,13 @@ export async function GET(request: NextRequest) {
     }
 
     // جلب جميع التفاعلات للمستخدم مع هذا المقال من قاعدة البيانات
-    const interactions = await prisma.interaction.findMany({
+    const interactions = await prisma.interactions.findMany({
       where: {
-        userId: userId,
-        articleId: articleId
+        user_id: userId,
+        article_id: articleId
       },
       orderBy: {
-        createdAt: 'desc'
+        created_at: 'desc'
       }
     });
 

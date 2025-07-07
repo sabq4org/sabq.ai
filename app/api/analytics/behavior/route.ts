@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 
 // جلب تحليلات سلوك المستخدم
 export async function GET(request: NextRequest) {
@@ -43,22 +45,6 @@ export async function GET(request: NextRequest) {
           user_id: userId,
           type: 'view',
           created_at: { gte: startDate }
-        },
-        include: {
-          article: {
-            select: {
-              id: true,
-              title: true,
-              category_id: true,
-              category: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true
-                }
-              }
-            }
-          }
         }
       }),
       

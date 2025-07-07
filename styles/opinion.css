@@ -1,0 +1,572 @@
+/* صفحة مقالات الرأي - التأثيرات والحركات */
+
+/* شريط الكتاب المتحرك */
+.authors-carousel {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.authors-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+/* تأثير hover على بطاقات الكتاب */
+.author-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.author-card:hover {
+  transform: translateY(-4px) scale(1.05);
+}
+
+.author-card:hover .author-avatar {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* حركة النبض للمحتوى الجديد */
+@keyframes pulse-red {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-red {
+  animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* تأثير التدرج المتحرك للهيدر */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animated-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+/* بطاقات المقالات */
+.opinion-card {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.opinion-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition: left 0.5s;
+}
+
+.opinion-card:hover::before {
+  left: 100%;
+}
+
+.opinion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* أزرار التفاعل */
+.interaction-button {
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.interaction-button:active {
+  transform: scale(0.95);
+}
+
+.interaction-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.interaction-button:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* حركة الموضوعات الساخنة */
+@keyframes slide-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.trending-topics-scroll {
+  animation: slide-left 30s linear infinite;
+}
+
+.trending-topics-scroll:hover {
+  animation-play-state: paused;
+}
+
+/* تأثير البودكاست */
+@keyframes sound-wave {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.5);
+  }
+}
+
+.sound-wave-bar {
+  animation: sound-wave 1s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+.sound-wave-bar:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.sound-wave-bar:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.sound-wave-bar:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+/* تأثير الإحصائيات */
+@keyframes count-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stat-item {
+  animation: count-up 0.6s ease-out forwards;
+}
+
+.stat-item:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.stat-item:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.stat-item:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.stat-item:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+/* تأثير التوصيات الذكية */
+.ai-recommendation {
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-recommendation::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #6366f1, #8b5cf6, #ec4899);
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: -1;
+}
+
+.ai-recommendation:hover::before {
+  opacity: 1;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* تأثير التحميل */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.loading-skeleton {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* التصميم المتجاوب */
+@media (max-width: 768px) {
+  .opinion-card {
+    margin-bottom: 1rem;
+  }
+  
+  .author-card {
+    min-width: 80px;
+  }
+  
+  .interaction-button {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* وضع الظلام */
+.dark .opinion-card {
+  background-color: rgb(31, 41, 55);
+}
+
+.dark .opinion-card:hover {
+  background-color: rgb(55, 65, 81);
+}
+
+.dark .loading-skeleton {
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+}
+
+/* تأثيرات الأزرار */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: left 0.3s;
+}
+
+.btn-primary:hover::before {
+  left: 0;
+}
+
+/* تأثير الكتابة */
+@keyframes typing {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes blink {
+  50% {
+    border-color: transparent;
+  }
+}
+
+.typing-text {
+  overflow: hidden;
+  white-space: nowrap;
+  border-left: 3px solid;
+  animation: typing 3s steps(30) 1s forwards, blink 1s infinite;
+}
+
+/* تأثيرات شريط الكتّاب المطور */
+.authors-carousel {
+  position: relative;
+}
+
+.authors-carousel::before,
+.authors-carousel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.authors-carousel::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+}
+
+.authors-carousel::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+}
+
+.author-avatar {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.author-avatar::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.author-card:hover .author-avatar::before {
+  opacity: 1;
+  animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* تأثيرات البحث اللحظي */
+.search-suggestion {
+  transition: all 0.2s ease;
+}
+
+.search-suggestion:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+  transform: translateX(4px);
+}
+
+/* تأثيرات الفلاتر */
+.filter-active {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transform: scale(1.05);
+}
+
+/* تأثيرات المشاعر */
+.mood-indicator {
+  position: relative;
+  overflow: hidden;
+}
+
+.mood-indicator::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.mood-indicator:hover::before {
+  left: 100%;
+}
+
+/* تأثيرات نسبة التوافق */
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 20px currentColor;
+  }
+}
+
+.relevance-score {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* تأثيرات البودكاست */
+@keyframes podcast-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.podcast-indicator {
+  animation: podcast-pulse 2s ease-in-out infinite;
+}
+
+/* تأثيرات الترند */
+.trending-indicator {
+  position: relative;
+}
+
+.trending-indicator::after {
+  content: '🔥';
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+/* تأثيرات الحالة المتصلة */
+.online-status {
+  position: relative;
+}
+
+.online-status::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: inherit;
+  animation: ripple 2s infinite;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* تأثيرات الشارات */
+.badge-verified {
+  animation: verified-shine 3s ease-in-out infinite;
+}
+
+@keyframes verified-shine {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.3) drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+  }
+}
+
+/* تأثيرات أزرار التفاعل المطورة */
+.enhanced-interaction-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.enhanced-interaction-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease, height 0.4s ease;
+}
+
+.enhanced-interaction-button:hover::before {
+  width: 200%;
+  height: 200%;
+}
+
+.enhanced-interaction-button:active {
+  transform: scale(0.95);
+}
+
+/* تأثيرات الشريط الجانبي */
+.sidebar-widget {
+  transition: all 0.3s ease;
+}
+
+.sidebar-widget:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* تأثيرات القائمة المنسدلة */
+.dropdown-enter {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.dropdown-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.3s ease;
+}
+
+.dropdown-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.dropdown-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+}
+
+/* تأثيرات المشاركة */
+.share-animation {
+  animation: share-bounce 0.6s ease;
+}
+
+@keyframes share-bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-15px);
+  }
+  60% {
+    transform: translateY(-7px);
+  }
+} 

@@ -29,7 +29,7 @@ async function migrateInterests() {
         }
         
         // جلب التصنيفات للحصول على slugs
-        const categories = await prisma.category.findMany({
+        const categories = await prisma.categories.findMany({
           select: { id: true, slug: true, name: true }
         });
         
@@ -97,7 +97,7 @@ async function migrateInterests() {
           
           if (categoryIds.length > 0) {
             // جلب التصنيفات
-            const categories = await prisma.category.findMany({
+            const categories = await prisma.categories.findMany({
               where: { id: { in: categoryIds } },
               select: { id: true, slug: true }
             });

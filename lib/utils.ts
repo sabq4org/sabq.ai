@@ -142,4 +142,60 @@ export function getImageUrl(imagePath: string | undefined | null): string {
   return imagePath;
 }
 
+/**
+ * 🔷 دالة مركزية لتحديد المسار المناسب للمقال
+ * 
+ * منطق صارم وحصري لتوزيع المسارات:
+ * • المقالات العادية (أخبار، تقارير، تغطيات) → /article/[id]
+ * • مقالات الرأي (كتّاب، زوايا رأي) → /opinion/[id]
+ * 
+ * @param article - المقال المراد تحديد مساره
+ * @returns المسار المناسب للمقال
+ */
+export function getArticleLink(article: any): string {
+  // التحقق من نوع المقال بعدة طرق
+  const isOpinionArticle = (
+    // 1. فحص category slug
+    article.category?.slug === 'opinion' ||
+    article.category?.slug === 'راي' ||
+    article.category?.slug === 'رأي' ||
+    
+    // 2. فحص category name
+    article.category?.name === 'رأي' ||
+    article.category?.name === 'راي' ||
+    article.category?.name === 'Opinion' ||
+    article.category?.name_ar === 'رأي' ||
+    article.category?.name_ar === 'راي' ||
+    
+    // 3. فحص category_name المرفقة مع المقال
+    article.category_name === 'رأي' ||
+    article.category_name === 'راي' ||
+    article.category_name === 'Opinion' ||
+    
+    // 4. فحص type field إذا كان موجود
+    article.type === 'OPINION' ||
+    article.type === 'opinion' ||
+    
+    // 5. فحص metadata أو خصائص إضافية
+    article.metadata?.type === 'opinion' ||
+    article.is_opinion === true ||
+    
+    // 6. فحص category_id المعروف لمقالات الرأي (إذا كان هناك ID محدد)
+    article.category_id === 'opinion' ||
+    
+    // 7. فحص العنوان أو المحتوى للكلمات المفتاحية (احتياطي)
+    article.title?.includes('رأي') ||
+    article.title?.includes('وجهة نظر') ||
+    article.tags?.some((tag: string) => ['رأي', 'راي', 'opinion'].includes(tag?.toLowerCase()))
+  );
+
+  // إرجاع المسار المناسب بناءً على النوع
+  if (isOpinionArticle) {
+    return `/opinion/${article.id}`;
+  }
+  
+  // جميع المقالات الأخرى تذهب لمسار المقالات العادية
+  return `/article/${article.id}`;
+}
+
 // Force rebuild - 2025-01-04 

@@ -19,11 +19,12 @@ if (!cloudinaryConfig.cloud_name || !cloudinaryConfig.api_key || !cloudinaryConf
 // دالة تنظيف أسماء الملفات
 export const cleanFileName = (fileName: string): string => {
   return fileName
-    .replace(/[^\w\s.-]/g, '') // إزالة الرموز الخاصة
+    .replace(/[^\w.-]/g, '') // إزالة الرموز الخاصة والمسافات
     .replace(/\s+/g, '-') // استبدال المسافات بـ -
     .replace(/[^\x00-\x7F]/g, '') // إزالة الأحرف غير اللاتينية
+    .replace(/[^a-zA-Z0-9._-]/g, '') // الاحتفاظ بالأحرف الآمنة فقط
     .toLowerCase()
-    .substring(0, 100); // تحديد الطول الأقصى
+    .substring(0, 50); // تقليل الطول الأقصى
 };
 
 // دالة رفع الصور إلى Cloudinary
@@ -32,7 +33,7 @@ export const uploadToCloudinary = async (
   options: {
     folder?: string;
     publicId?: string;
-    transformation?: any[];
+    transformation?: any[] | string;
     resourceType?: 'image' | 'video' | 'raw';
     fileName?: string;
   } = {}
@@ -65,24 +66,18 @@ export const uploadToCloudinary = async (
     // تنظيف اسم الملف
     const cleanName = cleanFileName(originalFileName || options.fileName || 'image');
     const timestamp = Date.now();
-    const randomId = Math.random().toString(36).substring(7);
+    const randomId = Math.random().toString(36).substring(2, 8);
     
-    // إنشاء public_id نظيف
-    const publicId = options.publicId || `${timestamp}-${cleanName}-${randomId}`;
+    // إنشاء public_id نظيف وآمن
+    const publicId = options.publicId || `${timestamp}_${cleanName}_${randomId}`.replace(/[^a-zA-Z0-9._-]/g, '_');
 
-    // إعدادات الرفع المحسنة
+    // إعدادات الرفع المبسطة
     const uploadOptions = {
       folder: options.folder || 'sabq-cms/featured',
       resource_type: (options.resourceType || 'auto') as 'image' | 'video' | 'raw' | 'auto',
       public_id: publicId,
-      transformation: options.transformation || [
-        { quality: 'auto:good' },
-        { fetch_format: 'auto' },
-        { width: 'auto', height: 'auto', crop: 'limit' }
-      ],
-      overwrite: false, // منع الكتابة فوق الملفات الموجودة
-      invalidate: true, // تحديث الكاش
-      tags: ['sabq-cms', 'featured'] // إضافة تاجات للملف
+      overwrite: false,
+      tags: ['sabq-cms']
     };
 
     console.log('📤 رفع الصورة إلى Cloudinary:', {

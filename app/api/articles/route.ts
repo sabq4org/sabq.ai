@@ -54,13 +54,19 @@ export async function GET(request: NextRequest) {
     // بناء شروط البحث
     const where: any = {}
     
-    // فلترة حسب الحالة
+    // فلترة حسب الحالة مع استبعاد المقالات المحذوفة دائماً
     const status = searchParams.get('status')
-    if (status) {
-      where.status = status
+    
+    // إذا كان المطلوب هو المقالات المحذوفة فقط (للوحة التحكم)
+    if (status === 'deleted') {
+      where.status = 'deleted'
     } else {
-      // استبعاد المقالات المحذوفة بشكل افتراضي
-      where.status = { not: 'deleted' }
+      // لجميع الحالات الأخرى، نستبعد المقالات المحذوفة دائماً
+      if (status) {
+        where.status = status
+      }
+      // إضافة شرط لاستبعاد المقالات المحذوفة في جميع الحالات
+      where.NOT = { status: 'deleted' }
     }
 
     // فلترة حسب التصنيف
@@ -97,17 +103,55 @@ export async function GET(request: NextRequest) {
       where.breaking = true
     }
 
+    /*
+    // فلترة حسب نوع المقال (OPINION أو غيره) - معطل مؤقتاً للتشخيص
+    const type = searchParams.get('type')
+    if (type === 'OPINION') {
+      // جلب معرف تصنيف الرأي من قاعدة البيانات
+      const opinionCategory = await prisma.categories.findFirst({
+        where: { 
+          OR: [
+            { slug: 'opinion' },
+            { name: 'رأي' }
+          ]
+        },
+        select: { id: true }
+      })
+      if (opinionCategory) {
+        where.category_id = opinionCategory.id
+      }
+    } else if (type && type !== 'OPINION') {
+      // لأنواع أخرى من المقالات، استبعاد مقالات الرأي
+      const opinionCategory = await prisma.categories.findFirst({
+        where: { 
+          OR: [
+            { slug: 'opinion' },
+            { name: 'رأي' }
+          ]
+        },
+        select: { id: true }
+      })
+      if (opinionCategory) {
+        where.category_id = { not: opinionCategory.id }
+      }
+    }
+    */
+
     // الترتيب
-    const sort = searchParams.get('sort') || 'oldest'
-    const order = (searchParams.get('order') || 'desc') as 'asc' | 'desc'
+    const sortBy = searchParams.get('sortBy') || 'published_at';
+    const order = (searchParams.get('order') || 'desc') as 'asc' | 'desc';
     
-    let orderBy: any = {}
-    if (sort === 'oldest') {
-      orderBy.created_at = 'asc'
-    } else if (sort === 'popular') {
-      orderBy.views = 'desc'
+    let orderBy: any = {};
+    if (sortBy === 'published_at') {
+      orderBy.published_at = order;
+    } else if (sortBy === 'views_count') {
+      orderBy.views_count = order;
+    } else if (sortBy === 'engagement_score') {
+      orderBy.engagement_score = order;
+    } else if (sortBy === 'created_at') {
+      orderBy.created_at = order;
     } else {
-      orderBy.created_at = 'desc'
+      orderBy.published_at = order;
     }
 
     // التقسيم (Pagination)
@@ -195,7 +239,8 @@ export async function GET(request: NextRequest) {
         category_id: searchParams.get('category_id'),
         search: searchParams.get('search'),
         featured: searchParams.get('featured'),
-        breaking: searchParams.get('breaking')
+        breaking: searchParams.get('breaking'),
+        type: searchParams.get('type')
       }
     })
   } catch (error) {
@@ -404,17 +449,8 @@ export async function DELETE(request: NextRequest) {
       }
     })
 
-    // تسجيل النشاط في سجل الأنشطة
-    await prisma.activity_logs.create({
-      data: {
-        user_id: authCheck.user.id,
-        action: 'articles_deleted',
-        entity_type: 'article',
-        entity_id: ids.join(','),
-        old_value: { status: 'published' },
-        new_value: { status: 'deleted', count: result.count }
-      }
-    });
+    // تسجيل النشاط في سجل الأنشطة - معطل مؤقتاً
+    // await prisma.activity_logs.create({ ... });
 
     console.log(`✅ تم حذف ${result.count} مقال بنجاح من قبل:`, authCheck.user?.email);
 

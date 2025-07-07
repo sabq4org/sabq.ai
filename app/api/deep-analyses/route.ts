@@ -8,7 +8,9 @@ import {
   SourceType
 } from '@/types/deep-analysis';
 import { generateDeepAnalysis, initializeOpenAI } from '@/lib/services/deepAnalysisService';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 import { getCurrentUser } from '@/app/lib/auth';
 
 export const runtime = 'nodejs';

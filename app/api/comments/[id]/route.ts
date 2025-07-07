@@ -15,8 +15,8 @@ async function getUserRole(userId: string): Promise<string> {
 
 // تحديث تعليق
 export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -28,7 +28,7 @@ export async function PUT(
     }
 
     const { content } = await request.json();
-    const { id: commentId } = await params;
+    const { id: commentId } = await context.params;
 
     // جلب التعليق الحالي
     const comment = await prisma.comments.findUnique({
@@ -86,8 +86,8 @@ export async function PUT(
 
 // حذف تعليق
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -98,7 +98,7 @@ export async function DELETE(
       );
     }
 
-    const { id: commentId } = await params;
+    const { id: commentId } = await context.params;
 
     // جلب التعليق
     const comment = await prisma.comments.findUnique({

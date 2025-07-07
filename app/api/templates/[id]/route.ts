@@ -7,11 +7,11 @@ import path from 'path'
 // GET /api/templates/[id]
 export async function GET(
   request: NextRequest,
-  props: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const params = await props.params;
-    const templateId = parseInt(params.id)
+    const { id } = await context.params;
+    const templateId = parseInt(id)
     
     const dataPath = path.join(process.cwd(), 'data', 'templates.json')
     const data = await fs.readFile(dataPath, 'utf-8')
@@ -39,12 +39,11 @@ export async function GET(
 // PATCH /api/templates/[id]
 export async function PATCH(
   request: NextRequest,
-  props: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requirePermission('templates.update')
-    const params = await props.params;
-    const { id } = params
+    const { id } = await context.params;
     const data = await request.json()
     
     const updatedTemplate = await templateService.updateTemplate(
@@ -74,13 +73,12 @@ export async function PATCH(
 
 // DELETE /api/templates/[id]
 export async function DELETE(
-  request: NextRequest,
-  props: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requirePermission('templates.delete')
-    const params = await props.params;
-    const { id } = params
+    const { id } = await context.params;
     
     const success = await templateService.deleteTemplate(parseInt(id))
     
@@ -104,12 +102,12 @@ export async function DELETE(
 }
 
 export async function PUT(
-  request: NextRequest,
-  props: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const params = await props.params;
-    const templateId = parseInt(params.id)
+    const { id } = await context.params;
+    const templateId = parseInt(id)
     const updatedData = await request.json()
     
     const dataPath = path.join(process.cwd(), 'data', 'templates.json')

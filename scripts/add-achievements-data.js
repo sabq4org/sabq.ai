@@ -167,9 +167,9 @@ async function addAchievementsData() {
     
     for (const point of loyaltyPoints) {
       try {
-        await prisma.loyaltyPoints.create({
-          data: {
-            userId,
+        await prisma.loyalty_points.create({
+            data: {
+              user_id: userId,
             points: point.points,
             action: point.action,
             description: point.description,

@@ -12,6 +12,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-pro
 
 export async function GET(request: NextRequest) {
   try {
+    // Debugging: طباعة متغيرات البيئة للتأكد من وجودها
+    console.log('DATABASE_URL is set:', !!process.env.DATABASE_URL);
+    console.log('JWT_SECRET is set:', !!process.env.JWT_SECRET);
+
     // محاولة الحصول على التوكن من الكوكيز أو من Authorization header
     let token = request.cookies.get('auth-token')?.value;
     
@@ -42,33 +46,18 @@ export async function GET(request: NextRequest) {
     }
 
     // البحث عن المستخدم في قاعدة البيانات
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: decoded.id },
       select: {
         id: true,
         email: true,
         name: true,
         role: true,
-        isVerified: true,
-        createdAt: true,
-        updatedAt: true,
+        is_verified: true,
+        created_at: true,
+        updated_at: true,
         avatar: true,
-        isAdmin: true,
-        loyaltyPoints: {
-          select: {
-            points: true
-          }
-        },
-        preferences: {
-          select: {
-            id: true,
-            key: true,
-            value: true
-          },
-          where: {
-            key: { startsWith: 'category_' }
-          }
-        }
+        is_admin: true
       }
     });
 
@@ -79,17 +68,40 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // جلب نقاط الولاء
+    const loyaltyPoints = await prisma.loyalty_points.findMany({
+      where: { user_id: user.id },
+      select: {
+        points: true
+      }
+    });
+
     // حساب مجموع نقاط الولاء
-    const totalLoyaltyPoints = user.loyaltyPoints.reduce((total: number, lp: { points: number }) => total + lp.points, 0);
+    const totalLoyaltyPoints = loyaltyPoints.reduce((total: number, lp: { points: number }) => total + lp.points, 0);
+
+    // جلب تفضيلات المستخدم
+    const preferences = await prisma.user_preferences.findMany({
+      where: {
+        user_id: user.id,
+        key: { startsWith: 'category_' }
+      },
+      select: {
+        id: true,
+        key: true,
+        value: true
+      }
+    });
 
     // استخراج اهتمامات المستخدم
     const interests = {
-      categories: user.preferences
+      categories: preferences
         .filter((pref: { key: string; }) => pref.key.startsWith('category_'))
-        .map((pref: { value: any; }) => pref.value.name),
-      keywords: user.interests
-        .filter((interest: { type: string; }) => interest.type === 'keyword')
-        .map((interest: { name: any; }) => interest.name)
+        .map((pref: { value: any; }) => {
+          const value = pref.value as any;
+          return value?.name || '';
+        })
+        .filter(Boolean),
+      keywords: [] // لا توجد جدول keywords في المستخدمين
     };
 
     // إضافة معلومات إضافية
@@ -99,8 +111,8 @@ export async function GET(request: NextRequest) {
       loyaltyPoints: totalLoyaltyPoints,
       status: 'active', // قيمة افتراضية
       role: user.role || 'user',
-      isVerified: user.isVerified || false,
-      interests: interests.categories.concat(interests.keywords)
+      isVerified: user.is_verified || false,
+      interests: interests.categories
     };
 
     return corsResponse({

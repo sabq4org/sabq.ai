@@ -7,7 +7,7 @@ async function exportCategories() {
     console.log('🔄 جاري تصدير التصنيفات...');
     
     // جلب جميع التصنيفات
-    const categories = await prisma.category.findMany({
+    const categories = await prisma.categories.findMany({
       orderBy: {
         displayOrder: 'asc'
       }

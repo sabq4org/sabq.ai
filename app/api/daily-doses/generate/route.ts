@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 import { handleOptions, corsResponse } from '@/lib/cors';
 import OpenAI from 'openai';
 
@@ -97,9 +99,7 @@ export async function POST(request: NextRequest) {
           gte: since
         }
       },
-      include: {
-        category: true
-      },
+      // include: { category: true }, // معطل مؤقتاً
       orderBy: [
         { views: 'desc' },
         { published_at: 'desc' }
@@ -113,9 +113,7 @@ export async function POST(request: NextRequest) {
         where: {
           status: 'published'
         },
-        include: {
-          category: true
-        },
+        // include: { category: true }, // معطل مؤقتاً
         orderBy: [
           { views: 'desc' },
           { published_at: 'desc' }

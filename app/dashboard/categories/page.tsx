@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 import { useDarkModeContext } from '@/contexts/DarkModeContext';
 
@@ -51,6 +52,7 @@ export default function CategoriesPage() {
     message: string;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   // دالة جلب التصنيفات من API الحقيقي
   const fetchCategories = useCallback(async () => {
@@ -393,6 +395,17 @@ export default function CategoriesPage() {
                 
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={() => router.push(`/dashboard/categories/${category.id}`)}
+                    className={`p-2 rounded-lg transition-colors duration-200 ${
+                      darkMode 
+                        ? 'text-green-400 hover:bg-green-900/20' 
+                        : 'text-green-600 hover:bg-green-50'
+                    }`}
+                    title="عرض التفاصيل"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={() => {
                       setSelectedCategory(category);
                       setShowEditModal(true);
@@ -663,11 +676,68 @@ export default function CategoriesPage() {
             <h3 className={`text-lg font-bold mb-6 transition-colors duration-300 ${
               darkMode ? 'text-white' : 'text-gray-800'
             }`}>🌳 التسلسل الهرمي</h3>
-            <p className={`text-center py-8 transition-colors duration-300 ${
-              darkMode ? 'text-gray-400' : 'text-gray-500'
-            }`}>
-              عرض تفاعلي لشجرة التصنيفات مع إمكانية السحب والإفلات (قريباً)
-            </p>
+            
+            {/* عرض شجري محسن للتصنيفات */}
+            <div className={`rounded-xl p-6 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+              <div className="mb-4">
+                <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  عرض التصنيفات في تسلسل هرمي يوضح العلاقات بين التصنيفات الرئيسية والفرعية
+                </p>
+              </div>
+              
+              {/* شجرة التصنيفات مع تحسينات بصرية */}
+              <div className="space-y-4">
+                {categories.filter(cat => !cat.parent_id).map(parentCat => (
+                  <div key={parentCat.id} className={`border rounded-lg p-4 ${
+                    darkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-white'
+                  }`}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div 
+                        className="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
+                        style={{ backgroundColor: parentCat.color_hex }}
+                      >
+                        {parentCat.icon}
+                      </div>
+                      <div>
+                        <h4 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                          {parentCat.name_ar}
+                        </h4>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {(parentCat.articles_count || 0)} مقال
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* التصنيفات الفرعية */}
+                    {categories.filter(cat => cat.parent_id === parentCat.id).length > 0 && (
+                      <div className="mr-12 space-y-2">
+                        {categories.filter(cat => cat.parent_id === parentCat.id).map(childCat => (
+                          <div key={childCat.id} className={`flex items-center gap-3 p-3 rounded-lg ${
+                            darkMode ? 'bg-gray-700' : 'bg-gray-50'
+                          }`}>
+                            <div className="w-2 h-2 rounded-full bg-gray-400" />
+                            <div 
+                              className="w-8 h-8 rounded flex items-center justify-center text-sm"
+                              style={{ backgroundColor: childCat.color_hex }}
+                            >
+                              {childCat.icon}
+                            </div>
+                            <div className="flex-1">
+                              <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                {childCat.name_ar}
+                              </span>
+                              <span className={`text-xs mr-2 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                                ({(childCat.articles_count || 0)} مقال)
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -683,11 +753,121 @@ export default function CategoriesPage() {
             <h3 className={`text-lg font-bold mb-6 transition-colors duration-300 ${
               darkMode ? 'text-white' : 'text-gray-800'
             }`}>⚙️ إعدادات التصنيفات</h3>
-            <p className={`text-center py-8 transition-colors duration-300 ${
-              darkMode ? 'text-gray-400' : 'text-gray-500'
-            }`}>
-              إعدادات عامة للتصنيفات ونظام العرض (قريباً)
-            </p>
+            
+            <div className="space-y-6">
+              {/* إعدادات العرض */}
+              <div className={`rounded-xl p-6 ${darkMode ? 'bg-gray-700' : 'bg-white'} border ${
+                darkMode ? 'border-gray-600' : 'border-gray-200'
+              }`}>
+                <h4 className={`font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  إعدادات العرض
+                </h4>
+                <div className="space-y-4">
+                  <label className="flex items-center justify-between">
+                    <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
+                      عرض التصنيفات الفارغة
+                    </span>
+                    <input type="checkbox" className="w-5 h-5 rounded" defaultChecked />
+                  </label>
+                  <label className="flex items-center justify-between">
+                    <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
+                      عرض عدد المقالات
+                    </span>
+                    <input type="checkbox" className="w-5 h-5 rounded" defaultChecked />
+                  </label>
+                  <label className="flex items-center justify-between">
+                    <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
+                      السماح بالتصنيفات الفرعية
+                    </span>
+                    <input type="checkbox" className="w-5 h-5 rounded" defaultChecked />
+                  </label>
+                </div>
+              </div>
+
+              {/* إعدادات SEO */}
+              <div className={`rounded-xl p-6 ${darkMode ? 'bg-gray-700' : 'bg-white'} border ${
+                darkMode ? 'border-gray-600' : 'border-gray-200'
+              }`}>
+                <h4 className={`font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  إعدادات SEO
+                </h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${
+                      darkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      قالب عنوان الصفحة
+                    </label>
+                    <input
+                      type="text"
+                      className={`w-full px-4 py-2 rounded-lg border ${
+                        darkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-300 bg-white text-gray-900'
+                      }`}
+                      defaultValue="{category_name} - {site_name}"
+                      dir="ltr"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${
+                      darkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      قالب وصف الصفحة
+                    </label>
+                    <textarea
+                      className={`w-full px-4 py-2 rounded-lg border ${
+                        darkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-300 bg-white text-gray-900'
+                      }`}
+                      rows={3}
+                      defaultValue="اقرأ آخر أخبار {category_name} على موقع {site_name}"
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* إحصائيات عامة */}
+              <div className={`rounded-xl p-6 ${darkMode ? 'bg-gray-700' : 'bg-white'} border ${
+                darkMode ? 'border-gray-600' : 'border-gray-200'
+              }`}>
+                <h4 className={`font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  معلومات النظام
+                </h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+                      إجمالي التصنيفات:
+                    </span>
+                    <span className={`mr-2 font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {categories.length}
+                    </span>
+                  </div>
+                  <div>
+                    <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+                      التصنيفات النشطة:
+                    </span>
+                    <span className={`mr-2 font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {categories.filter(c => c.is_active).length}
+                    </span>
+                  </div>
+                  <div>
+                    <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+                      التصنيفات الرئيسية:
+                    </span>
+                    <span className={`mr-2 font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {categories.filter(c => !c.parent_id).length}
+                    </span>
+                  </div>
+                  <div>
+                    <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+                      التصنيفات الفرعية:
+                    </span>
+                    <span className={`mr-2 font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {categories.filter(c => c.parent_id).length}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -714,4 +894,4 @@ export default function CategoriesPage() {
       <NotificationComponent />
     </div>
   );
-} 
+}

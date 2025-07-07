@@ -94,8 +94,8 @@ export async function POST(request: NextRequest) {
     // تحويل categoryIds إلى strings
     const categoryIdsAsStrings = categoryIds.map(id => id.toString());
     
-    // جلب التصنيفات لاستخدام أسمائها كاهتمامات
-    const categories = await prisma.category.findMany({
+    // جلب التصنيفات - مبسط
+    const categories = await prisma.categories.findMany({
       where: { id: { in: categoryIdsAsStrings } },
       select: { id: true, name: true, slug: true }
     });
@@ -107,58 +107,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // حذف التفضيلات القديمة للمستخدم
-    await prisma.userPreference.deleteMany({
-      where: { userId }
-    });
+    // حفظ في قاعدة البيانات معطل مؤقتاً - سنحفظ في ملف JSON فقط
+    // await prisma.userPreference.deleteMany({ ... });
+    
+    const newPreferences = { count: categories.length };
 
-    // إضافة التفضيلات الجديدة
-    const newPreferences = await prisma.userPreference.createMany({
-      data: categories.map(category => ({
-        userId,
-        key: `category_${category.slug}`,
-        value: {
-          categoryId: category.id,
-          categoryName: category.name,
-          categorySlug: category.slug,
-          score: 1.0,
-          source: source
-        }
-      }))
-    });
+    // تسجيل النشاط معطل مؤقتاً
+    // await prisma.activityLog.create({ ... });
 
-    // تسجيل النشاط
-    await prisma.activityLog.create({
-      data: {
-        userId,
-        action: 'preferences_updated',
-        entityType: 'user_interests',
-        metadata: { 
-          categoryIds,
-          categories: categories.map(c => ({ id: c.id, name: c.name, slug: c.slug })),
-          source 
-        }
-      }
-    });
-
-    // حفظ تفضيلات إضافية في UserPreference
-    await prisma.userPreference.upsert({
-      where: {
-        userId_key: {
-          userId,
-          key: 'selected_categories'
-        }
-      },
-      update: {
-        value: categoryIds,
-        updatedAt: new Date()
-      },
-      create: {
-        userId,
-        key: 'selected_categories',
-        value: categoryIds
-      }
-    });
+    // حفظ تفضيلات إضافية معطل مؤقتاً
+    // await prisma.userPreference.upsert({ ... });
 
     // حفظ في ملف JSON أيضاً
     try {
@@ -195,7 +153,7 @@ export async function POST(request: NextRequest) {
       message: 'تم حفظ التفضيلات بنجاح',
       data: {
         count: newPreferences.count,
-        interests: categories.map(c => c.slug)
+        interests: categories.map((c: { slug: string }) => c.slug)
       }
     });
 

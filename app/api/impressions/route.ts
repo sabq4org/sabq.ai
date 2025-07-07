@@ -206,24 +206,20 @@ export async function GET(request: NextRequest) {
     });
 
     // جلب معلومات المقالات بشكل منفصل
-    const articleIds = [...new Set(interactions.map(i => i.article_id).filter(Boolean))];
+    const articleIds = [...new Set(interactions.map((i: { article_id: string }) => i.article_id).filter(Boolean))];
     const articles = await prisma.articles.findMany({
       where: { id: { in: articleIds } },
       select: {
         id: true,
         title: true,
         slug: true,
-        category_id: true,
-        reading_time: true
+        featured_image: true
       }
     });
-
-    const articlesMap = new Map(articles.map(a => [a.id, a]));
-
-    // دمج البيانات
-    const interactionsWithArticles = interactions.map(interaction => ({
+    const articlesMap = new Map(articles.map((a: { id: string }) => [a.id, a]));
+    const impressionsWithArticles = interactions.map((interaction: { article_id: string }) => ({
       ...interaction,
-      article: articlesMap.get(interaction.article_id!)
+      article: interaction.article_id ? articlesMap.get(interaction.article_id) : null
     }));
     
     // حساب الإحصائيات
@@ -235,7 +231,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json({
       success: true,
-      interactions: interactionsWithArticles,
+      interactions: impressionsWithArticles,
       stats
     });
     

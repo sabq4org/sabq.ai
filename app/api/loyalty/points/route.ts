@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,9 +16,9 @@ export async function GET(request: NextRequest) {
     }
     
     // جلب نقاط الولاء من قاعدة البيانات
-    const loyaltyPoints = await prisma.loyaltyPoint.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' }
+    const loyaltyPoints = await prisma.loyalty_points.findMany({
+      where: { user_id: userId },
+      orderBy: { created_at: 'desc' }
     });
     
     // حساب إجمالي النقاط
@@ -45,8 +47,8 @@ export async function GET(request: NextRequest) {
       redeemed_points: redeemedPoints,
       tier: tier,
       next_tier_points: getNextTierPoints(totalPoints),
-      created_at: loyaltyPoints.length > 0 ? loyaltyPoints[loyaltyPoints.length - 1].createdAt.toISOString() : new Date().toISOString(),
-      last_updated: loyaltyPoints.length > 0 ? loyaltyPoints[0].createdAt.toISOString() : new Date().toISOString()
+      created_at: loyaltyPoints.length > 0 ? loyaltyPoints[loyaltyPoints.length - 1].created_at.toISOString() : new Date().toISOString(),
+      last_updated: loyaltyPoints.length > 0 ? loyaltyPoints[0].created_at.toISOString() : new Date().toISOString()
     };
     
     return NextResponse.json({
@@ -77,17 +79,17 @@ export async function POST(request: NextRequest) {
     }
     
     // جلب نقاط الولاء من قاعدة البيانات
-    const loyaltyPoints = await prisma.loyaltyPoint.findMany({
-      where: { userId: user_id },
-      orderBy: { createdAt: 'desc' },
+    const loyaltyPoints = await prisma.loyalty_points.findMany({
+      where: { user_id: user_id },
+      orderBy: { created_at: 'desc' },
       take: 50
     });
     
     // جلب التفاعلات من قاعدة البيانات
-    const interactions = await prisma.interaction.findMany({
-      where: { userId: user_id },
+    const interactions = await prisma.interactions.findMany({
+      where: { user_id: user_id },
       include: {
-        article: {
+        articles: {
           select: {
             id: true,
             title: true,
@@ -95,7 +97,7 @@ export async function POST(request: NextRequest) {
           }
         }
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
       take: 50
     });
     
@@ -109,8 +111,8 @@ export async function POST(request: NextRequest) {
       recent_activities: loyaltyPoints.slice(0, 10).map((p: any) => ({
         type: p.action,
         points: p.points,
-        article_id: p.referenceId,
-        timestamp: p.createdAt.toISOString()
+        article_id: p.reference_id,
+        timestamp: p.created_at.toISOString()
       }))
     };
     

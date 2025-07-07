@@ -10,6 +10,7 @@ import {
   Trophy, Laptop, Building2, Leaf, Activity, Globe,
   Grid, List, SortDesc, Sparkles
 } from 'lucide-react';
+import { getArticleLink } from '@/lib/utils';
 
 interface Category {
   id: number;
@@ -406,7 +407,7 @@ export default function CategoryDetailPage({ params }: PageProps) {
             {viewMode === 'grid' ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredArticles.map((article) => (
-                  <Link key={article.id} href={`/article/${article.id}`}>
+                  <Link key={article.id} href={getArticleLink(article)}>
                     <article className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden h-full">
                       {/* Image */}
                       <div className="relative h-48 overflow-hidden">
@@ -475,7 +476,7 @@ export default function CategoryDetailPage({ params }: PageProps) {
             ) : (
               <div className="space-y-4">
                 {filteredArticles.map((article) => (
-                  <Link key={article.id} href={`/article/${article.id}`}>
+                  <Link key={article.id} href={getArticleLink(article)}>
                     <article className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 p-6 flex gap-6">
                       {/* Image */}
                       <div className="relative w-48 h-32 rounded-xl overflow-hidden flex-shrink-0">

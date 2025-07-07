@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Clock, Eye, User, Award, Zap, Heart, Bookmark } from 'lucide-react';
 import { formatDateOnly } from '@/lib/date-utils';
 import { getValidImageUrl, generatePlaceholderImage } from '@/lib/cloudinary';
+import { getArticleLink } from '@/lib/utils';
 
 interface Article {
   id: string;
@@ -106,7 +107,7 @@ export default function ArticleCard({ article, viewMode = 'grid' }: ArticleCardP
   const imageUrl = getValidImageUrl(article.featured_image, article.title, 'article');
   
   return (
-    <Link href={`/article/${article.id}`}>
+    <Link href={getArticleLink(article)}>
       <div className={`group h-full bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 hover:shadow-lg dark:hover:shadow-gray-900/70 transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 ${
         viewMode === 'list' ? 'flex gap-4 p-4' : 'flex flex-col'
       }`}>

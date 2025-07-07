@@ -1,33 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 
 export async function GET(
-  request: NextRequest,
-  props: { params: Promise<{ id: string }> }
+  request: Request,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: userId } = await props.params;
+    const { id: userId } = await context.params;
     
-    // جلب التفاعلات من قاعدة البيانات
-    const interactions = await prisma.interaction.findMany({
-      where: { userId },
-      include: {
-        article: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            category: {
-              select: {
-                id: true,
-                name: true,
-                slug: true
-              }
-            }
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
+    // جلب التفاعلات من قاعدة البيانات - مبسط
+    const interactions = await prisma.interactions.findMany({
+      where: { user_id: userId },
+      // include: { article: { ... } }, // معطل مؤقتاً
+      orderBy: { created_at: 'desc' },
+      take: 50
     });
     
     // حساب الإحصائيات

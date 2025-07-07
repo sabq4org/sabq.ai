@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 import { z } from 'zod';
 import { parse } from 'csv-parse/sync';
 import crypto from 'crypto';
@@ -60,14 +62,14 @@ export async function GET(request: NextRequest) {
     ]);
     
     // جلب عدد سجلات البريد لكل مشترك
-    const subscriberIds = subscribers.map(s => s.id);
+    const subscriberIds = subscribers.map((s: { id: string }) => s.id);
     const logsCounts = subscriberIds.length > 0 ? await prisma.emailLog.groupBy({
       by: ['subscriber_id'],
       where: { subscriber_id: { in: subscriberIds } },
       _count: { subscriber_id: true }
     }) : [];
-    const logsCountMap = new Map(logsCounts.map(lc => [lc.subscriber_id, lc._count.subscriber_id]));
-    const subscribersWithCounts = subscribers.map(s => ({
+    const logsCountMap = new Map(logsCounts.map((lc: { subscriber_id: string; _count: { subscriber_id: number } }) => [lc.subscriber_id, lc._count.subscriber_id]));
+    const subscribersWithCounts = subscribers.map((s: { id: string }) => ({
       ...s,
       emailLogsCount: logsCountMap.get(s.id) || 0
     }));

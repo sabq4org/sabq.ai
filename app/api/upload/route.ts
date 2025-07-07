@@ -34,8 +34,8 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // تحديد مجلد الرفع حسب النوع
-      let folder = 'sabq-cms';
+      // تحديد مجلد Cloudinary حسب النوع
+      let folder = 'sabq-cms/general';
       switch (type) {
         case 'avatar':
           folder = 'sabq-cms/avatars';
@@ -56,17 +56,15 @@ export async function POST(request: NextRequest) {
           folder = 'sabq-cms/general';
       }
 
-      // رفع الملف إلى Cloudinary
+      console.log('📤 رفع الصورة إلى Cloudinary...');
+
+      // رفع الصورة إلى Cloudinary فقط
       const result = await uploadToCloudinary(file, {
         folder,
-        publicId: `${Date.now()}-${file.name.replace(/\.[^/.]+$/, "")}`,
-        transformation: [
-          { quality: 'auto:good' },
-          { fetch_format: 'auto' }
-        ]
+        fileName: file.name
       });
 
-      console.log('✅ تم رفع الملف إلى Cloudinary:', result.url);
+      console.log('✅ تم رفع الصورة إلى Cloudinary بنجاح:', result.url);
 
       return NextResponse.json({ 
         success: true, 
@@ -75,24 +73,25 @@ export async function POST(request: NextRequest) {
         width: result.width,
         height: result.height,
         format: result.format,
-        message: 'تم رفع الصورة بنجاح إلى Cloudinary'
+        bytes: result.bytes,
+        message: 'تم رفع الصورة إلى السحابة بنجاح',
+        cloudinary_storage: true
       });
 
-    } catch (cloudinaryError) {
-      console.error('❌ خطأ في رفع الملف إلى Cloudinary:', cloudinaryError);
+    } catch (uploadError) {
+      console.error('❌ خطأ في رفع الملف إلى Cloudinary:', uploadError);
       return NextResponse.json({ 
         success: false, 
-        error: 'فشل رفع الصورة إلى السحابة',
-        message: 'لا يمكن حفظ الصور محلياً. يجب رفعها إلى Cloudinary فقط.',
-        details: cloudinaryError instanceof Error ? cloudinaryError.message : 'خطأ غير معروف'
+        error: 'فشل في رفع الصورة إلى السحابة',
+        message: 'جميع الصور يجب رفعها إلى Cloudinary. لا يمكن حفظها محلياً.'
       }, { status: 500 });
     }
 
   } catch (error) {
-    console.error('❌ خطأ في رفع الملف:', error);
+    console.error('❌ خطأ في معالجة الملف:', error);
     return NextResponse.json({ 
       success: false, 
-      error: 'فشل رفع الملف',
+      error: 'فشل في معالجة الملف',
       message: error instanceof Error ? error.message : 'خطأ غير معروف' 
     }, { status: 500 });
   }

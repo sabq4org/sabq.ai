@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 
 export const runtime = 'nodejs';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ categorySlug: string }> }
+  context: { params: Promise<{ categorySlug: string }> }
 ) {
   try {
-    const { categorySlug } = await params;
-    const category = await prisma.category.findUnique({
-      where: { slug: categorySlug },
-      include: {
-        parent: true,
-        _count: {
-          select: { articles: true }
-        }
-      }
+    const { categorySlug } = await context.params;
+    const category = await prisma.categories.findUnique({
+      where: { slug: categorySlug }
+    });
+
+    // جلب عدد المقالات بشكل منفصل
+    const articlesCount = await prisma.articles.count({
+      where: { category_id: category?.id }
     });
 
     if (!category) {
@@ -66,13 +67,13 @@ export async function GET(
         color: colorHex,
         color_hex: colorHex,
         icon: icon,
-        articles_count: category._count.articles,
-        is_active: category.isActive,
-        parent_id: category.parentId,
-        parent: category.parent,
-        position: category.displayOrder,
-        created_at: category.createdAt.toISOString(),
-        updated_at: category.updatedAt.toISOString(),
+        articles_count: articlesCount,
+        is_active: category.is_active,
+        parent_id: category.parent_id,
+        parent: null, // سيتم جلبها بشكل منفصل إذا لزم الأمر
+        position: category.display_order,
+        created_at: category.created_at.toISOString(),
+        updated_at: category.updated_at.toISOString(),
         metadata: metadata
       }
     });
