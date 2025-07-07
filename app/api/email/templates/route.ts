@@ -35,17 +35,17 @@ export async function GET(request: NextRequest) {
     });
     
     // جلب عدد المهام لكل قالب
-    const templateIds = templates.map(t => t.id);
+    const templateIds = templates.map((t: { id: string }) => t.id);
     const jobsCounts = templateIds.length > 0 ? await prisma.emailJob.groupBy({
       by: ['template_id'],
       where: { template_id: { in: templateIds } },
       _count: { template_id: true }
     }) : [];
     
-    const jobsCountMap = new Map(jobsCounts.map(jc => [jc.template_id, jc._count.template_id]));
-    const templatesWithCounts = templates.map(t => ({
+    const jobsCountMap = new Map(jobsCounts.map((jc: { template_id: string, _count: { template_id: number } }) => [jc.template_id, jc._count.template_id]));
+    const templatesWithCounts = templates.map((t: { id: string }) => ({
       ...t,
-      _count: { emailJobs: jobsCountMap.get(t.id) || 0 }
+      jobsCount: jobsCountMap.get(t.id) || 0
     }));
     
     return NextResponse.json({
