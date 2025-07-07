@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     if (articleId) where.articleId = articleId;
     if (type) where.type = type;
     
-    const interactions = await prisma.interaction.findMany({
+    const interactions = await prisma.interactions.findMany({
       where,
       orderBy: {
         createdAt: 'desc'
