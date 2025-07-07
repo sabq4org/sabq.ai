@@ -1,4 +1,5 @@
-import { prisma } from '../lib/prisma';
+import prisma from '../lib/prisma';
+import { v4 as uuidv4 } from 'uuid';
 
 async function main() {
   const categories = [
@@ -8,8 +9,8 @@ async function main() {
       slug: 'technology',
       color: '#8B5CF6',
       icon: '💻',
-      displayOrder: 1,
-      isActive: true,
+      display_order: 1,
+      is_active: true,
     },
     {
       name: 'رياضة',
@@ -17,8 +18,8 @@ async function main() {
       slug: 'sports',
       color: '#F59E0B',
       icon: '⚽',
-      displayOrder: 2,
-      isActive: true,
+      display_order: 2,
+      is_active: true,
     },
     {
       name: 'اقتصاد',
@@ -26,8 +27,8 @@ async function main() {
       slug: 'economy',
       color: '#10B981',
       icon: '💰',
-      displayOrder: 3,
-      isActive: true,
+      display_order: 3,
+      is_active: true,
     },
     {
       name: 'سياسة',
@@ -35,8 +36,8 @@ async function main() {
       slug: 'politics',
       color: '#EF4444',
       icon: '🏛️',
-      displayOrder: 4,
-      isActive: true,
+      display_order: 4,
+      is_active: true,
     },
     {
       name: 'محليات',
@@ -44,8 +45,8 @@ async function main() {
       slug: 'local',
       color: '#3B82F6',
       icon: '🗺️',
-      displayOrder: 5,
-      isActive: true,
+      display_order: 5,
+      is_active: true,
     },
     {
       name: 'ثقافة ومجتمع',
@@ -53,8 +54,8 @@ async function main() {
       slug: 'culture',
       color: '#EC4899',
       icon: '🎭',
-      displayOrder: 6,
-      isActive: true,
+      display_order: 6,
+      is_active: true,
     },
     {
       name: 'مقالات رأي',
@@ -62,8 +63,8 @@ async function main() {
       slug: 'opinion',
       color: '#7C3AED',
       icon: '✍️',
-      displayOrder: 7,
-      isActive: true,
+      display_order: 7,
+      is_active: true,
     },
     {
       name: 'منوعات',
@@ -71,16 +72,29 @@ async function main() {
       slug: 'misc',
       color: '#6B7280',
       icon: '🎉',
-      displayOrder: 8,
-      isActive: true,
+      display_order: 8,
+      is_active: true,
     },
   ];
 
   for (const cat of categories) {
     await prisma.categories.upsert({
       where: { slug: cat.slug },
-      update: cat,
-      create: cat,
+      update: {
+        name: cat.name,
+        description: cat.description,
+        color: cat.color,
+        icon: cat.icon,
+        display_order: cat.display_order,
+        is_active: cat.is_active,
+        updated_at: new Date()
+      },
+      create: {
+        id: uuidv4(),
+        ...cat,
+        created_at: new Date(),
+        updated_at: new Date()
+      },
     });
   }
 

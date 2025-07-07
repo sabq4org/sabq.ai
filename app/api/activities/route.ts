@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePermission } from '@/app/lib/auth';
-import { PrismaClient } from '@/lib/generated/prisma';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 export const runtime = 'nodejs';
 
