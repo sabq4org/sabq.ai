@@ -132,16 +132,20 @@ export async function GET(request: NextRequest) {
     */
 
     // الترتيب
-    const sort = searchParams.get('sort') || 'oldest'
-    const order = (searchParams.get('order') || 'desc') as 'asc' | 'desc'
+    const sortBy = searchParams.get('sortBy') || 'published_at';
+    const order = (searchParams.get('order') || 'desc') as 'asc' | 'desc';
     
-    let orderBy: any = {}
-    if (sort === 'oldest') {
-      orderBy.created_at = 'asc'
-    } else if (sort === 'popular') {
-      orderBy.views = 'desc'
+    let orderBy: any = {};
+    if (sortBy === 'published_at') {
+      orderBy.published_at = order;
+    } else if (sortBy === 'views_count') {
+      orderBy.views_count = order;
+    } else if (sortBy === 'engagement_score') {
+      orderBy.engagement_score = order;
+    } else if (sortBy === 'created_at') {
+      orderBy.created_at = order;
     } else {
-      orderBy.created_at = 'desc'
+      orderBy.published_at = order;
     }
 
     // التقسيم (Pagination)
