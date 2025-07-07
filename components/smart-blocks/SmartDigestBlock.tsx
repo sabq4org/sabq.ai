@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { Clock, TrendingUp, ArrowLeft, BookOpen, Zap, Crown, Leaf, Sun, Cloud, Moon, Star, Sparkles, Volume2, Headphones, Coffee, Sunrise, Sunset, Pause, Play, ExternalLink, Heart, Share2, BookmarkPlus } from 'lucide-react';
 import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
+import { getArticleLink } from '@/lib/utils';
 
 interface DoseContent {
   id: string;
@@ -415,7 +416,7 @@ export default function SmartDigestBlock({ forceTimeSlot }: SmartDigestBlockProp
                           
                           {content.article && (
                             <Link
-                              href={`/article/${content.article.slug}`}
+                              href={getArticleLink(content.article)}
                               className={`p-1.5 rounded-full transition-all duration-300 transform hover:scale-110 ${
                                 darkMode 
                                   ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 

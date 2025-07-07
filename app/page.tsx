@@ -87,6 +87,7 @@ import {
 import { useTheme } from '@/contexts/ThemeContext';
 import { getCookie, setCookie } from '@/lib/cookies';
 import { generatePlaceholderImage, getValidImageUrl } from '@/lib/cloudinary';
+import { getArticleLink } from '@/lib/utils';
 
 import CategoryBadge from './components/CategoryBadge';
 import Header from '../components/Header';
@@ -369,16 +370,6 @@ function NewspaperHomePage(): React.ReactElement {
   };
   const handleTogglePersonalized = () => {
     setShowPersonalized(prev => !prev);
-  };
-
-  // دالة مساعدة لتحديد الرابط المناسب للمقال
-  const getArticleLink = (article: any) => {
-    // إذا كان المقال من تصنيف الرأي، توجه لصفحة الرأي
-    if (article.category?.slug === 'opinion' || article.category?.name === 'رأي') {
-      return `/opinion/${article.id}`;
-    }
-    // وإلا توجه لصفحة المقال العادية
-    return `/article/${article.id}`;
   };
 
   // مكون بطاقة الأخبار

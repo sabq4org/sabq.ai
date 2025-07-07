@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Clock, Eye, AlertCircle, ChevronLeft, ListOrdered } from 'lucide-react';
+import { getArticleLink } from '@/lib/utils';
 
 interface HeadlineListBlockProps {
   block: any;
@@ -132,7 +133,7 @@ export function HeadlineListBlock({ block, articles }: HeadlineListBlockProps) {
         {displayArticles.map((article, index) => (
           <Link
             key={article.id}
-            href={`/article/${article.id}`}
+            href={getArticleLink(article)}
             className="headline-item group"
           >
             <div 
