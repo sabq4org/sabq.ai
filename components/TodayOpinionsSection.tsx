@@ -153,6 +153,39 @@ export default function TodayOpinionsSection({ darkMode = false }: TodayOpinions
             views_count: 5200,
             likes_count: 380,
             comments_count: 52
+          },
+          {
+            id: '5',
+            title: 'مستقبل النقل في المدن السعودية',
+            author_name: 'أ. عبدالله الراشد',
+            author_avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80',
+            author_club: 'bronze',
+            author_specialization: 'النقل والمواصلات',
+            excerpt: 'تطوير شبكات النقل العام في المملكة...',
+            ai_summary: 'يحلل الكاتب مشاريع النقل العام الجديدة في المملكة وتأثيرها على جودة الحياة والاستدامة البيئية.',
+            featured_image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80',
+            published_at: new Date(Date.now() - 14400000).toISOString(),
+            reading_time: 5,
+            views_count: 3800,
+            likes_count: 290,
+            comments_count: 38
+          },
+          {
+            id: '6',
+            title: 'التجارة الإلكترونية والاقتصاد الرقمي',
+            author_name: 'أ. ريم التميمي',
+            author_avatar: 'https://images.unsplash.com/photo-1594736797933-d0411e042d9e?auto=format&fit=crop&w=150&q=80',
+            author_club: 'silver',
+            author_specialization: 'الاقتصاد الرقمي',
+            excerpt: 'نمو قطاع التجارة الإلكترونية في المملكة...',
+            ai_summary: 'تستعرض الكاتبة نمو التجارة الإلكترونية في السعودية والفرص الاستثمارية في الاقتصاد الرقمي.',
+            featured_image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=800&q=80',
+            published_at: new Date(Date.now() - 18000000).toISOString(),
+            reading_time: 6,
+            views_count: 4500,
+            likes_count: 320,
+            comments_count: 45,
+            is_trending: true
           }
         ];
 
@@ -393,65 +426,58 @@ export default function TodayOpinionsSection({ darkMode = false }: TodayOpinions
           )}
         </div>
 
-        {/* بطاقات المقالات الأنيقة */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        {/* بطاقات الآراء المُضغوطة والأنيقة */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
           {opinionArticles.map((article) => (
             <div 
               key={article.id}
-              className={`group relative rounded-3xl overflow-hidden shadow-xl dark:shadow-gray-900/50 transition-all duration-500 transform hover:scale-105 hover:shadow-2xl ${
-                darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'
+              className={`group relative rounded-2xl overflow-hidden shadow-lg dark:shadow-gray-900/50 transition-all duration-300 transform hover:scale-105 hover:shadow-xl ${
+                darkMode 
+                  ? 'bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700' 
+                  : 'bg-gradient-to-br from-white to-gray-50 border border-gray-200'
               }`}
             >
-              {/* شارات المقال */}
-              <div className="absolute top-4 right-4 z-10 flex gap-2">
+              {/* شارات المقال - مُعاد تموضعها */}
+              <div className="absolute top-3 left-3 z-10 flex gap-1">
                 {article.is_trending && (
-                  <span className="px-3 py-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold rounded-full shadow-lg backdrop-blur-sm">
-                    🔥 ترند
+                  <span className="px-2 py-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold rounded-full shadow-lg">
+                    🔥
                   </span>
                 )}
                 {article.is_featured && (
-                  <span className="px-3 py-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs font-bold rounded-full shadow-lg backdrop-blur-sm">
-                    ⭐ مميز
+                  <span className="px-2 py-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs font-bold rounded-full shadow-lg">
+                    ⭐
                   </span>
                 )}
               </div>
 
-              {/* صورة المقال */}
-              <div className="relative h-48 overflow-hidden">
-                <img 
-                  src={article.featured_image} 
-                  alt={article.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </div>
-
-              {/* معلومات الكاتب */}
-              <div className="p-6">
+              {/* المحتوى الرئيسي - بدون صورة كبيرة */}
+              <div className="p-5">
+                {/* معلومات الكاتب - في الأعلى */}
                 <div className="flex items-center gap-3 mb-4">
-                  <Link href={`/author/${article.author_slug || 'dr-mohammed-ahmad'}`} className="flex items-center gap-3 group/author">
-                    <div className="relative">
+                  <Link href={`/author/${article.author_slug || 'dr-mohammed-ahmad'}`} className="flex items-center gap-3 group/author flex-1">
+                    <div className="relative flex-shrink-0">
                       <img 
                         src={article.author_avatar} 
                         alt={article.author_name}
-                        className={`w-12 h-12 rounded-full object-cover border-3 ${
+                        className={`w-10 h-10 rounded-full object-cover border-2 ${
                           writerClubBorders[article.author_club || 'default']
                         } group-hover/author:scale-110 transition-transform`}
                       />
-                      <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-r ${
+                      <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-r ${
                         writerClubColors[article.author_club || 'default']
                       } flex items-center justify-center border-2 border-white dark:border-gray-800`}>
-                        <Star className="w-2.5 h-2.5 text-white" />
+                        <Star className="w-2 h-2 text-white" />
                       </div>
                     </div>
                     
-                    <div>
-                      <h4 className={`font-bold group-hover/author:text-blue-600 transition-colors ${
+                    <div className="flex-1 min-w-0">
+                      <h4 className={`font-bold text-sm group-hover/author:text-blue-600 transition-colors truncate ${
                         darkMode ? 'text-white' : 'text-gray-800'
                       }`}>
                         {article.author_name}
                       </h4>
-                      <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      <p className={`text-xs truncate ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         {article.author_specialization}
                       </p>
                     </div>
@@ -460,36 +486,26 @@ export default function TodayOpinionsSection({ darkMode = false }: TodayOpinions
 
                 {/* عنوان المقال */}
                 <Link href={`/opinion/${article.id}`}>
-                  <h3 className={`font-bold text-lg mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors ${
+                  <h3 className={`font-bold text-base mb-3 line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors ${
                     darkMode ? 'text-white' : 'text-gray-900'
                   }`}>
                     {article.title}
                   </h3>
                 </Link>
 
-                {/* الملخص الذكي */}
-                <div className={`mb-4 p-3 rounded-xl ${
-                  darkMode ? 'bg-gray-700/50 border border-gray-600' : 'bg-blue-50 border border-blue-100'
+                {/* الملخص المُختصر */}
+                <p className={`text-sm leading-relaxed line-clamp-2 mb-4 ${
+                  darkMode ? 'text-gray-300' : 'text-gray-600'
                 }`}>
-                  <div className="flex items-start gap-2 mb-2">
-                    <Zap className={`w-4 h-4 mt-0.5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-                    <span className={`text-xs font-medium ${darkMode ? 'text-blue-300' : 'text-blue-700'}`}>
-                      ملخص ذكي بالـ AI
-                    </span>
-                  </div>
-                  <p className={`text-sm leading-relaxed line-clamp-3 ${
-                    darkMode ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
-                    {article.ai_summary || article.excerpt}
-                  </p>
-                </div>
+                  {article.ai_summary || article.excerpt}
+                </p>
 
-                {/* أزرار التفاعل */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
+                {/* أزرار التفاعل المُضغوطة */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
                     <button 
                       onClick={() => handleTTSPlay(article.id, article.ai_summary || article.excerpt)}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105 ${
+                      className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-all hover:scale-105 ${
                         currentPlayingId === article.id
                           ? 'bg-green-500 text-white'
                           : darkMode 
@@ -498,75 +514,68 @@ export default function TodayOpinionsSection({ darkMode = false }: TodayOpinions
                       }`}
                     >
                       {currentPlayingId === article.id ? (
-                        <Volume2 className="w-4 h-4 animate-pulse" />
+                        <Volume2 className="w-3 h-3 animate-pulse" />
                       ) : (
-                        <Headphones className="w-4 h-4" />
+                        <Headphones className="w-3 h-3" />
                       )}
-                      <span>استمع</span>
                     </button>
 
                     <button 
                       onClick={() => handleLike(article.id)}
-                      className={`flex items-center gap-1 px-3 py-2 rounded-xl text-sm transition-all hover:scale-105 ${
+                      className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-all hover:scale-105 ${
                         darkMode 
                           ? 'hover:bg-red-900/20 text-gray-400 hover:text-red-400' 
                           : 'hover:bg-red-50 text-gray-500 hover:text-red-600'
                       }`}
                     >
-                      <Heart className="w-4 h-4" />
+                      <Heart className="w-3 h-3" />
                       <span>{article.likes_count}</span>
                     </button>
 
                     <button 
                       onClick={() => handleShare(article)}
-                      className={`flex items-center gap-1 px-3 py-2 rounded-xl text-sm transition-all hover:scale-105 ${
+                      className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-all hover:scale-105 ${
                         darkMode 
                           ? 'hover:bg-blue-900/20 text-gray-400 hover:text-blue-400' 
                           : 'hover:bg-blue-50 text-gray-500 hover:text-blue-600'
                       }`}
                     >
-                      <Share2 className="w-4 h-4" />
-                      <span>مشاركة</span>
+                      <Share2 className="w-3 h-3" />
                     </button>
                   </div>
-                </div>
 
-                {/* التفاصيل السفلية */}
-                <div className={`flex items-center justify-between pt-4 border-t ${
-                  darkMode ? 'border-gray-700' : 'border-gray-100'
-                }`}>
-                  <div className="flex items-center gap-4 text-xs">
-                    <span className={`flex items-center gap-1 ${
-                      darkMode ? 'text-gray-400' : 'text-gray-500'
-                    }`}>
-                      <Clock className="w-3 h-3" />
-                      {article.reading_time} د
-                    </span>
-                    <span className={`flex items-center gap-1 ${
-                      darkMode ? 'text-gray-400' : 'text-gray-500'
-                    }`}>
-                      <Eye className="w-3 h-3" />
-                      {article.views_count.toLocaleString()}
-                    </span>
-                    <span className={`flex items-center gap-1 ${
-                      darkMode ? 'text-gray-400' : 'text-gray-500'
-                    }`}>
-                      <MessageSquare className="w-3 h-3" />
-                      {article.comments_count}
-                    </span>
-                  </div>
-
+                  {/* زر التفاصيل */}
                   <Link 
                     href={`/opinion/${article.id}`}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105 ${
+                    className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition-all hover:scale-105 ${
                       darkMode 
                         ? 'bg-blue-900/20 hover:bg-blue-800/30 text-blue-400' 
                         : 'bg-blue-50 hover:bg-blue-100 text-blue-600'
                     }`}
                   >
                     <span>التفاصيل</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-3 h-3" />
                   </Link>
+                </div>
+
+                {/* معلومات إضافية صغيرة */}
+                <div className={`flex items-center justify-between pt-3 mt-3 border-t ${
+                  darkMode ? 'border-gray-700' : 'border-gray-200'
+                }`}>
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className={`flex items-center gap-1 ${
+                      darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      <Clock className="w-3 h-3" />
+                      {article.reading_time}د
+                    </span>
+                    <span className={`flex items-center gap-1 ${
+                      darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      <Eye className="w-3 h-3" />
+                      {article.views_count > 1000 ? `${(article.views_count / 1000).toFixed(1)}ك` : article.views_count}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
