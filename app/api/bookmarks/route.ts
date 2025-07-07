@@ -85,18 +85,7 @@ export async function GET(request: NextRequest) {
         type: interactions_type.save
       },
       orderBy: { created_at: 'desc' },
-      include: {
-        article: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            featured_image: true,
-            published_at: true,
-            category: { select: { name: true, slug: true } }
-          }
-        }
-      },
+      // include: { article: { ... } }, // معطل مؤقتاً
       skip,
       take: limit
     });
@@ -105,7 +94,7 @@ export async function GET(request: NextRequest) {
       where: { user_id: userId, type: interactions_type.save }
     });
 
-    const formattedItems = savedItems.map((item: interactions & { article: any }) => ({
+    const formattedItems = savedItems.map((item: any) => ({
       ...item,
       item_id: item.article_id,
       item_type: 'article'

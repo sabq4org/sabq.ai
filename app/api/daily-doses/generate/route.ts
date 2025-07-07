@@ -97,9 +97,7 @@ export async function POST(request: NextRequest) {
           gte: since
         }
       },
-      include: {
-        category: true
-      },
+      // include: { category: true }, // معطل مؤقتاً
       orderBy: [
         { views: 'desc' },
         { published_at: 'desc' }
@@ -113,9 +111,7 @@ export async function POST(request: NextRequest) {
         where: {
           status: 'published'
         },
-        include: {
-          category: true
-        },
+        // include: { category: true }, // معطل مؤقتاً
         orderBy: [
           { views: 'desc' },
           { published_at: 'desc' }

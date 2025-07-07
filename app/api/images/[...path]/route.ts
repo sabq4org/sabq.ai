@@ -9,7 +9,7 @@ export async function GET(
   context: { params: Promise<{ path: string[] }> }
 ) {
   try {
-    const resolvedParams = context.params;
+    const resolvedParams = await context.params;
     const imagePath = resolvedParams.path.join('/');
     const fullPath = path.join(process.cwd(), 'public', 'uploads', imagePath);
     
