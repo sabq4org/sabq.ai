@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+import { uploadToCloudinary } from '@/lib/cloudinary-server';
 
 export const runtime = 'nodejs';
 
@@ -35,69 +34,56 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // تنظيف اسم الملف
-      const timestamp = Date.now();
-      const randomId = Math.random().toString(36).substring(2, 8);
-      const fileExtension = path.extname(file.name);
-      const cleanFileName = file.name
-        .replace(/[^a-zA-Z0-9.-]/g, '_')
-        .replace(fileExtension, '')
-        .substring(0, 30);
-      
-      const finalFileName = `${timestamp}_${cleanFileName}_${randomId}${fileExtension}`;
-
-      // تحديد مجلد الحفظ
-      let uploadDir = 'uploads';
+      // تحديد مجلد Cloudinary حسب النوع
+      let folder = 'sabq-cms/general';
       switch (type) {
         case 'avatar':
-          uploadDir = 'uploads/avatars';
+          folder = 'sabq-cms/avatars';
           break;
         case 'featured':
-          uploadDir = 'uploads/featured';
+          folder = 'sabq-cms/featured';
           break;
         case 'gallery':
-          uploadDir = 'uploads/gallery';
+          folder = 'sabq-cms/gallery';
           break;
         case 'team':
-          uploadDir = 'uploads/team';
+          folder = 'sabq-cms/team';
           break;
         case 'analysis':
-          uploadDir = 'uploads/analysis';
+          folder = 'sabq-cms/analysis';
           break;
         default:
-          uploadDir = 'uploads/general';
+          folder = 'sabq-cms/general';
       }
 
-      // إنشاء المجلد إذا لم يكن موجوداً
-      const fullUploadDir = path.join(process.cwd(), 'public', uploadDir);
-      await mkdir(fullUploadDir, { recursive: true });
+      console.log('📤 رفع الصورة إلى Cloudinary...');
 
-      // تحويل الملف إلى buffer وحفظه
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      
-      const filePath = path.join(fullUploadDir, finalFileName);
-      await writeFile(filePath, buffer);
+      // رفع الصورة إلى Cloudinary فقط
+      const result = await uploadToCloudinary(file, {
+        folder,
+        fileName: file.name
+      });
 
-      // إنشاء URL للوصول للملف
-      const fileUrl = `/${uploadDir}/${finalFileName}`;
-
-      console.log('✅ تم حفظ الملف محلياً:', fileUrl);
+      console.log('✅ تم رفع الصورة إلى Cloudinary بنجاح:', result.url);
 
       return NextResponse.json({ 
         success: true, 
-        url: fileUrl,
-        public_id: finalFileName,
-        message: 'تم رفع الصورة بنجاح',
-        local_storage: true
+        url: result.url,
+        public_id: result.publicId,
+        width: result.width,
+        height: result.height,
+        format: result.format,
+        bytes: result.bytes,
+        message: 'تم رفع الصورة إلى السحابة بنجاح',
+        cloudinary_storage: true
       });
 
     } catch (uploadError) {
-      console.error('❌ خطأ في حفظ الملف:', uploadError);
+      console.error('❌ خطأ في رفع الملف إلى Cloudinary:', uploadError);
       return NextResponse.json({ 
         success: false, 
-        error: 'فشل في حفظ الملف',
-        message: uploadError instanceof Error ? uploadError.message : 'خطأ غير معروف'
+        error: 'فشل في رفع الصورة إلى السحابة',
+        message: 'جميع الصور يجب رفعها إلى Cloudinary. لا يمكن حفظها محلياً.'
       }, { status: 500 });
     }
 
