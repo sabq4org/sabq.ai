@@ -1,5 +1,7 @@
 # 🚀 منصة سبق الذكية - Sabq AI CMS
 
+<!-- Build trigger: 2025-01-07 - Fixed Prisma Client initialization for Vercel & DigitalOcean -->
+
 <div align="center">
 
 ![Next.js](https://img.shields.io/badge/Next.js-15.3.3-black?style=for-the-badge&logo=next.js)
