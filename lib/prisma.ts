@@ -11,22 +11,32 @@ const globalForPrisma = globalThis as unknown as {
 
 let prisma: PrismaClient
 
-try {
-  if (process.env.NODE_ENV === 'production') {
+// Special handling for Vercel and other serverless environments
+if (typeof window === 'undefined') {
+  try {
+    if (process.env.NODE_ENV === 'production') {
+      // In production (Vercel), create a new instance each time
+      prisma = new PrismaClient({
+        log: ['error'],
+      })
+    } else {
+      // In development, use global instance
+      if (!globalForPrisma.prisma) {
+        globalForPrisma.prisma = new PrismaClient({
+          log: ['query', 'error', 'warn'],
+        })
+      }
+      prisma = globalForPrisma.prisma
+    }
+  } catch (error) {
+    console.error('Failed to initialize Prisma Client:', error)
+    // Fallback: create a new instance
     prisma = new PrismaClient({
       log: ['error'],
     })
-  } else {
-    if (!globalForPrisma.prisma) {
-      globalForPrisma.prisma = new PrismaClient({
-        log: ['query', 'error', 'warn'],
-      })
-    }
-    prisma = globalForPrisma.prisma
   }
-} catch (error) {
-  console.error('Failed to initialize Prisma Client:', error)
-  // Fallback: create a new instance
+} else {
+  // Client-side fallback (should not happen in API routes)
   prisma = new PrismaClient()
 }
 
