@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import ReasonFeedback from '@/components/recommendation/ReasonFeedback';
 import { trackEvent, trackArticleView, EventType } from '@/lib/analytics-core';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -28,6 +29,8 @@ interface Article {
   tags: string[];
   recommendation_score?: number;
   recommendation_reason?: string;
+  recommendation_type?: 'interest' | 'popular' | 'collaborative' | 'diversity' | 'freshness';
+  recommendation_id?: string;
 }
 
 interface ArticleFeedProps {
@@ -52,6 +55,8 @@ export default function ArticleFeed({
   const [hasMore, setHasMore] = useState(true);
   const [recommendations, setRecommendations] = useState<Article[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const [refreshingRecommendations, setRefreshingRecommendations] = useState(false);
+  const [showRecommendationSettings, setShowRecommendationSettings] = useState(false);
   
   const { user } = useAuth();
 
@@ -101,10 +106,14 @@ export default function ArticleFeed({
   }, [category, featured]);
 
   // جلب التوصيات الذكية
-  const fetchRecommendations = useCallback(async () => {
+  const fetchRecommendations = useCallback(async (refresh: boolean = false) => {
     if (!user || !showRecommendations) return;
 
-    setLoadingRecommendations(true);
+    if (refresh) {
+      setRefreshingRecommendations(true);
+    } else {
+      setLoadingRecommendations(true);
+    }
 
     try {
       // جلب الأحداث السلوكية للمستخدم
@@ -130,19 +139,26 @@ export default function ArticleFeed({
         body: JSON.stringify({
           user_events: userEvents.events || [],
           articles: articles,
-          top_n: 5,
+          top_n: refresh ? 8 : 5,
           context
         })
       });
 
       if (recommendationsResponse.ok) {
         const recommendationsData = await recommendationsResponse.json();
-        setRecommendations(recommendationsData.recommendations || []);
+        const processedRecommendations = recommendationsData.recommendations?.map((rec: any) => ({
+          ...rec,
+          recommendation_id: rec.id || `rec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          recommendation_type: determineRecommendationType(rec.recommendation_reason),
+        })) || [];
+
+        setRecommendations(processedRecommendations);
 
         // تتبع عرض التوصيات
         trackEvent(EventType.FEATURE_USE, {
           feature: 'smart_recommendations',
-          recommendations_count: recommendationsData.recommendations?.length || 0,
+          action: refresh ? 'refresh' : 'load',
+          recommendations_count: processedRecommendations.length,
           context
         });
       }
@@ -151,8 +167,19 @@ export default function ArticleFeed({
       console.error('خطأ في جلب التوصيات:', err);
     } finally {
       setLoadingRecommendations(false);
+      setRefreshingRecommendations(false);
     }
   }, [user, showRecommendations, articles, context]);
+
+  // تحديد نوع التوصية من النص
+  const determineRecommendationType = (reason: string): 'interest' | 'popular' | 'collaborative' | 'diversity' | 'freshness' => {
+    if (reason?.includes('اهتمام') || reason?.includes('تقرأ')) return 'interest';
+    if (reason?.includes('شائع') || reason?.includes('الأكثر')) return 'popular';
+    if (reason?.includes('مشابه') || reason?.includes('المستخدمين')) return 'collaborative';
+    if (reason?.includes('جديد') || reason?.includes('اكتشف')) return 'diversity';
+    if (reason?.includes('حديث') || reason?.includes('مؤخراً')) return 'freshness';
+    return 'interest';
+  };
 
   // تأثير جانبي لجلب المقالات عند التحميل
   useEffect(() => {
@@ -180,7 +207,8 @@ export default function ArticleFeed({
       source: 'article_feed',
       context,
       recommendation_score: article.recommendation_score,
-      is_recommended: !!article.recommendation_score
+      is_recommended: !!article.recommendation_score,
+      recommendation_type: article.recommendation_type
     });
 
     // الانتقال لصفحة المقال
@@ -204,6 +232,12 @@ export default function ArticleFeed({
         
         // تحديث المقال في القائمة
         setArticles(prev => prev.map(article => 
+          article.id === articleId 
+            ? { ...article, like_count: data.like_count }
+            : article
+        ));
+
+        setRecommendations(prev => prev.map(article => 
           article.id === articleId 
             ? { ...article, like_count: data.like_count }
             : article
@@ -252,17 +286,33 @@ export default function ArticleFeed({
     }
   };
 
+  // تحديث التوصيات
+  const refreshRecommendations = () => {
+    fetchRecommendations(true);
+  };
+
+  // معالجة التغذية الراجعة
+  const handleFeedbackSubmit = (feedbackData: any) => {
+    // تتبع إرسال التغذية الراجعة
+    trackEvent(EventType.FEATURE_USE, {
+      feature: 'recommendation_feedback_submit',
+      feedback: feedbackData.feedback,
+      hasNote: !!feedbackData.note,
+      recommendationId: feedbackData.recommendationId
+    });
+  };
+
   // مكون المقال الواحد
   const ArticleCard = ({ article, isRecommended = false }: { article: Article; isRecommended?: boolean }) => (
     <Card 
       className={`p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group relative
-        ${isRecommended ? 'border-blue-200 bg-blue-50' : 'hover:border-gray-300'}`}
+        ${isRecommended ? 'border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-md' : 'hover:border-gray-300'}`}
       onClick={() => handleArticleClick(article)}
     >
       {/* علامة التوصية */}
       {isRecommended && (
-        <div className="absolute top-4 left-4 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-          🎯 موصى لك
+        <div className="absolute top-4 left-4 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium border border-blue-200">
+          🎯 موصى خصيصاً لك
         </div>
       )}
 
@@ -280,18 +330,20 @@ export default function ArticleFeed({
 
       {/* التصنيف */}
       <div className="flex items-center justify-between mb-3">
-        <span className="text-blue-600 text-sm font-medium">
+        <span className={`text-sm font-medium px-2 py-1 rounded-full
+          ${isRecommended ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-700'}`}>
           {article.category.name}
         </span>
         {article.reading_time && (
-          <span className="text-gray-500 text-sm">
+          <span className="text-gray-500 text-sm flex items-center">
             📖 {article.reading_time} دقائق
           </span>
         )}
       </div>
 
       {/* العنوان */}
-      <h2 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
+      <h2 className={`text-xl font-bold mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors
+        ${isRecommended ? 'text-gray-900' : 'text-gray-900'}`}>
         {article.title}
       </h2>
 
@@ -302,22 +354,14 @@ export default function ArticleFeed({
         </p>
       )}
 
-      {/* سبب التوصية */}
-      {isRecommended && article.recommendation_reason && (
-        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-blue-800 text-sm">
-            💡 {article.recommendation_reason}
-          </p>
-        </div>
-      )}
-
       {/* الكلمات المفتاحية */}
       {article.tags.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
           {article.tags.slice(0, 3).map(tag => (
             <span 
               key={tag}
-              className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+              className={`px-2 py-1 text-xs rounded-full
+                ${isRecommended ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-700'}`}
             >
               #{tag}
             </span>
@@ -338,7 +382,7 @@ export default function ArticleFeed({
             variant="ghost"
             size="sm"
             onClick={(e) => handleLike(article.id, e)}
-            className="text-red-500 hover:text-red-600"
+            className="text-red-500 hover:text-red-600 hover:bg-red-50"
           >
             ❤️ {article.like_count}
           </Button>
@@ -346,12 +390,24 @@ export default function ArticleFeed({
             variant="ghost"
             size="sm"
             onClick={(e) => handleShare(article, e)}
-            className="text-blue-500 hover:text-blue-600"
+            className="text-blue-500 hover:text-blue-600 hover:bg-blue-50"
           >
             📤 مشاركة
           </Button>
         </div>
       </div>
+
+      {/* التغذية الراجعة للتوصيات */}
+      {isRecommended && article.recommendation_reason && article.recommendation_id && (
+        <ReasonFeedback
+          recommendationId={article.recommendation_id}
+          reasonText={article.recommendation_reason}
+          reasonType={article.recommendation_type || 'interest'}
+          userId={user?.id}
+          articleId={article.id}
+          onFeedbackSubmit={handleFeedbackSubmit}
+        />
+      )}
     </Card>
   );
 
@@ -378,13 +434,68 @@ export default function ArticleFeed({
       {showRecommendations && recommendations.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               🎯 مقالات موصى لك خصيصاً
+              <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                {recommendations.length} توصية
+              </span>
             </h2>
-            {loadingRecommendations && (
-              <div className="text-blue-600 text-sm">جاري التحديث...</div>
-            )}
+            
+            <div className="flex items-center gap-3">
+              {loadingRecommendations && (
+                <div className="text-blue-600 text-sm">جاري التحديث...</div>
+              )}
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={refreshRecommendations}
+                disabled={refreshingRecommendations}
+                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+              >
+                {refreshingRecommendations ? '🔄 جاري التحديث...' : '🔄 تحديث التوصيات'}
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowRecommendationSettings(!showRecommendationSettings)}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                ⚙️ إعدادات
+              </Button>
+            </div>
           </div>
+
+          {/* إعدادات التوصيات */}
+          {showRecommendationSettings && (
+            <Card className="p-4 bg-gray-50 border-gray-200">
+              <div className="space-y-3">
+                <h3 className="font-medium text-gray-900">إعدادات التوصيات</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span>🎯</span>
+                    <span>بناءً على اهتماماتك</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>🔥</span>
+                    <span>المحتوى الشائع</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>👥</span>
+                    <span>تفضيلات مشابهة</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>🌈</span>
+                    <span>محتوى متنوع</span>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-600">
+                  التوصيات تتحسن تلقائياً بناءً على تفاعلك مع المحتوى وتغذيتك الراجعة.
+                </p>
+              </div>
+            </Card>
+          )}
           
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {recommendations.map(article => (

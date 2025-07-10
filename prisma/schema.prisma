@@ -33,6 +33,7 @@ model User {
   article_likes     ArticleLike[]
   article_bookmarks ArticleBookmark[]
   comments          Comment[]
+  reason_feedback   RecommendationReasonFeedback[]
   
   @@map("users")
 }
@@ -50,6 +51,7 @@ model Session {
   // Relations
   user           User?     @relation(fields: [user_id], references: [id])
   analytics_events AnalyticsEvent[]
+  reason_feedback RecommendationReasonFeedback[]
   
   @@map("sessions")
 }
@@ -164,9 +166,31 @@ model Recommendation {
   // Relations
   user           User      @relation(fields: [user_id], references: [id])
   article        Article   @relation(fields: [article_id], references: [id])
+  reason_feedback RecommendationReasonFeedback[]
   
   @@unique([user_id, article_id, context])
   @@map("recommendations")
+}
+
+model RecommendationReasonFeedback {
+  id                    String    @id @default(uuid())
+  recommendation_id     String
+  reason_text           String    // The reason text that was shown
+  feedback              String    // "clear" | "unclear" | "helpful" | "not_helpful"
+  note                  String?   // Optional user note
+  improvement_suggestion String?   // Optional improvement suggestion
+  user_id               String?   // User who provided feedback (if logged in)
+  session_id            String?   // Session identifier
+  ip_address            String?   // For anonymous feedback
+  user_agent            String?   // Browser/device information
+  created_at            DateTime  @default(now())
+  
+  // Relations
+  recommendation        Recommendation @relation(fields: [recommendation_id], references: [id])
+  user                  User?          @relation(fields: [user_id], references: [id])
+  session               Session?       @relation(fields: [session_id], references: [id])
+  
+  @@map("recommendation_reason_feedback")
 }
 
 model ArticleLike {
