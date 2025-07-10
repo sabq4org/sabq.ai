@@ -1,0 +1,439 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// الجداول الأساسية
+
+model User {
+  id                     String                    @id @default(cuid())
+  email                  String                    @unique
+  hashedPassword        String                    @map("hashed_password")
+  name                   String?
+  phone                  String?
+  status                 UserStatus               @default(ACTIVE)
+  createdAt              DateTime                 @default(now()) @map("created_at")
+  updatedAt              DateTime                 @updatedAt @map("updated_at")
+  
+  // Relations
+  articles               Article[]
+  articleComments        ArticleComment[]
+  articleAnalyticsEvents ArticleAnalyticsEvent[]
+  userPreferences        UserPreference[]
+  userNotifications      UserNotification[]
+  userRoles              UserRole[]
+  loyaltyPoints          LoyaltyPoint[]
+  sessions               Session[]
+  auditLogs              AuditLog[]
+  recommendations        Recommendation[]
+  pushNotifications      PushNotification[]
+  integrationsChangeLogs IntegrationChangeLog[]
+  cdnProvidersChangeLogs CDNProviderIntegrationChangeLog[]
+  
+  @@map("users")
+}
+
+model Role {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  permissions Json
+  
+  // Relations
+  userRoles   UserRole[]
+  
+  @@map("roles")
+}
+
+model UserRole {
+  userId String @map("user_id")
+  roleId String @map("role_id")
+  
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  token      String   @unique
+  expiresAt  DateTime @map("expires_at")
+  deviceInfo Json?    @map("device_info")
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  user                   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  articleAnalyticsEvents ArticleAnalyticsEvent[]
+  
+  @@map("sessions")
+}
+
+model Section {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  articles    Article[]
+  
+  @@map("sections")
+}
+
+model Article {
+  id                     String                    @id @default(cuid())
+  title                  String
+  slug                   String                    @unique
+  summary                String?
+  content                String
+  authorId               String                    @map("author_id")
+  sectionId              String                    @map("section_id")
+  status                 ArticleStatus            @default(DRAFT)
+  publishedAt            DateTime?                @map("published_at")
+  createdAt              DateTime                 @default(now()) @map("created_at")
+  updatedAt              DateTime                 @updatedAt @map("updated_at")
+  
+  // Relations
+  author                 User                     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  section                Section                  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  articleMedia           ArticleMedia[]
+  articleTags            ArticleTag[]
+  articleComments        ArticleComment[]
+  articleAnalyticsEvents ArticleAnalyticsEvent[]
+  recommendations        Recommendation[]
+  
+  @@map("articles")
+}
+
+model ArticleMedia {
+  id        String    @id @default(cuid())
+  articleId String    @map("article_id")
+  mediaType MediaType @map("media_type")
+  url       String
+  metadata  Json?
+  createdAt DateTime  @default(now()) @map("created_at")
+  
+  // Relations
+  article   Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  
+  @@map("article_media")
+}
+
+model Tag {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  createdAt   DateTime     @default(now()) @map("created_at")
+  
+  // Relations
+  articleTags ArticleTag[]
+  
+  @@map("tags")
+}
+
+model ArticleTag {
+  articleId String @map("article_id")
+  tagId     String @map("tag_id")
+  
+  // Relations
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@id([articleId, tagId])
+  @@map("article_tags")
+}
+
+model ArticleComment {
+  id        String        @id @default(cuid())
+  articleId String        @map("article_id")
+  userId    String        @map("user_id")
+  content   String
+  status    CommentStatus @default(PENDING)
+  createdAt DateTime      @default(now()) @map("created_at")
+  parentId  String?       @map("parent_id")
+  
+  // Relations
+  article   Article          @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    ArticleComment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   ArticleComment[] @relation("CommentReplies")
+  
+  @@map("article_comments")
+}
+
+model ArticleAnalyticsEvent {
+  id        String    @id @default(cuid())
+  articleId String    @map("article_id")
+  userId    String?   @map("user_id")
+  sessionId String?   @map("session_id")
+  eventType EventType @map("event_type")
+  eventData Json?     @map("event_data")
+  createdAt DateTime  @default(now()) @map("created_at")
+  
+  // Relations
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  session   Session? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  
+  @@map("article_analytics_events")
+}
+
+model UserPreference {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  preferences Json
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_preferences")
+}
+
+model UserNotification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  type      String
+  content   String
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_notifications")
+}
+
+model LoyaltyPoint {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  points    Int
+  reason    String
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("loyalty_points")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  action    String
+  entity    String
+  entityId  String   @map("entity_id")
+  oldValue  Json?    @map("old_value")
+  newValue  Json?    @map("new_value")
+  summary   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("audit_logs")
+}
+
+// جداول التوصية والتخصيص
+
+model Recommendation {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  articleId     String   @map("article_id")
+  score         Float
+  recommendedAt DateTime @default(now()) @map("recommended_at")
+  reason        Json?
+  
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article       Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  
+  @@map("recommendations")
+}
+
+// جداول التكاملات والربط مع الأنظمة
+
+model Integration {
+  id                     String                 @id @default(cuid())
+  name                   String                 @unique
+  type                   IntegrationType
+  config                 Json
+  status                 IntegrationStatus      @default(ACTIVE)
+  createdAt              DateTime               @default(now()) @map("created_at")
+  updatedAt              DateTime               @updatedAt @map("updated_at")
+  
+  // Relations
+  integrationChangeLogs  IntegrationChangeLog[]
+  
+  @@map("integrations")
+}
+
+model IntegrationChangeLog {
+  id            String     @id @default(cuid())
+  integrationId String     @map("integration_id")
+  changedBy     String     @map("changed_by")
+  changeType    String     @map("change_type")
+  oldValue      Json?      @map("old_value")
+  newValue      Json?      @map("new_value")
+  summary       String?
+  createdAt     DateTime   @default(now()) @map("created_at")
+  
+  // Relations
+  integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [changedBy], references: [id], onDelete: Cascade)
+  
+  @@map("integrations_change_log")
+}
+
+model CDNProvider {
+  id                                   String                               @id @default(cuid())
+  name                                 String                               @unique
+  config                               Json
+  status                               CDNStatus                            @default(ACTIVE)
+  createdAt                            DateTime                             @default(now()) @map("created_at")
+  updatedAt                            DateTime                             @updatedAt @map("updated_at")
+  
+  // Relations
+  cdnProviderIntegrationChangeLogs     CDNProviderIntegrationChangeLog[]
+  
+  @@map("cdn_providers")
+}
+
+model CDNProviderIntegrationChangeLog {
+  id          String      @id @default(cuid())
+  providerId  String      @map("provider_id")
+  changedBy   String      @map("changed_by")
+  changeType  String      @map("change_type")
+  oldValue    Json?       @map("old_value")
+  newValue    Json?       @map("new_value")
+  summary     String?
+  createdAt   DateTime    @default(now()) @map("created_at")
+  
+  // Relations
+  provider    CDNProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [changedBy], references: [id], onDelete: Cascade)
+  
+  @@map("cdn_providers_integrations_change_log")
+}
+
+// جداول النسخ الاحتياطي
+
+model BackupJob {
+  id         String        @id @default(cuid())
+  jobType    String        @map("job_type")
+  status     BackupStatus
+  startedAt  DateTime      @default(now()) @map("started_at")
+  finishedAt DateTime?     @map("finished_at")
+  details    Json?
+  
+  @@map("backup_jobs")
+}
+
+// جداول الإشعارات
+
+model PushNotification {
+  id     String               @id @default(cuid())
+  userId String               @map("user_id")
+  title  String
+  body   String
+  data   Json?
+  status NotificationStatus  @default(PENDING)
+  sentAt DateTime?           @map("sent_at")
+  
+  // Relations
+  user   User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("push_notifications")
+}
+
+// Enums
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  BANNED
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  DELETED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SPAM
+}
+
+enum EventType {
+  PAGE_VIEW
+  SCROLL
+  CLICK
+  READING_TIME
+  LIKE
+  SHARE
+  COMMENT
+  BOOKMARK
+  SEARCH
+}
+
+enum IntegrationType {
+  CDN
+  STORAGE
+  PAYMENT
+  ANALYTICS
+  EMAIL
+  SMS
+  SOCIAL
+  AI
+  SECURITY
+}
+
+enum IntegrationStatus {
+  ACTIVE
+  INACTIVE
+  ERROR
+  MAINTENANCE
+}
+
+enum CDNStatus {
+  ACTIVE
+  INACTIVE
+  ERROR
+  MAINTENANCE
+}
+
+enum BackupStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  DELIVERED
+} 
