@@ -1,291 +1,462 @@
-"use client";
-import { useEffect, useState } from "react";
-import { trackEvent, trackClick, usePageTracking } from "../../lib/analytics";
-import Link from "next/link";
+'use client';
 
-type Article = {
+import React, { useState, useEffect, useCallback } from 'react';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { trackEvent, trackArticleView, EventType } from '@/lib/analytics-core';
+import { useAuth } from '@/hooks/useAuth';
+
+interface Article {
   id: string;
   title: string;
-  summary: string;
-  content?: string;
-  published_at: string;
-  category: string;
-  tags: string[];
-  author: { 
+  slug: string;
+  summary?: string;
+  featured_image?: string;
+  category: {
+    id: string;
     name: string;
-    avatar?: string;
+    slug: string;
   };
-  image_url?: string;
-  views_count?: number;
-  likes_count?: number;
-};
+  author: {
+    id: string;
+    name: string;
+  };
+  published_at: string;
+  view_count: number;
+  like_count: number;
+  reading_time?: number;
+  tags: string[];
+  recommendation_score?: number;
+  recommendation_reason?: string;
+}
 
-export default function ArticleFeed() {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
+interface ArticleFeedProps {
+  initialArticles?: Article[];
+  category?: string;
+  featured?: boolean;
+  showRecommendations?: boolean;
+  context?: string;
+}
+
+export default function ArticleFeed({ 
+  initialArticles = [], 
+  category,
+  featured,
+  showRecommendations = false,
+  context = 'homepage'
+}: ArticleFeedProps) {
+  const [articles, setArticles] = useState<Article[]>(initialArticles);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [recommendations, setRecommendations] = useState<Article[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  
+  const { user } = useAuth();
 
-  useEffect(() => {
-    // تتبع مشاهدة صفحة المقالات
-    usePageTracking();
-    
-    // جلب المقالات
-    fetchArticles();
-  }, []);
+  // جلب المقالات
+  const fetchArticles = useCallback(async (pageNum: number = 1, replace: boolean = false) => {
+    setLoading(true);
+    setError(null);
 
-  const fetchArticles = async () => {
     try {
-      setLoading(true);
-      const res = await fetch("/api/articles");
-      if (!res.ok) {
-        throw new Error("فشل في جلب المقالات");
-      }
-      const data = await res.json();
-      setArticles(data.articles || []);
+      const params = new URLSearchParams({
+        page: pageNum.toString(),
+        limit: '10',
+        ...(category && { category }),
+        ...(featured && { featured: 'true' })
+      });
+
+      const response = await fetch(`/api/articles?${params}`);
       
-      // تتبع تحميل المقالات بنجاح
-      await trackEvent("articles_loaded", { 
-        articlesCount: data.articles?.length || 0 
+      if (!response.ok) {
+        throw new Error('فشل في جلب المقالات');
+      }
+
+      const data = await response.json();
+      
+      if (replace) {
+        setArticles(data.articles);
+      } else {
+        setArticles(prev => [...prev, ...data.articles]);
+      }
+      
+      setHasMore(data.pagination.current_page < data.pagination.total_pages);
+      setPage(pageNum);
+
+      // تتبع تحميل المقالات
+      trackEvent(EventType.PAGE_VIEW, {
+        context: 'article_feed',
+        category,
+        page: pageNum,
+        total_articles: data.articles.length
       });
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : "حدث خطأ غير متوقع");
-      await trackEvent("articles_load_error", { 
-        error: err instanceof Error ? err.message : "unknown" 
-      });
+      setError(err instanceof Error ? err.message : 'حدث خطأ غير متوقع');
     } finally {
       setLoading(false);
     }
+  }, [category, featured]);
+
+  // جلب التوصيات الذكية
+  const fetchRecommendations = useCallback(async () => {
+    if (!user || !showRecommendations) return;
+
+    setLoadingRecommendations(true);
+
+    try {
+      // جلب الأحداث السلوكية للمستخدم
+      const eventsResponse = await fetch('/api/analytics/user-events', {
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+
+      if (!eventsResponse.ok) {
+        throw new Error('فشل في جلب بيانات المستخدم');
+      }
+
+      const userEvents = await eventsResponse.json();
+
+      // طلب التوصيات من خدمة الذكاء الاصطناعي
+      const recommendationsResponse = await fetch('/api/ml/recommendations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify({
+          user_events: userEvents.events || [],
+          articles: articles,
+          top_n: 5,
+          context
+        })
+      });
+
+      if (recommendationsResponse.ok) {
+        const recommendationsData = await recommendationsResponse.json();
+        setRecommendations(recommendationsData.recommendations || []);
+
+        // تتبع عرض التوصيات
+        trackEvent(EventType.FEATURE_USE, {
+          feature: 'smart_recommendations',
+          recommendations_count: recommendationsData.recommendations?.length || 0,
+          context
+        });
+      }
+
+    } catch (err) {
+      console.error('خطأ في جلب التوصيات:', err);
+    } finally {
+      setLoadingRecommendations(false);
+    }
+  }, [user, showRecommendations, articles, context]);
+
+  // تأثير جانبي لجلب المقالات عند التحميل
+  useEffect(() => {
+    if (initialArticles.length === 0) {
+      fetchArticles(1, true);
+    }
+  }, [fetchArticles, initialArticles.length]);
+
+  // تأثير جانبي لجلب التوصيات
+  useEffect(() => {
+    if (articles.length > 0 && showRecommendations) {
+      fetchRecommendations();
+    }
+  }, [articles.length, fetchRecommendations, showRecommendations]);
+
+  // تعامل مع النقر على المقال
+  const handleArticleClick = (article: Article) => {
+    // تتبع عرض المقال
+    trackArticleView(article.id, {
+      title: article.title,
+      category: article.category.name,
+      author: article.author.name,
+      tags: article.tags,
+      readingTime: article.reading_time,
+      source: 'article_feed',
+      context,
+      recommendation_score: article.recommendation_score,
+      is_recommended: !!article.recommendation_score
+    });
+
+    // الانتقال لصفحة المقال
+    window.location.href = `/articles/${article.slug}`;
   };
 
-  const handleArticleClick = async (article: Article) => {
-    // تتبع النقر على المقال
-    await trackClick("article_card", {
+  // تعامل مع الإعجاب
+  const handleLike = async (articleId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+
+    try {
+      const response = await fetch(`/api/articles/${articleId}/like`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${user?.token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // تحديث المقال في القائمة
+        setArticles(prev => prev.map(article => 
+          article.id === articleId 
+            ? { ...article, like_count: data.like_count }
+            : article
+        ));
+
+        // تتبع الإعجاب
+        trackEvent(EventType.ARTICLE_LIKE, {
+          articleId,
+          action: 'like',
+          context: 'article_feed'
+        });
+      }
+    } catch (err) {
+      console.error('خطأ في الإعجاب:', err);
+    }
+  };
+
+  // تعامل مع المشاركة
+  const handleShare = (article: Article, event: React.MouseEvent) => {
+    event.stopPropagation();
+
+    if (navigator.share) {
+      navigator.share({
+        title: article.title,
+        text: article.summary,
+        url: `${window.location.origin}/articles/${article.slug}`
+      });
+    } else {
+      // نسخ الرابط للحافظة
+      navigator.clipboard.writeText(`${window.location.origin}/articles/${article.slug}`);
+    }
+
+    // تتبع المشاركة
+    trackEvent(EventType.ARTICLE_SHARE, {
       articleId: article.id,
-      articleTitle: article.title,
-      category: article.category,
-      author: article.author.name,
+      platform: navigator.share ? 'native' : 'clipboard',
+      method: 'share_button',
+      context: 'article_feed'
     });
   };
 
-  const handleCategoryClick = async (category: string) => {
-    await trackClick("category_tag", { category });
+  // تحميل المزيد
+  const loadMore = () => {
+    if (!loading && hasMore) {
+      fetchArticles(page + 1);
+    }
   };
 
-  const handleAuthorClick = async (author: string) => {
-    await trackClick("author_name", { author });
-  };
-
-  if (loading) {
-    return <ArticleSkeletonLoader />;
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <div className="text-red-600 text-lg mb-4">⚠️ {error}</div>
-        <button 
-          onClick={fetchArticles}
-          className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
-        >
-          إعادة المحاولة
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-4xl mx-auto" dir="rtl">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-800 mb-2">أحدث المقالات</h2>
-        <p className="text-gray-600">اكتشف أحدث المقالات والأخبار من سبق</p>
-      </div>
-
-      {articles.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-500 text-lg mb-4">📰 لا توجد مقالات متاحة حالياً</div>
-          <button 
-            onClick={fetchArticles}
-            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
-          >
-            تحديث
-          </button>
+  // مكون المقال الواحد
+  const ArticleCard = ({ article, isRecommended = false }: { article: Article; isRecommended?: boolean }) => (
+    <Card 
+      className={`p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group relative
+        ${isRecommended ? 'border-blue-200 bg-blue-50' : 'hover:border-gray-300'}`}
+      onClick={() => handleArticleClick(article)}
+    >
+      {/* علامة التوصية */}
+      {isRecommended && (
+        <div className="absolute top-4 left-4 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+          🎯 موصى لك
         </div>
-      ) : (
-        <div className="grid gap-6">
-          {articles.map((article) => (
-            <ArticleCard 
-              key={article.id} 
-              article={article} 
-              onArticleClick={handleArticleClick}
-              onCategoryClick={handleCategoryClick}
-              onAuthorClick={handleAuthorClick}
-            />
+      )}
+
+      {/* الصورة المميزة */}
+      {article.featured_image && (
+        <div className="mb-4 overflow-hidden rounded-lg">
+          <img 
+            src={article.featured_image} 
+            alt={article.title}
+            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
+          />
+        </div>
+      )}
+
+      {/* التصنيف */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-blue-600 text-sm font-medium">
+          {article.category.name}
+        </span>
+        {article.reading_time && (
+          <span className="text-gray-500 text-sm">
+            📖 {article.reading_time} دقائق
+          </span>
+        )}
+      </div>
+
+      {/* العنوان */}
+      <h2 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
+        {article.title}
+      </h2>
+
+      {/* الملخص */}
+      {article.summary && (
+        <p className="text-gray-600 mb-4 line-clamp-3">
+          {article.summary}
+        </p>
+      )}
+
+      {/* سبب التوصية */}
+      {isRecommended && article.recommendation_reason && (
+        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <p className="text-blue-800 text-sm">
+            💡 {article.recommendation_reason}
+          </p>
+        </div>
+      )}
+
+      {/* الكلمات المفتاحية */}
+      {article.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {article.tags.slice(0, 3).map(tag => (
+            <span 
+              key={tag}
+              className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+            >
+              #{tag}
+            </span>
           ))}
         </div>
       )}
-    </div>
-  );
-}
 
-// مكون بطاقة المقال
-function ArticleCard({ 
-  article, 
-  onArticleClick, 
-  onCategoryClick, 
-  onAuthorClick 
-}: {
-  article: Article;
-  onArticleClick: (article: Article) => void;
-  onCategoryClick: (category: string) => void;
-  onAuthorClick: (author: string) => void;
-}) {
-  return (
-    <article className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
-      <div className="md:flex">
-        {article.image_url && (
-          <div className="md:w-1/3">
-            <img 
-              src={article.image_url} 
-              alt={article.title}
-              className="w-full h-48 md:h-full object-cover"
-            />
-          </div>
-        )}
-        
-        <div className={`p-6 ${article.image_url ? 'md:w-2/3' : 'w-full'}`}>
-          {/* تصنيف المقال */}
-          <div className="mb-3">
-            <button
-              onClick={() => onCategoryClick(article.category)}
-              className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-blue-200 transition-colors"
-            >
-              {article.category}
-            </button>
-          </div>
+      {/* المعلومات السفلية */}
+      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+        <div className="flex items-center space-x-4 space-x-reverse text-sm text-gray-500">
+          <span>✍️ {article.author.name}</span>
+          <span>👁️ {article.view_count.toLocaleString()}</span>
+          <span>📅 {new Date(article.published_at).toLocaleDateString('ar-SA')}</span>
+        </div>
 
-          {/* عنوان المقال */}
-          <Link href={`/articles/${article.id}`}>
-            <h3 
-              className="text-xl font-bold text-gray-800 mb-3 hover:text-blue-600 transition-colors cursor-pointer line-clamp-2"
-              onClick={() => onArticleClick(article)}
-            >
-              {article.title}
-            </h3>
-          </Link>
-
-          {/* ملخص المقال */}
-          <p className="text-gray-600 mb-4 line-clamp-3">
-            {article.summary}
-          </p>
-
-          {/* العلامات */}
-          {article.tags && article.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {article.tags.slice(0, 3).map((tag, index) => (
-                <span 
-                  key={index}
-                  className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm"
-                >
-                  #{tag}
-                </span>
-              ))}
-              {article.tags.length > 3 && (
-                <span className="text-gray-500 text-sm">
-                  +{article.tags.length - 3} أخرى
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* معلومات المقال */}
-          <div className="flex items-center justify-between text-sm text-gray-500">
-            <div className="flex items-center space-x-4 space-x-reverse">
-              <button
-                onClick={() => onAuthorClick(article.author.name)}
-                className="flex items-center space-x-2 space-x-reverse hover:text-blue-600 transition-colors"
-              >
-                {article.author.avatar && (
-                  <img 
-                    src={article.author.avatar} 
-                    alt={article.author.name}
-                    className="w-6 h-6 rounded-full"
-                  />
-                )}
-                <span>بواسطة {article.author.name}</span>
-              </button>
-              
-              <span>•</span>
-              
-              <time dateTime={article.published_at}>
-                {new Date(article.published_at).toLocaleDateString('ar-SA', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </time>
-            </div>
-
-            <div className="flex items-center space-x-4 space-x-reverse">
-              {article.views_count && (
-                <span className="flex items-center space-x-1 space-x-reverse">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  <span>{article.views_count}</span>
-                </span>
-              )}
-              
-              {article.likes_count && (
-                <span className="flex items-center space-x-1 space-x-reverse">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                  <span>{article.likes_count}</span>
-                </span>
-              )}
-            </div>
-          </div>
+        <div className="flex items-center space-x-2 space-x-reverse">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => handleLike(article.id, e)}
+            className="text-red-500 hover:text-red-600"
+          >
+            ❤️ {article.like_count}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => handleShare(article, e)}
+            className="text-blue-500 hover:text-blue-600"
+          >
+            📤 مشاركة
+          </Button>
         </div>
       </div>
-    </article>
+    </Card>
   );
-}
 
-// مكون التحميل المؤقت
-function ArticleSkeletonLoader() {
   return (
-    <div className="max-w-4xl mx-auto" dir="rtl">
-      <div className="mb-8">
-        <div className="h-8 bg-gray-200 rounded-md w-64 mb-2 animate-pulse"></div>
-        <div className="h-4 bg-gray-200 rounded-md w-96 animate-pulse"></div>
+    <div className="space-y-8">
+      {/* عرض خطأ */}
+      {error && (
+        <Card className="p-6 border-red-200 bg-red-50">
+          <div className="text-center text-red-800">
+            <p className="font-medium">⚠️ حدث خطأ</p>
+            <p className="text-sm mt-1">{error}</p>
+            <Button 
+              onClick={() => fetchArticles(1, true)} 
+              className="mt-3"
+              variant="outline"
+            >
+              إعادة المحاولة
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {/* التوصيات الذكية */}
+      {showRecommendations && recommendations.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-900">
+              🎯 مقالات موصى لك خصيصاً
+            </h2>
+            {loadingRecommendations && (
+              <div className="text-blue-600 text-sm">جاري التحديث...</div>
+            )}
+          </div>
+          
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {recommendations.map(article => (
+              <ArticleCard 
+                key={`rec-${article.id}`} 
+                article={article} 
+                isRecommended={true}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* المقالات العادية */}
+      <div className="space-y-4">
+        {!showRecommendations && (
+          <h2 className="text-2xl font-bold text-gray-900">
+            📰 أحدث المقالات
+          </h2>
+        )}
+        
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {articles.map(article => (
+            <ArticleCard 
+              key={article.id} 
+              article={article}
+            />
+          ))}
+        </div>
       </div>
 
-      <div className="grid gap-6">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="md:flex">
-              <div className="md:w-1/3">
-                <div className="w-full h-48 md:h-full bg-gray-200 animate-pulse"></div>
-              </div>
-              <div className="p-6 md:w-2/3">
-                <div className="h-6 bg-gray-200 rounded-md w-20 mb-3 animate-pulse"></div>
-                <div className="h-6 bg-gray-200 rounded-md w-full mb-3 animate-pulse"></div>
-                <div className="h-4 bg-gray-200 rounded-md w-full mb-2 animate-pulse"></div>
-                <div className="h-4 bg-gray-200 rounded-md w-3/4 mb-4 animate-pulse"></div>
-                <div className="flex space-x-2 space-x-reverse mb-4">
-                  <div className="h-6 bg-gray-200 rounded-full w-16 animate-pulse"></div>
-                  <div className="h-6 bg-gray-200 rounded-full w-16 animate-pulse"></div>
-                </div>
-                <div className="flex justify-between">
-                  <div className="h-4 bg-gray-200 rounded-md w-32 animate-pulse"></div>
-                  <div className="h-4 bg-gray-200 rounded-md w-24 animate-pulse"></div>
-                </div>
-              </div>
-            </div>
+      {/* تحميل المزيد */}
+      {hasMore && (
+        <div className="text-center pt-8">
+          <Button 
+            onClick={loadMore}
+            disabled={loading}
+            size="lg"
+            className="px-8"
+          >
+            {loading ? '⏳ جاري التحميل...' : '📖 تحميل المزيد'}
+          </Button>
+        </div>
+      )}
+
+      {/* رسالة عدم وجود مقالات */}
+      {!loading && articles.length === 0 && (
+        <Card className="p-12 text-center">
+          <div className="text-gray-500">
+            <p className="text-lg font-medium">📭 لا توجد مقالات متاحة</p>
+            <p className="text-sm mt-2">تحقق مرة أخرى لاحقاً</p>
           </div>
-        ))}
-      </div>
+        </Card>
+      )}
+
+      {/* مؤشر التحميل الأولي */}
+      {loading && articles.length === 0 && (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {[...Array(6)].map((_, index) => (
+            <Card key={index} className="p-6 animate-pulse">
+              <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
+              <div className="bg-gray-200 h-4 rounded mb-2"></div>
+              <div className="bg-gray-200 h-4 rounded w-3/4 mb-4"></div>
+              <div className="bg-gray-200 h-16 rounded mb-4"></div>
+              <div className="flex justify-between">
+                <div className="bg-gray-200 h-4 rounded w-1/3"></div>
+                <div className="bg-gray-200 h-4 rounded w-1/4"></div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 } 

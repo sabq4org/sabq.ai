@@ -1,562 +1,515 @@
 /**
- * مكتبة التحليلات الشاملة
- * Complete Analytics Library
- * @version 1.0.0
+ * نظام التحليلات الشامل - Advanced Analytics System
+ * تتبع السلوك والتحليلات المتقدمة للمستخدمين
+ * @version 3.0.0
  * @author Sabq AI Team
  */
 
-import { privacyManager, PersonalDataType, ProcessingPurpose } from './privacy-controls';
+import { getCookie, setCookie } from 'js-cookie';
 
-// أنواع الأحداث والتحليلات
+// أنواع الأحداث المدعومة
 export enum EventType {
+  // Page Events
   PAGE_VIEW = 'page_view',
-  USER_ACTION = 'user_action',
+  PAGE_ENTER = 'page_enter',
+  PAGE_EXIT = 'page_exit',
+  
+  // Article Events
   ARTICLE_VIEW = 'article_view',
+  ARTICLE_LIKE = 'article_like',
+  ARTICLE_UNLIKE = 'article_unlike',
+  ARTICLE_BOOKMARK = 'article_bookmark',
+  ARTICLE_UNBOOKMARK = 'article_unbookmark',
   ARTICLE_SHARE = 'article_share',
-  SEARCH = 'search',
-  CLICK = 'click',
-  SCROLL = 'scroll',
-  TIME_SPENT = 'time_spent',
-  ERROR = 'error',
-  CONVERSION = 'conversion',
-  CUSTOM = 'custom'
+  ARTICLE_COMMENT = 'article_comment',
+  
+  // Reading Behavior
+  READING_START = 'reading_start',
+  READING_END = 'reading_end',
+  READING_TIME = 'reading_time',
+  SCROLL_DEPTH = 'scroll_depth',
+  SECTION_VIEW = 'section_view',
+  
+  // Search Events
+  SEARCH_QUERY = 'search_query',
+  SEARCH_CLICK = 'search_click',
+  SEARCH_NO_RESULTS = 'search_no_results',
+  
+  // Navigation Events
+  NAVIGATE_MENU = 'navigate_menu',
+  NAVIGATE_CATEGORY = 'navigate_category',
+  NAVIGATE_LINK = 'navigate_link',
+  NAVIGATE_BACK = 'navigate_back',
+  
+  // User Interaction
+  CLICK_ELEMENT = 'click_element',
+  FORM_SUBMIT = 'form_submit',
+  FORM_ABANDON = 'form_abandon',
+  MODAL_OPEN = 'modal_open',
+  MODAL_CLOSE = 'modal_close',
+  
+  // Session Events
+  SESSION_START = 'session_start',
+  SESSION_END = 'session_end',
+  SESSION_TIMEOUT = 'session_timeout',
+  
+  // Engagement Events
+  NEWSLETTER_SIGNUP = 'newsletter_signup',
+  NOTIFICATION_CLICK = 'notification_click',
+  FEATURE_USE = 'feature_use',
+  
+  // Performance Events
+  PERFORMANCE_TIMING = 'performance_timing',
+  ERROR_OCCURRED = 'error_occurred',
+  LOAD_TIME = 'load_time',
 }
 
-export enum TrackingLevel {
-  ESSENTIAL = 'essential',     // الضروري فقط
-  FUNCTIONAL = 'functional',   // وظيفي
-  ANALYTICS = 'analytics',     // تحليلي
-  MARKETING = 'marketing'      // تسويقي
-}
-
-export enum DeviceType {
-  DESKTOP = 'desktop',
-  MOBILE = 'mobile',
-  TABLET = 'tablet',
-  TV = 'tv',
-  UNKNOWN = 'unknown'
-}
-
-// واجهات التحليلات
+// بنية بيانات الحدث
 export interface AnalyticsEvent {
-  id: string;
-  type: EventType;
-  category: string;
-  action: string;
-  label?: string;
-  value?: number;
-  userId?: string;
+  eventType: EventType;
+  eventData: Record<string, any>;
+  timestamp: string;
   sessionId: string;
-  timestamp: Date;
-  url: string;
+  userId?: string;
+  articleId?: string;
+  pageUrl?: string;
   referrer?: string;
-  userAgent: string;
-  deviceInfo: DeviceInfo;
-  location?: LocationInfo;
-  metadata: EventMetadata;
+  deviceInfo?: DeviceInfo;
+  context?: string;
 }
 
+// معلومات الجهاز
 export interface DeviceInfo {
-  type: DeviceType;
-  browser: string;
-  browserVersion: string;
-  os: string;
-  osVersion: string;
+  userAgent: string;
   screenResolution: string;
+  viewportSize: string;
+  deviceType: 'desktop' | 'tablet' | 'mobile';
+  os: string;
+  browser: string;
   language: string;
   timezone: string;
 }
 
-export interface LocationInfo {
-  country: string;
-  region: string;
-  city: string;
-  latitude?: number;
-  longitude?: number;
-  ipAddress: string;
-}
-
-export interface EventMetadata {
-  customDimensions: Record<string, any>;
-  customMetrics: Record<string, number>;
-  experimentIds?: string[];
-  campaignData?: CampaignData;
-  articleData?: ArticleData;
-}
-
-export interface CampaignData {
-  source: string;
-  medium: string;
-  campaign: string;
-  term?: string;
-  content?: string;
-}
-
-export interface ArticleData {
-  id: string;
-  title: string;
-  category: string;
-  author: string;
-  publishDate: Date;
-  wordCount: number;
-  readingTime: number;
-  tags: string[];
-}
-
-export interface AnalyticsConfig {
-  trackingLevel: TrackingLevel;
-  enableRealTime: boolean;
-  enableHeatmaps: boolean;
-  enableScrollTracking: boolean;
-  enableClickTracking: boolean;
-  enableFormTracking: boolean;
-  enableErrorTracking: boolean;
+// إعدادات التتبع
+export interface TrackingConfig {
+  enabled: boolean;
+  batchSize: number;
+  flushInterval: number;
+  endpoint: string;
+  debug: boolean;
+  respectDNT: boolean; // Do Not Track
   enablePerformanceTracking: boolean;
-  sessionTimeout: number; // دقائق
-  dataRetentionDays: number;
-  respectDoNotTrack: boolean;
-  anonymizeIPs: boolean;
+  enableErrorTracking: boolean;
+  enableScrollTracking: boolean;
+  enableReadingTimeTracking: boolean;
 }
 
-export interface AnalyticsReport {
-  id: string;
-  name: string;
-  period: {
-    start: Date;
-    end: Date;
-  };
-  metrics: AnalyticsMetrics;
-  dimensions: AnalyticsDimensions;
-  segments: AnalyticsSegment[];
-  insights: AnalyticsInsight[];
-  generatedAt: Date;
-}
+// الفئة الرئيسية للتحليلات
+export class AdvancedAnalytics {
+  private config: TrackingConfig;
+  private eventQueue: AnalyticsEvent[] = [];
+  private sessionId: string;
+  private userId?: string;
+  private isInitialized = false;
+  private flushTimer?: NodeJS.Timeout;
+  private readingStartTime?: number;
+  private lastScrollDepth = 0;
+  private performanceObserver?: PerformanceObserver;
 
-export interface AnalyticsMetrics {
-  pageViews: number;
-  uniquePageViews: number;
-  sessions: number;
-  users: number;
-  newUsers: number;
-  bounceRate: number;
-  averageSessionDuration: number;
-  pagesPerSession: number;
-  conversionRate: number;
-  totalConversions: number;
-}
-
-export interface AnalyticsDimensions {
-  topPages: PageMetric[];
-  topReferrers: ReferrerMetric[];
-  topCountries: CountryMetric[];
-  topDevices: DeviceMetric[];
-  topBrowsers: BrowserMetric[];
-  topSources: SourceMetric[];
-}
-
-export interface PageMetric {
-  page: string;
-  pageViews: number;
-  uniquePageViews: number;
-  averageTimeOnPage: number;
-  bounceRate: number;
-  exitRate: number;
-}
-
-export interface ReferrerMetric {
-  referrer: string;
-  sessions: number;
-  users: number;
-  bounceRate: number;
-}
-
-export interface CountryMetric {
-  country: string;
-  sessions: number;
-  users: number;
-  bounceRate: number;
-  conversionRate: number;
-}
-
-export interface DeviceMetric {
-  device: DeviceType;
-  sessions: number;
-  users: number;
-  bounceRate: number;
-}
-
-export interface BrowserMetric {
-  browser: string;
-  sessions: number;
-  users: number;
-  bounceRate: number;
-}
-
-export interface SourceMetric {
-  source: string;
-  medium: string;
-  sessions: number;
-  users: number;
-  conversionRate: number;
-}
-
-export interface AnalyticsSegment {
-  name: string;
-  criteria: SegmentCriteria;
-  users: number;
-  sessions: number;
-  metrics: AnalyticsMetrics;
-}
-
-export interface SegmentCriteria {
-  userType?: 'new' | 'returning';
-  deviceType?: DeviceType;
-  country?: string;
-  source?: string;
-  customDimensions?: Record<string, any>;
-}
-
-export interface AnalyticsInsight {
-  type: 'trend' | 'anomaly' | 'opportunity' | 'warning';
-  title: string;
-  description: string;
-  impact: 'high' | 'medium' | 'low';
-  metric: string;
-  value: number;
-  change: number;
-  recommendation?: string;
-}
-
-// فئة إدارة التحليلات الرئيسية
-export class AnalyticsManager {
-  private events: AnalyticsEvent[] = [];
-  private sessions: Map<string, AnalyticsSession> = new Map();
-  private config: AnalyticsConfig;
-
-  constructor(config?: Partial<AnalyticsConfig>) {
+  constructor(config: Partial<TrackingConfig> = {}) {
     this.config = {
-      trackingLevel: TrackingLevel.ANALYTICS,
-      enableRealTime: true,
-      enableHeatmaps: false,
-      enableScrollTracking: true,
-      enableClickTracking: true,
-      enableFormTracking: true,
-      enableErrorTracking: true,
+      enabled: true,
+      batchSize: 10,
+      flushInterval: 5000,
+      endpoint: '/api/analytics/events',
+      debug: false,
+      respectDNT: true,
       enablePerformanceTracking: true,
-      sessionTimeout: 30,
-      dataRetentionDays: 90,
-      respectDoNotTrack: true,
-      anonymizeIPs: true,
+      enableErrorTracking: true,
+      enableScrollTracking: true,
+      enableReadingTimeTracking: true,
       ...config
     };
+
+    this.sessionId = this.getOrCreateSessionId();
+    this.init();
   }
 
-  /**
-   * تتبع حدث
-   */
-  async trackEvent(event: Partial<AnalyticsEvent>): Promise<boolean> {
-    try {
-      // فحص الخصوصية والموافقة
-      if (!this.canTrack(event.userId)) {
-        return false;
-      }
+  // تهيئة النظام
+  private init() {
+    if (this.isInitialized) return;
 
-      const fullEvent: AnalyticsEvent = {
-        id: this.generateEventId(),
-        type: event.type || EventType.CUSTOM,
-        category: event.category || 'general',
-        action: event.action || 'unknown',
-        label: event.label,
-        value: event.value,
-        userId: event.userId,
-        sessionId: event.sessionId || this.getCurrentSessionId(),
-        timestamp: new Date(),
-        url: event.url || (typeof window !== 'undefined' ? window.location.href : ''),
-        referrer: event.referrer || (typeof document !== 'undefined' ? document.referrer : undefined),
-        userAgent: event.userAgent || (typeof navigator !== 'undefined' ? navigator.userAgent : ''),
-        deviceInfo: event.deviceInfo || this.getDeviceInfo(),
-        location: event.location,
-        metadata: {
-          customDimensions: {},
-          customMetrics: {},
-          ...event.metadata
-        }
-      };
-
-      // إضافة الحدث
-      this.events.push(fullEvent);
-
-      // تحديث الجلسة
-      await this.updateSession(fullEvent);
-
-      // تسجيل في نظام الخصوصية
-      await privacyManager.logDataProcessing({
-        id: fullEvent.id,
-        userId: fullEvent.userId || 'anonymous',
-        action: 'track',
-        dataType: PersonalDataType.BEHAVIORAL,
-        purpose: ProcessingPurpose.ANALYTICS,
-        timestamp: fullEvent.timestamp,
-        ipAddress: fullEvent.location?.ipAddress,
-        userAgent: fullEvent.userAgent,
-        justification: `Analytics event: ${fullEvent.type}`
-      });
-
-      // معالجة الحدث في الوقت الفعلي
-      if (this.config.enableRealTime) {
-        await this.processRealTimeEvent(fullEvent);
-      }
-
-      return true;
-    } catch (error) {
-      console.error('خطأ في تتبع الحدث:', error);
-      return false;
-    }
-  }
-
-  /**
-   * تتبع مشاهدة الصفحة
-   */
-  async trackPageView(url: string, title?: string, userId?: string): Promise<boolean> {
-    return this.trackEvent({
-      type: EventType.PAGE_VIEW,
-      category: 'navigation',
-      action: 'page_view',
-      label: title,
-      url,
-      userId
-    });
-  }
-
-  /**
-   * تتبع مشاهدة المقال
-   */
-  async trackArticleView(articleData: ArticleData, userId?: string): Promise<boolean> {
-    return this.trackEvent({
-      type: EventType.ARTICLE_VIEW,
-      category: 'content',
-      action: 'article_view',
-      label: articleData.title,
-      value: articleData.readingTime,
-      userId,
-      metadata: {
-        customDimensions: {},
-        customMetrics: {},
-        articleData
-      }
-    });
-  }
-
-  /**
-   * تتبع البحث
-   */
-  async trackSearch(query: string, results: number, userId?: string): Promise<boolean> {
-    return this.trackEvent({
-      type: EventType.SEARCH,
-      category: 'search',
-      action: 'search_query',
-      label: query,
-      value: results,
-      userId
-    });
-  }
-
-  /**
-   * تتبع النقرات
-   */
-  async trackClick(element: string, url?: string, userId?: string): Promise<boolean> {
-    return this.trackEvent({
-      type: EventType.CLICK,
-      category: 'interaction',
-      action: 'click',
-      label: element,
-      url,
-      userId
-    });
-  }
-
-  /**
-   * تتبع الأخطاء
-   */
-  async trackError(error: Error, context?: string, userId?: string): Promise<boolean> {
-    return this.trackEvent({
-      type: EventType.ERROR,
-      category: 'error',
-      action: 'javascript_error',
-      label: error.message,
-      userId,
-      metadata: {
-        customDimensions: {
-          errorStack: error.stack,
-          errorContext: context
-        },
-        customMetrics: {}
-      }
-    });
-  }
-
-  /**
-   * تتبع التحويل
-   */
-  async trackConversion(goal: string, value?: number, userId?: string): Promise<boolean> {
-    return this.trackEvent({
-      type: EventType.CONVERSION,
-      category: 'conversion',
-      action: 'goal_completion',
-      label: goal,
-      value,
-      userId
-    });
-  }
-
-  /**
-   * إنشاء تقرير تحليلات
-   */
-  async generateReport(
-    startDate: Date,
-    endDate: Date,
-    filters?: Partial<AnalyticsEvent>
-  ): Promise<AnalyticsReport> {
-    try {
-      // تصفية الأحداث حسب الفترة والمرشحات
-      const filteredEvents = this.events.filter(event => {
-        const inDateRange = event.timestamp >= startDate && event.timestamp <= endDate;
-        
-        if (!inDateRange) return false;
-        
-        if (filters) {
-          if (filters.type && event.type !== filters.type) return false;
-          if (filters.category && event.category !== filters.category) return false;
-          if (filters.userId && event.userId !== filters.userId) return false;
-        }
-        
-        return true;
-      });
-
-      // حساب المقاييس
-      const metrics = this.calculateMetrics(filteredEvents);
-      const dimensions = this.calculateDimensions(filteredEvents);
-      const segments = this.calculateSegments(filteredEvents);
-      const insights = this.generateInsights(filteredEvents, metrics);
-
-      const report: AnalyticsReport = {
-        id: this.generateEventId(),
-        name: `تقرير تحليلات ${startDate.toLocaleDateString('ar')} - ${endDate.toLocaleDateString('ar')}`,
-        period: { start: startDate, end: endDate },
-        metrics,
-        dimensions,
-        segments,
-        insights,
-        generatedAt: new Date()
-      };
-
-      return report;
-    } catch (error) {
-      console.error('خطأ في إنشاء التقرير:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * الحصول على الإحصائيات الفورية
-   */
-  getRealTimeStats(): {
-    activeUsers: number;
-    activeSessions: number;
-    pageViewsLast30Minutes: number;
-    topPages: string[];
-  } {
-    const now = new Date();
-    const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
-
-    const recentEvents = this.events.filter(e => e.timestamp >= thirtyMinutesAgo);
-    const activeSessions = new Set(recentEvents.map(e => e.sessionId)).size;
-    const activeUsers = new Set(recentEvents.filter(e => e.userId).map(e => e.userId)).size;
-    const pageViews = recentEvents.filter(e => e.type === EventType.PAGE_VIEW).length;
-
-    // أهم الصفحات
-    const pageViews30min = recentEvents.filter(e => e.type === EventType.PAGE_VIEW);
-    const pageCount: Record<string, number> = {};
-    pageViews30min.forEach(e => {
-      pageCount[e.url] = (pageCount[e.url] || 0) + 1;
-    });
-    const topPages = Object.entries(pageCount)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
-      .map(([url]) => url);
-
-    return {
-      activeUsers,
-      activeSessions,
-      pageViewsLast30Minutes: pageViews,
-      topPages
-    };
-  }
-
-  // وظائف مساعدة
-  private canTrack(userId?: string): boolean {
     // فحص Do Not Track
-    if (this.config.respectDoNotTrack && typeof navigator !== 'undefined') {
-      if (navigator.doNotTrack === '1') return false;
+    if (this.config.respectDNT && this.isDNTEnabled()) {
+      this.config.enabled = false;
+      console.log('Analytics disabled due to Do Not Track');
+      return;
     }
 
-    // فحص موافقة المستخدم من نظام الخصوصية
-    // في تطبيق حقيقي، سيتم الفحص من قاعدة البيانات
-    return true;
+    // تسجيل بداية الجلسة
+    this.track(EventType.SESSION_START, {
+      referrer: document.referrer,
+      userAgent: navigator.userAgent,
+      timestamp: new Date().toISOString()
+    });
+
+    // إعداد المراقبة التلقائية
+    this.setupAutoTracking();
+    
+    // إعداد مؤقت الإرسال
+    this.setupFlushTimer();
+    
+    this.isInitialized = true;
+    
+    if (this.config.debug) {
+      console.log('Advanced Analytics initialized', this.config);
+    }
   }
 
-  private getCurrentSessionId(): string {
-    // في تطبيق حقيقي، سيتم الحصول على معرف الجلسة من الكوكيز أو التخزين المحلي
-    return 'session_' + Date.now();
+  // تسجيل حدث
+  public track(eventType: EventType, eventData: Record<string, any> = {}, context?: string): void {
+    if (!this.config.enabled) return;
+
+    const event: AnalyticsEvent = {
+      eventType,
+      eventData: {
+        ...eventData,
+        url: window.location.href,
+        title: document.title,
+        timestamp: new Date().toISOString()
+      },
+      timestamp: new Date().toISOString(),
+      sessionId: this.sessionId,
+      userId: this.userId,
+      pageUrl: window.location.href,
+      referrer: document.referrer,
+      deviceInfo: this.getDeviceInfo(),
+      context
+    };
+
+    this.eventQueue.push(event);
+
+    if (this.config.debug) {
+      console.log('Analytics Event:', event);
+    }
+
+    // إرسال فوري للأحداث الحرجة
+    if (this.isCriticalEvent(eventType)) {
+      this.flush();
+    } else if (this.eventQueue.length >= this.config.batchSize) {
+      this.flush();
+    }
   }
 
+  // تسجيل عرض الصفحة
+  public trackPageView(pageData: Record<string, any> = {}): void {
+    this.track(EventType.PAGE_VIEW, {
+      path: window.location.pathname,
+      hash: window.location.hash,
+      search: window.location.search,
+      loadTime: performance.now(),
+      ...pageData
+    });
+  }
+
+  // تسجيل عرض المقال
+  public trackArticleView(articleId: string, articleData: Record<string, any> = {}): void {
+    this.track(EventType.ARTICLE_VIEW, {
+      articleId,
+      category: articleData.category,
+      author: articleData.author,
+      tags: articleData.tags,
+      readingTime: articleData.readingTime,
+      ...articleData
+    });
+
+    // بدء تتبع وقت القراءة
+    if (this.config.enableReadingTimeTracking) {
+      this.startReadingTime(articleId);
+    }
+  }
+
+  // تسجيل تفاعل المستخدم
+  public trackUserInteraction(action: string, target: string, data: Record<string, any> = {}): void {
+    this.track(EventType.CLICK_ELEMENT, {
+      action,
+      target,
+      elementType: data.elementType,
+      elementText: data.elementText,
+      position: data.position,
+      ...data
+    });
+  }
+
+  // تسجيل البحث
+  public trackSearch(query: string, resultsCount: number, filters: Record<string, any> = {}): void {
+    this.track(EventType.SEARCH_QUERY, {
+      query: query.toLowerCase(),
+      resultsCount,
+      filters,
+      queryLength: query.length,
+      hasFilters: Object.keys(filters).length > 0
+    });
+  }
+
+  // تسجيل الأخطاء
+  public trackError(error: Error, context?: string): void {
+    if (!this.config.enableErrorTracking) return;
+
+    this.track(EventType.ERROR_OCCURRED, {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      context,
+      userAgent: navigator.userAgent,
+      url: window.location.href
+    });
+  }
+
+  // تسجيل الأداء
+  public trackPerformance(timing: PerformanceTiming): void {
+    if (!this.config.enablePerformanceTracking) return;
+
+    this.track(EventType.PERFORMANCE_TIMING, {
+      loadTime: timing.loadEventEnd - timing.navigationStart,
+      domContentLoaded: timing.domContentLoadedEventEnd - timing.navigationStart,
+      firstPaint: timing.responseStart - timing.navigationStart,
+      dnsLookup: timing.domainLookupEnd - timing.domainLookupStart,
+      serverResponse: timing.responseEnd - timing.requestStart
+    });
+  }
+
+  // تعيين معرف المستخدم
+  public setUserId(userId: string): void {
+    this.userId = userId;
+    
+    // إرسال الأحداث المؤجلة مع معرف المستخدم
+    if (this.eventQueue.length > 0) {
+      this.flush();
+    }
+  }
+
+  // تسجيل الخروج
+  public clearUserId(): void {
+    this.userId = undefined;
+  }
+
+  // إعداد التتبع التلقائي
+  private setupAutoTracking(): void {
+    // تتبع التمرير
+    if (this.config.enableScrollTracking) {
+      this.setupScrollTracking();
+    }
+
+    // تتبع الأخطاء
+    if (this.config.enableErrorTracking) {
+      this.setupErrorTracking();
+    }
+
+    // تتبع الأداء
+    if (this.config.enablePerformanceTracking) {
+      this.setupPerformanceTracking();
+    }
+
+    // تتبع إغلاق الصفحة
+    this.setupUnloadTracking();
+  }
+
+  // إعداد تتبع التمرير
+  private setupScrollTracking(): void {
+    let isScrolling = false;
+    
+    const handleScroll = () => {
+      if (isScrolling) return;
+      isScrolling = true;
+
+      requestAnimationFrame(() => {
+        const scrollDepth = Math.round(
+          (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100
+        );
+
+        // تسجيل عند الوصول لعمق جديد (كل 25%)
+        if (scrollDepth >= this.lastScrollDepth + 25) {
+          this.track(EventType.SCROLL_DEPTH, {
+            depth: scrollDepth,
+            scrollY: window.scrollY,
+            viewportHeight: window.innerHeight,
+            documentHeight: document.documentElement.scrollHeight
+          });
+          this.lastScrollDepth = scrollDepth;
+        }
+
+        isScrolling = false;
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+  }
+
+  // إعداد تتبع الأخطاء
+  private setupErrorTracking(): void {
+    window.addEventListener('error', (event) => {
+      this.trackError(new Error(event.message), 'global_error');
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+      this.trackError(new Error(event.reason), 'unhandled_promise');
+    });
+  }
+
+  // إعداد تتبع الأداء
+  private setupPerformanceTracking(): void {
+    if ('PerformanceObserver' in window) {
+      this.performanceObserver = new PerformanceObserver((list) => {
+        const entries = list.getEntries();
+        entries.forEach((entry) => {
+          if (entry.entryType === 'largest-contentful-paint') {
+            this.track(EventType.PERFORMANCE_TIMING, {
+              metric: 'LCP',
+              value: entry.startTime,
+              entryType: entry.entryType
+            });
+          }
+        });
+      });
+
+      this.performanceObserver.observe({ entryTypes: ['largest-contentful-paint'] });
+    }
+
+    // تسجيل Load Event
+    window.addEventListener('load', () => {
+      this.trackPerformance(performance.timing);
+    });
+  }
+
+  // إعداد تتبع إغلاق الصفحة
+  private setupUnloadTracking(): void {
+    const handleUnload = () => {
+      this.track(EventType.PAGE_EXIT, {
+        sessionDuration: Date.now() - this.getSessionStartTime(),
+        scrollDepth: this.lastScrollDepth
+      });
+      this.flush(true); // إرسال فوري
+    };
+
+    window.addEventListener('beforeunload', handleUnload);
+    window.addEventListener('pagehide', handleUnload);
+  }
+
+  // بدء تتبع وقت القراءة
+  private startReadingTime(articleId: string): void {
+    this.readingStartTime = Date.now();
+    
+    // تسجيل وقت القراءة كل 30 ثانية
+    const readingInterval = setInterval(() => {
+      if (this.readingStartTime) {
+        const readingTime = Date.now() - this.readingStartTime;
+        this.track(EventType.READING_TIME, {
+          articleId,
+          duration: readingTime,
+          isActive: !document.hidden
+        });
+      }
+    }, 30000);
+
+    // تنظيف المؤقت عند مغادرة الصفحة
+    const cleanup = () => {
+      clearInterval(readingInterval);
+      if (this.readingStartTime) {
+        const totalReadingTime = Date.now() - this.readingStartTime;
+        this.track(EventType.READING_END, {
+          articleId,
+          totalDuration: totalReadingTime
+        });
+      }
+    };
+
+    window.addEventListener('beforeunload', cleanup);
+  }
+
+  // إرسال الأحداث
+  private async flush(immediate = false): Promise<void> {
+    if (this.eventQueue.length === 0) return;
+
+    const events = [...this.eventQueue];
+    this.eventQueue = [];
+
+    try {
+      const response = await fetch(this.config.endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ events }),
+        keepalive: immediate, // للإرسال عند إغلاق الصفحة
+      });
+
+      if (!response.ok) {
+        // إعادة الأحداث للطابور في حالة الفشل
+        this.eventQueue.unshift(...events);
+        throw new Error(`Analytics API error: ${response.status}`);
+      }
+
+      if (this.config.debug) {
+        console.log(`Analytics: Sent ${events.length} events`);
+      }
+    } catch (error) {
+      console.error('Analytics flush error:', error);
+      // إعادة الأحداث للطابور
+      this.eventQueue.unshift(...events);
+    }
+  }
+
+  // إعداد مؤقت الإرسال
+  private setupFlushTimer(): void {
+    this.flushTimer = setInterval(() => {
+      this.flush();
+    }, this.config.flushInterval);
+  }
+
+  // الحصول على معرف الجلسة
+  private getOrCreateSessionId(): string {
+    let sessionId = getCookie('analytics_session');
+    
+    if (!sessionId) {
+      sessionId = this.generateSessionId();
+      setCookie('analytics_session', sessionId, { expires: 1 }); // يوم واحد
+    }
+    
+    return sessionId;
+  }
+
+  // توليد معرف الجلسة
+  private generateSessionId(): string {
+    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  // الحصول على معلومات الجهاز
   private getDeviceInfo(): DeviceInfo {
-    if (typeof navigator === 'undefined' || typeof window === 'undefined') {
-      return {
-        type: DeviceType.UNKNOWN,
-        browser: 'unknown',
-        browserVersion: 'unknown',
-        os: 'unknown',
-        osVersion: 'unknown',
-        screenResolution: 'unknown',
-        language: 'ar',
-        timezone: 'Asia/Riyadh'
-      };
-    }
-
-    // تحديد نوع الجهاز
-    let deviceType = DeviceType.DESKTOP;
-    if (/Mobile|Android|iPhone|iPad/.test(navigator.userAgent)) {
-      deviceType = /iPad/.test(navigator.userAgent) ? DeviceType.TABLET : DeviceType.MOBILE;
-    }
-
+    const userAgent = navigator.userAgent;
+    
     return {
-      type: deviceType,
-      browser: this.getBrowserName(),
-      browserVersion: this.getBrowserVersion(),
-      os: this.getOSName(),
-      osVersion: this.getOSVersion(),
-      screenResolution: `${window.screen.width}x${window.screen.height}`,
-      language: navigator.language || 'ar',
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Riyadh'
+      userAgent,
+      screenResolution: `${screen.width}x${screen.height}`,
+      viewportSize: `${window.innerWidth}x${window.innerHeight}`,
+      deviceType: this.getDeviceType(),
+      os: this.getOS(),
+      browser: this.getBrowser(),
+      language: navigator.language,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
     };
   }
 
-  private getBrowserName(): string {
-    const userAgent = navigator.userAgent;
-    if (userAgent.includes('Chrome')) return 'Chrome';
-    if (userAgent.includes('Firefox')) return 'Firefox';
-    if (userAgent.includes('Safari')) return 'Safari';
-    if (userAgent.includes('Edge')) return 'Edge';
-    return 'Unknown';
+  // تحديد نوع الجهاز
+  private getDeviceType(): 'desktop' | 'tablet' | 'mobile' {
+    const width = window.innerWidth;
+    if (width < 768) return 'mobile';
+    if (width < 1024) return 'tablet';
+    return 'desktop';
   }
 
-  private getBrowserVersion(): string {
-    // تطبيق مبسط لاستخراج إصدار المتصفح
-    return 'unknown';
-  }
-
-  private getOSName(): string {
+  // تحديد نظام التشغيل
+  private getOS(): string {
     const userAgent = navigator.userAgent;
     if (userAgent.includes('Windows')) return 'Windows';
     if (userAgent.includes('Mac')) return 'macOS';
@@ -566,447 +519,131 @@ export class AnalyticsManager {
     return 'Unknown';
   }
 
-  private getOSVersion(): string {
-    // تطبيق مبسط لاستخراج إصدار نظام التشغيل
-    return 'unknown';
+  // تحديد المتصفح
+  private getBrowser(): string {
+    const userAgent = navigator.userAgent;
+    if (userAgent.includes('Chrome')) return 'Chrome';
+    if (userAgent.includes('Firefox')) return 'Firefox';
+    if (userAgent.includes('Safari')) return 'Safari';
+    if (userAgent.includes('Edge')) return 'Edge';
+    return 'Unknown';
   }
 
-  private generateEventId(): string {
-    return 'event_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  // فحص Do Not Track
+  private isDNTEnabled(): boolean {
+    return navigator.doNotTrack === '1' || 
+           (window as any).doNotTrack === '1' || 
+           (navigator as any).msDoNotTrack === '1';
   }
 
-  private async updateSession(event: AnalyticsEvent): Promise<void> {
-    // تحديث بيانات الجلسة
-    let session = this.sessions.get(event.sessionId);
-    
-    if (!session) {
-      session = {
-        id: event.sessionId,
-        userId: event.userId,
-        startTime: event.timestamp,
-        lastActivity: event.timestamp,
-        pageViews: 0,
-        events: 0,
-        deviceInfo: event.deviceInfo,
-        location: event.location
-      };
-      this.sessions.set(event.sessionId, session);
+  // فحص الأحداث الحرجة
+  private isCriticalEvent(eventType: EventType): boolean {
+    return [
+      EventType.SESSION_START,
+      EventType.SESSION_END,
+      EventType.ERROR_OCCURRED,
+      EventType.ARTICLE_LIKE,
+      EventType.FORM_SUBMIT
+    ].includes(eventType);
+  }
+
+  // الحصول على وقت بداية الجلسة
+  private getSessionStartTime(): number {
+    const stored = getCookie('session_start_time');
+    if (stored) {
+      return parseInt(stored);
     }
+    const now = Date.now();
+    setCookie('session_start_time', now.toString(), { expires: 1 });
+    return now;
+  }
 
-    session.lastActivity = event.timestamp;
-    session.events += 1;
-    
-    if (event.type === EventType.PAGE_VIEW) {
-      session.pageViews += 1;
+  // تنظيف الموارد
+  public destroy(): void {
+    if (this.flushTimer) {
+      clearInterval(this.flushTimer);
     }
-  }
-
-  private async processRealTimeEvent(event: AnalyticsEvent): Promise<void> {
-    // معالجة الأحداث في الوقت الفعلي
-    // في تطبيق حقيقي، سيتم إرسال الأحداث إلى خدمة التحليلات في الوقت الفعلي
-    console.log('حدث في الوقت الفعلي:', {
-      type: event.type,
-      action: event.action,
-      timestamp: event.timestamp
-    });
-  }
-
-  private calculateMetrics(events: AnalyticsEvent[]): AnalyticsMetrics {
-    const pageViews = events.filter(e => e.type === EventType.PAGE_VIEW);
-    const uniquePageViews = this.getUniquePageViews(pageViews);
-    const sessions = this.getUniqueSessions(events);
-    const users = this.getUniqueUsers(events);
-    const newUsers = this.getNewUsers(events);
-
-    return {
-      pageViews: pageViews.length,
-      uniquePageViews,
-      sessions: sessions.size,
-      users: users.size,
-      newUsers,
-      bounceRate: this.calculateBounceRate(events),
-      averageSessionDuration: this.calculateAverageSessionDuration(events),
-      pagesPerSession: pageViews.length / sessions.size,
-      conversionRate: this.calculateConversionRate(events),
-      totalConversions: events.filter(e => e.type === EventType.CONVERSION).length
-    };
-  }
-
-  private calculateDimensions(events: AnalyticsEvent[]): AnalyticsDimensions {
-    return {
-      topPages: this.getTopPages(events),
-      topReferrers: this.getTopReferrers(events),
-      topCountries: this.getTopCountries(events),
-      topDevices: this.getTopDevices(events),
-      topBrowsers: this.getTopBrowsers(events),
-      topSources: this.getTopSources(events)
-    };
-  }
-
-  private calculateSegments(events: AnalyticsEvent[]): AnalyticsSegment[] {
-    // حساب الشرائح المختلفة
-    return [];
-  }
-
-  private generateInsights(events: AnalyticsEvent[], metrics: AnalyticsMetrics): AnalyticsInsight[] {
-    const insights: AnalyticsInsight[] = [];
-
-    // رؤى أساسية
-    if (metrics.bounceRate > 70) {
-      insights.push({
-        type: 'warning',
-        title: 'معدل الارتداد مرتفع',
-        description: `معدل الارتداد الحالي ${metrics.bounceRate.toFixed(1)}% أعلى من المعدل المثالي`,
-        impact: 'high',
-        metric: 'bounceRate',
-        value: metrics.bounceRate,
-        change: 0,
-        recommendation: 'راجع محتوى الصفحات الرئيسية وحسن تجربة المستخدم'
-      });
+    
+    if (this.performanceObserver) {
+      this.performanceObserver.disconnect();
     }
-
-    return insights;
-  }
-
-  // وظائف حساب مساعدة
-  private getUniquePageViews(pageViews: AnalyticsEvent[]): number {
-    const unique = new Set();
-    pageViews.forEach(pv => {
-      unique.add(`${pv.sessionId}_${pv.url}`);
-    });
-    return unique.size;
-  }
-
-  private getUniqueSessions(events: AnalyticsEvent[]): Set<string> {
-    return new Set(events.map(e => e.sessionId));
-  }
-
-  private getUniqueUsers(events: AnalyticsEvent[]): Set<string> {
-    return new Set(events.filter(e => e.userId).map(e => e.userId!));
-  }
-
-  private getNewUsers(events: AnalyticsEvent[]): number {
-    // في تطبيق حقيقي، سيتم فحص المستخدمين الجدد من قاعدة البيانات
-    return Math.floor(this.getUniqueUsers(events).size * 0.3);
-  }
-
-  private calculateBounceRate(events: AnalyticsEvent[]): number {
-    const sessions = this.getUniqueSessions(events);
-    const bouncedSessions = Array.from(sessions).filter(sessionId => {
-      const sessionEvents = events.filter(e => e.sessionId === sessionId);
-      return sessionEvents.filter(e => e.type === EventType.PAGE_VIEW).length === 1;
-    });
     
-    return sessions.size > 0 ? (bouncedSessions.length / sessions.size) * 100 : 0;
-  }
-
-  private calculateAverageSessionDuration(events: AnalyticsEvent[]): number {
-    // حساب متوسط مدة الجلسة بالثواني
-    return 180; // مثال: 3 دقائق
-  }
-
-  private calculateConversionRate(events: AnalyticsEvent[]): number {
-    const conversions = events.filter(e => e.type === EventType.CONVERSION).length;
-    const sessions = this.getUniqueSessions(events).size;
-    return sessions > 0 ? (conversions / sessions) * 100 : 0;
-  }
-
-  private getTopPages(events: AnalyticsEvent[]): PageMetric[] {
-    // حساب أهم الصفحات
-    return [];
-  }
-
-  private getTopReferrers(events: AnalyticsEvent[]): ReferrerMetric[] {
-    // حساب أهم المواقع المرجعية
-    return [];
-  }
-
-  private getTopCountries(events: AnalyticsEvent[]): CountryMetric[] {
-    // حساب أهم البلدان
-    return [];
-  }
-
-  private getTopDevices(events: AnalyticsEvent[]): DeviceMetric[] {
-    // حساب أهم الأجهزة
-    return [];
-  }
-
-  private getTopBrowsers(events: AnalyticsEvent[]): BrowserMetric[] {
-    // حساب أهم المتصفحات
-    return [];
-  }
-
-  private getTopSources(events: AnalyticsEvent[]): SourceMetric[] {
-    // حساب أهم المصادر
-    return [];
+    this.flush(true);
+    this.isInitialized = false;
   }
 }
 
-// واجهة الجلسة التحليلية
-interface AnalyticsSession {
-  id: string;
-  userId?: string;
-  startTime: Date;
-  lastActivity: Date;
-  pageViews: number;
-  events: number;
-  deviceInfo: DeviceInfo;
-  location?: LocationInfo;
-}
+// إنشاء مثيل عام
+export const analytics = new AdvancedAnalytics({
+  debug: process.env.NODE_ENV === 'development',
+  endpoint: '/api/analytics/events'
+});
 
-// إنشاء مثيل مدير التحليلات
-export const analyticsManager = new AnalyticsManager();
+// دوال مساعدة للاستخدام السهل
+export const trackEvent = (eventType: EventType, eventData?: Record<string, any>, context?: string) => {
+  analytics.track(eventType, eventData, context);
+};
 
-// وظائف مساعدة للتصدير
-export const AnalyticsUtils = {
-  /**
-   * تهيئة التتبع الأساسي
-   */
-  initializeTracking(): void {
-    if (typeof window === 'undefined') return;
+export const trackPageView = (pageData?: Record<string, any>) => {
+  analytics.trackPageView(pageData);
+};
 
-    // تتبع مشاهدات الصفحات
-    analyticsManager.trackPageView(window.location.href, document.title);
+export const trackArticleView = (articleId: string, articleData?: Record<string, any>) => {
+  analytics.trackArticleView(articleId, articleData);
+};
 
-    // تتبع الأخطاء
-    window.addEventListener('error', (event) => {
-      analyticsManager.trackError(event.error, 'window_error');
-    });
+export const trackUserInteraction = (action: string, target: string, data?: Record<string, any>) => {
+  analytics.trackUserInteraction(action, target, data);
+};
 
-    // تتبع الحالة غير المعالجة
-    window.addEventListener('unhandledrejection', (event) => {
-      analyticsManager.trackError(
-        new Error(event.reason), 
-        'unhandled_promise_rejection'
-      );
-    });
-  },
+export const trackSearch = (query: string, resultsCount: number, filters?: Record<string, any>) => {
+  analytics.trackSearch(query, resultsCount, filters);
+};
 
-  /**
-   * تتبع النقرات التلقائي
-   */
-  enableAutoClickTracking(): void {
-    if (typeof document === 'undefined') return;
+export const trackError = (error: Error, context?: string) => {
+  analytics.trackError(error, context);
+};
 
-    document.addEventListener('click', (event) => {
-      const target = event.target as HTMLElement;
-      const tagName = target.tagName.toLowerCase();
-      const elementId = target.id;
-      const elementClass = target.className;
-      
-      let elementDescription = tagName;
-      if (elementId) elementDescription += `#${elementId}`;
-      if (elementClass) elementDescription += `.${elementClass}`;
+export const setUserId = (userId: string) => {
+  analytics.setUserId(userId);
+};
 
-      analyticsManager.trackClick(elementDescription);
-    });
-  },
+export const clearUserId = () => {
+  analytics.clearUserId();
+};
 
-  /**
-   * تتبع التمرير
-   */
-  enableScrollTracking(): void {
-    if (typeof window === 'undefined') return;
-
-    let maxScroll = 0;
-    window.addEventListener('scroll', () => {
-      const scrollPercent = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
-      
-      if (scrollPercent > maxScroll) {
-        maxScroll = Math.floor(scrollPercent / 25) * 25; // 0%, 25%, 50%, 75%, 100%
-        
-        if (maxScroll > 0 && maxScroll % 25 === 0) {
-          analyticsManager.trackEvent({
-            type: EventType.SCROLL,
-            category: 'engagement',
-            action: 'scroll_depth',
-            label: `${maxScroll}%`,
-            value: maxScroll
-          });
-        }
-      }
-    });
-  }
-}; 
-
-// دوال تتبع الأحداث السلوكية - ترسل البيانات إلى API الخلفي
-
-export interface EventData {
-  [key: string]: any;
-  userId?: string;
-  sessionId?: string;
-  userAgent?: string;
-  timestamp?: string;
-  page?: string;
-  referrer?: string;
-}
-
-export interface TrackingEvent {
-  eventType: string;
-  eventData: EventData;
-  timestamp: string;
-  sessionId: string;
-  userId?: string;
-}
-
-// تتبع الأحداث العامة
-export async function trackEvent(eventType: string, eventData: EventData = {}) {
-  try {
-    const sessionId = getSessionId();
-    const userId = getCurrentUserId();
-    
-    const eventPayload: TrackingEvent = {
-      eventType,
-      eventData: {
-        ...eventData,
-        userId,
-        sessionId,
-        userAgent: navigator.userAgent,
-        timestamp: new Date().toISOString(),
-        page: window.location.pathname,
-        referrer: document.referrer,
-      },
-      timestamp: new Date().toISOString(),
-      sessionId,
-      userId,
-    };
-
-    await fetch("/api/analytics/events", {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "X-Session-ID": sessionId,
-      },
-      body: JSON.stringify(eventPayload),
-    });
-  } catch (e) {
-    // يمكن إرسال الأخطاء إلى Sentry أو تجاهلها إن كان الحدث غير حرج
-    console.error("Failed to track event", e);
-  }
-}
-
-// تتبع مشاهدة الصفحة
-export async function trackPageView(page: string, additionalData: EventData = {}) {
-  await trackEvent("page_view", {
-    page,
-    title: document.title,
-    ...additionalData,
-  });
-}
-
-// تتبع النقرات
-export async function trackClick(element: string, additionalData: EventData = {}) {
-  await trackEvent("click", {
-    element,
-    ...additionalData,
-  });
-}
-
-// تتبع التمرير
-export async function trackScroll(percentage: number, additionalData: EventData = {}) {
-  await trackEvent("scroll", {
-    percentage,
-    ...additionalData,
-  });
-}
-
-// تتبع قراءة المقال
-export async function trackArticleRead(articleId: string, readTime: number, additionalData: EventData = {}) {
-  await trackEvent("article_read", {
+// أحداث خاصة بالتطبيق
+export const trackArticleLike = (articleId: string, liked: boolean) => {
+  trackEvent(liked ? EventType.ARTICLE_LIKE : EventType.ARTICLE_UNLIKE, {
     articleId,
-    readTime,
-    ...additionalData,
+    action: liked ? 'like' : 'unlike'
   });
-}
+};
 
-// تتبع البحث
-export async function trackSearch(query: string, resultsCount: number, additionalData: EventData = {}) {
-  await trackEvent("search", {
-    query,
-    resultsCount,
-    ...additionalData,
+export const trackArticleBookmark = (articleId: string, bookmarked: boolean) => {
+  trackEvent(bookmarked ? EventType.ARTICLE_BOOKMARK : EventType.ARTICLE_UNBOOKMARK, {
+    articleId,
+    action: bookmarked ? 'bookmark' : 'unbookmark'
   });
-}
+};
 
-// تتبع التفاعل مع المحتوى
-export async function trackInteraction(interactionType: string, contentId: string, additionalData: EventData = {}) {
-  await trackEvent("interaction", {
-    interactionType,
-    contentId,
-    ...additionalData,
+export const trackArticleShare = (articleId: string, platform: string, method: string) => {
+  trackEvent(EventType.ARTICLE_SHARE, {
+    articleId,
+    platform,
+    method,
+    url: window.location.href
   });
-}
+};
 
-// الحصول على معرف الجلسة
-function getSessionId(): string {
-  let sessionId = localStorage.getItem("sabq_session_id");
-  if (!sessionId) {
-    sessionId = generateSessionId();
-    localStorage.setItem("sabq_session_id", sessionId);
-  }
-  return sessionId;
-}
+export const trackNewsletterSignup = (email: string, source: string) => {
+  trackEvent(EventType.NEWSLETTER_SIGNUP, {
+    email: email.toLowerCase(),
+    source,
+    timestamp: new Date().toISOString()
+  });
+};
 
-// الحصول على معرف المستخدم الحالي
-function getCurrentUserId(): string | undefined {
-  try {
-    const userStr = localStorage.getItem("sabq_user");
-    if (userStr) {
-      const user = JSON.parse(userStr);
-      return user.id;
-    }
-  } catch (e) {
-    console.error("Error getting user ID", e);
-  }
-  return undefined;
-}
-
-// توليد معرف جلسة فريد
-function generateSessionId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-}
-
-// Hook لتتبع مشاهدة الصفحة تلقائياً
-export function usePageTracking() {
-  if (typeof window !== "undefined") {
-    trackPageView(window.location.pathname);
-  }
-}
-
-// Hook لتتبع التمرير
-export function useScrollTracking() {
-  if (typeof window !== "undefined") {
-    let scrollPercentage = 0;
-    const handleScroll = () => {
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const currentPercentage = Math.round((scrollTop / scrollHeight) * 100);
-      
-      // تتبع كل 25%
-      if (currentPercentage >= scrollPercentage + 25) {
-        scrollPercentage = currentPercentage;
-        trackScroll(scrollPercentage);
-      }
-    };
-    
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }
-}
-
-// أمثلة استخدام:
-/*
-import { useEffect } from "react";
-import { trackEvent, trackPageView, usePageTracking } from "../lib/analytics";
-
-// في مكون React
-useEffect(() => {
-  usePageTracking();
-}, []);
-
-// تتبع حدث مخصص
-trackEvent("button_click", { buttonId: "subscribe", section: "header" });
-
-// تتبع مشاهدة مقال
-trackEvent("article_view", { articleId: "123", category: "tech" });
-*/ 
+// تصدير الثوابت
+export { EventType };
+export type { AnalyticsEvent, DeviceInfo, TrackingConfig }; 

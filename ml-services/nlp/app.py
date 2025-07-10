@@ -1,41 +1,30 @@
 """
-خدمة الذكاء الاصطناعي لنظام سبق
-AI Service for Sabq CMS
-@version 2.1.0
-@author Sabq AI Team
+خدمة الذكاء الاصطناعي للتوصيات والتحليلات
+AI Service for Recommendations and Analytics
+@version 3.0.0
 """
 
-from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Optional, Any
 import uvicorn
-import asyncio
-import logging
-from datetime import datetime, timedelta
-import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.cluster import KMeans
-from sklearn.decomposition import LatentDirichletAllocation
-import pickle
-import os
 import json
-import redis
-from collections import Counter, defaultdict
-import re
-from itertools import combinations
+import logging
+from datetime import datetime
+
+from .interest_model import UserInterestModel
+from .recommendation_engine import RecommendationEngine
 
 # إعداد التسجيل
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# إنشاء تطبيق FastAPI
+# إنشاء التطبيق
 app = FastAPI(
-    title="Sabq AI Service",
-    description="خدمة الذكاء الاصطناعي لنظام سبق",
-    version="2.1.0",
+    title="Sabq AI ML Services",
+    description="خدمات الذكاء الاصطناعي لنظام سبق",
+    version="3.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -43,493 +32,330 @@ app = FastAPI(
 # إعداد CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # في الإنتاج، حدد النطاقات المسموحة
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# إعداد Redis للتخزين المؤقت
-try:
-    redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
-    redis_client.ping()
-    logger.info("✅ تم الاتصال بـ Redis بنجاح")
-except:
-    redis_client = None
-    logger.warning("⚠️ فشل الاتصال بـ Redis - سيتم استخدام الذاكرة المحلية")
+# تهيئة النماذج
+interest_model = UserInterestModel()
+recommendation_engine = RecommendationEngine()
 
 # نماذج البيانات
-class Event(BaseModel):
-    event_type: str = Field(..., description="نوع الحدث")
-    event_data: Dict[str, Any] = Field(default_factory=dict, description="بيانات الحدث")
-    timestamp: Optional[datetime] = Field(None, description="وقت الحدث")
-    user_id: Optional[str] = Field(None, description="معرف المستخدم")
-    session_id: Optional[str] = Field(None, description="معرف الجلسة")
-
-class RecommendRequest(BaseModel):
-    events: List[Event] = Field(..., description="قائمة الأحداث")
-    user_id: Optional[str] = Field(None, description="معرف المستخدم")
-    limit: int = Field(10, ge=1, le=50, description="عدد التوصيات")
-    exclude_articles: List[str] = Field(default_factory=list, description="المقالات المستبعدة")
-
-class TrainRequest(BaseModel):
-    data: List[Dict[str, Any]] = Field(..., description="بيانات التدريب")
-    model_type: str = Field(..., description="نوع النموذج")
-    parameters: Dict[str, Any] = Field(default_factory=dict, description="معاملات التدريب")
-
-class TextAnalysisRequest(BaseModel):
-    text: str = Field(..., description="النص المراد تحليله")
-    analysis_type: str = Field("sentiment", description="نوع التحليل")
-    language: str = Field("ar", description="لغة النص")
+class AnalyticsEvent(BaseModel):
+    event_type: str
+    event_data: Dict[str, Any]
+    timestamp: str
+    user_id: Optional[str] = None
+    article_id: Optional[str] = None
 
 class Article(BaseModel):
-    id: str = Field(..., description="معرف المقال")
-    title: str = Field(..., description="عنوان المقال")
-    content: str = Field(..., description="محتوى المقال")
-    summary: str = Field(..., description="ملخص المقال")
-    category: str = Field(..., description="تصنيف المقال")
-    tags: List[str] = Field(default_factory=list, description="علامات المقال")
-    views: int = Field(0, description="عدد المشاهدات")
-    likes: int = Field(0, description="عدد الإعجابات")
-    published_at: Optional[datetime] = Field(None, description="تاريخ النشر")
+    id: str
+    title: str
+    category: Dict[str, str]
+    tags: List[str] = []
+    view_count: int = 0
+    like_count: int = 0
+    comment_count: int = 0
+    published_at: Optional[str] = None
+    author: Optional[Dict[str, str]] = None
 
-# متغيرات عامة للنماذج
-recommendation_model = None
-text_analyzer = None
-article_embeddings = {}
-user_profiles = {}
+class RecommendationRequest(BaseModel):
+    user_events: List[AnalyticsEvent]
+    articles: List[Article]
+    top_n: int = Field(default=5, ge=1, le=20)
+    context: str = "homepage"
 
-# الفئات الرئيسية
-class RecommendationEngine:
-    def __init__(self):
-        self.vectorizer = TfidfVectorizer(
-            max_features=5000,
-            stop_words=None,  # سنضيف كلمات الإيقاف العربية لاحقاً
-            ngram_range=(1, 2),
-            min_df=2,
-            max_df=0.8
-        )
-        self.similarity_matrix = None
-        self.article_features = None
-        self.user_item_matrix = None
-        self.item_similarity = None
-        
-    def preprocess_arabic_text(self, text: str) -> str:
-        """معالجة النص العربي"""
-        # إزالة الرموز الخاصة
-        text = re.sub(r'[^\w\s]', '', text)
-        # إزالة الأرقام
-        text = re.sub(r'\d+', '', text)
-        # إزالة المسافات الزائدة
-        text = re.sub(r'\s+', ' ', text).strip()
-        return text
-        
-    def extract_article_features(self, articles: List[Article]) -> np.ndarray:
-        """استخراج ميزات المقالات"""
-        # دمج العنوان والمحتوى والملخص
-        texts = []
-        for article in articles:
-            combined_text = f"{article.title} {article.summary} {article.content}"
-            processed_text = self.preprocess_arabic_text(combined_text)
-            texts.append(processed_text)
-        
-        # تحويل النصوص إلى vectors
-        features = self.vectorizer.fit_transform(texts)
-        return features.toarray()
-    
-    def calculate_similarity(self, features: np.ndarray) -> np.ndarray:
-        """حساب التشابه بين المقالات"""
-        return cosine_similarity(features)
-    
-    def build_user_profile(self, user_events: List[Event]) -> Dict[str, float]:
-        """بناء ملف المستخدم بناءً على تفاعلاته"""
-        profile = defaultdict(float)
-        
-        for event in user_events:
-            if event.event_type == "ARTICLE_VIEW":
-                profile["views"] += 1
-            elif event.event_type == "ARTICLE_LIKE":
-                profile["likes"] += 2
-            elif event.event_type == "ARTICLE_SHARE":
-                profile["shares"] += 3
-            elif event.event_type == "ARTICLE_COMMENT":
-                profile["comments"] += 1.5
-                
-            # إضافة معلومات التصنيف والعلامات
-            if "category" in event.event_data:
-                profile[f"category_{event.event_data['category']}"] += 1
-            if "tags" in event.event_data:
-                for tag in event.event_data["tags"]:
-                    profile[f"tag_{tag}"] += 0.5
-        
-        return dict(profile)
-    
-    def recommend_articles(
-        self, 
-        user_events: List[Event], 
-        articles: List[Article], 
-        limit: int = 10,
-        exclude_articles: List[str] = None
-    ) -> List[Dict[str, Any]]:
-        """توصية المقالات للمستخدم"""
-        if not articles:
-            return []
-        
-        exclude_articles = exclude_articles or []
-        
-        # بناء ملف المستخدم
-        user_profile = self.build_user_profile(user_events)
-        
-        # حساب النقاط لكل مقال
-        article_scores = []
-        
-        for article in articles:
-            if article.id in exclude_articles:
-                continue
-                
-            score = self.calculate_article_score(article, user_profile)
-            article_scores.append({
-                "article_id": article.id,
-                "title": article.title,
-                "score": score,
-                "category": article.category,
-                "tags": article.tags,
-                "views": article.views,
-                "likes": article.likes,
-                "reason": self.get_recommendation_reason(article, user_profile)
-            })
-        
-        # ترتيب وإرجاع أفضل التوصيات
-        article_scores.sort(key=lambda x: x["score"], reverse=True)
-        return article_scores[:limit]
-    
-    def calculate_article_score(self, article: Article, user_profile: Dict[str, float]) -> float:
-        """حساب نقاط المقال للمستخدم"""
-        score = 0.0
-        
-        # النقاط الأساسية
-        score += article.views * 0.001  # نقاط المشاهدات
-        score += article.likes * 0.01   # نقاط الإعجابات
-        
-        # التطابق مع تفضيلات المستخدم
-        category_key = f"category_{article.category}"
-        if category_key in user_profile:
-            score += user_profile[category_key] * 0.5
-            
-        # التطابق مع العلامات
-        for tag in article.tags:
-            tag_key = f"tag_{tag}"
-            if tag_key in user_profile:
-                score += user_profile[tag_key] * 0.3
-        
-        # نقاط الحداثة
-        if article.published_at:
-            days_old = (datetime.now() - article.published_at).days
-            freshness_score = max(0, 1 - (days_old / 30))  # يقل التأثير مع الوقت
-            score += freshness_score * 0.2
-        
-        return score
-    
-    def get_recommendation_reason(self, article: Article, user_profile: Dict[str, float]) -> str:
-        """تحديد سبب التوصية"""
-        reasons = []
-        
-        category_key = f"category_{article.category}"
-        if category_key in user_profile and user_profile[category_key] > 2:
-            reasons.append(f"يعجبك تصنيف {article.category}")
-        
-        matching_tags = [tag for tag in article.tags if f"tag_{tag}" in user_profile]
-        if matching_tags:
-            reasons.append(f"يحتوي على علامات مثل: {', '.join(matching_tags[:2])}")
-        
-        if article.views > 1000:
-            reasons.append("مقال شائع")
-        
-        if article.likes > 100:
-            reasons.append("مقال محبوب")
-        
-        return reasons[0] if reasons else "مقال مميز"
+class InterestAnalysisRequest(BaseModel):
+    user_events: List[AnalyticsEvent]
 
-class TextAnalyzer:
-    def __init__(self):
-        self.sentiment_keywords = {
-            "positive": ["ممتاز", "رائع", "جيد", "مفيد", "مذهل", "إيجابي", "سعيد", "جميل"],
-            "negative": ["سيء", "فظيع", "سلبي", "مؤسف", "محزن", "غاضب", "مزعج", "صعب"],
-            "neutral": ["عادي", "مقبول", "متوسط", "لا بأس"]
-        }
-        
-    def analyze_sentiment(self, text: str) -> Dict[str, Any]:
-        """تحليل المشاعر للنص العربي"""
-        text = text.lower()
-        
-        positive_score = sum(1 for word in self.sentiment_keywords["positive"] if word in text)
-        negative_score = sum(1 for word in self.sentiment_keywords["negative"] if word in text)
-        neutral_score = sum(1 for word in self.sentiment_keywords["neutral"] if word in text)
-        
-        total_score = positive_score + negative_score + neutral_score
-        
-        if total_score == 0:
-            return {"sentiment": "neutral", "confidence": 0.5, "scores": {"positive": 0, "negative": 0, "neutral": 1}}
-        
-        scores = {
-            "positive": positive_score / total_score,
-            "negative": negative_score / total_score,
-            "neutral": neutral_score / total_score
-        }
-        
-        sentiment = max(scores, key=scores.get)
-        confidence = scores[sentiment]
-        
-        return {
-            "sentiment": sentiment,
-            "confidence": confidence,
-            "scores": scores
-        }
-    
-    def extract_keywords(self, text: str, top_k: int = 10) -> List[str]:
-        """استخراج الكلمات المفتاحية"""
-        # تنظيف النص
-        text = self.preprocess_arabic_text(text)
-        words = text.split()
-        
-        # حساب تكرار الكلمات
-        word_freq = Counter(words)
-        
-        # إزالة الكلمات الشائعة
-        stop_words = ["في", "من", "إلى", "على", "عن", "مع", "هذا", "هذه", "التي", "الذي", "أن", "أو", "لا", "ما", "كل", "بعض", "كان", "يكون", "قد", "لقد", "وقد"]
-        
-        filtered_words = {word: freq for word, freq in word_freq.items() if word not in stop_words and len(word) > 2}
-        
-        # إرجاع أهم الكلمات
-        return [word for word, _ in Counter(filtered_words).most_common(top_k)]
-    
-    def preprocess_arabic_text(self, text: str) -> str:
-        """معالجة النص العربي"""
-        # إزالة الرموز الخاصة
-        text = re.sub(r'[^\w\s]', '', text)
-        # إزالة الأرقام
-        text = re.sub(r'\d+', '', text)
-        # إزالة المسافات الزائدة
-        text = re.sub(r'\s+', ' ', text).strip()
-        return text
+class TextAnalysisRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=10000)
+    analysis_type: str = Field(default="all")
 
-# إنشاء المحركات
-recommendation_engine = RecommendationEngine()
-text_analyzer = TextAnalyzer()
+class RecommendationResponse(BaseModel):
+    recommendations: List[Dict[str, Any]]
+    metrics: Dict[str, Any]
+    user_profile: Dict[str, Any]
+    timestamp: str
 
-# المسارات الأساسية
+# الصفحة الرئيسية
 @app.get("/")
 async def root():
     return {
-        "message": "مرحباً بك في خدمة الذكاء الاصطناعي لنظام سبق",
-        "version": "2.1.0",
-        "status": "active",
-        "endpoints": {
-            "recommend": "/recommend",
-            "train": "/train",
-            "analyze": "/analyze",
-            "health": "/health"
-        }
+        "service": "Sabq AI ML Services",
+        "version": "3.0.0",
+        "status": "running",
+        "endpoints": [
+            "/recommendations",
+            "/interest-analysis", 
+            "/text-analysis",
+            "/user-profile",
+            "/health"
+        ]
     }
 
+# فحص صحة الخدمة
 @app.get("/health")
 async def health_check():
-    """فحص صحة الخدمة"""
-    redis_status = "connected" if redis_client else "disconnected"
-    
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "version": "2.1.0",
-        "services": {
-            "recommendation_engine": "active",
-            "text_analyzer": "active",
-            "redis": redis_status
-        }
+        "models": {
+            "interest_model": "loaded",
+            "recommendation_engine": "loaded"
+        },
+        "version": "3.0.0"
     }
 
-@app.post("/recommend")
-async def recommend_articles(request: RecommendRequest):
-    """توصية المقالات للمستخدم"""
+# خدمة التوصيات الرئيسية
+@app.post("/recommendations", response_model=RecommendationResponse)
+async def get_recommendations(request: RecommendationRequest):
+    """
+    توليد توصيات مخصصة للمستخدم
+    """
     try:
-        # التحقق من وجود البيانات
-        if not request.events:
-            raise HTTPException(status_code=400, detail="قائمة الأحداث مطلوبة")
+        logger.info(f"Processing recommendation request for {len(request.articles)} articles")
         
-        # محاولة الحصول على النتائج من التخزين المؤقت
-        cache_key = f"recommendations:{request.user_id}:{len(request.events)}"
-        if redis_client:
-            cached_result = redis_client.get(cache_key)
-            if cached_result:
-                return json.loads(cached_result)
+        # تحويل البيانات للنماذج
+        user_events = [event.dict() for event in request.user_events]
+        articles = [article.dict() for article in request.articles]
         
-        # بناء قائمة وهمية من المقالات للتوضيح
-        # في التطبيق الحقيقي، ستأتي من قاعدة البيانات
-        sample_articles = [
-            Article(
-                id="1",
-                title="أحدث تطورات الذكاء الاصطناعي",
-                content="محتوى المقال حول الذكاء الاصطناعي...",
-                summary="ملخص المقال",
-                category="تقنية",
-                tags=["ذكاء اصطناعي", "تقنية", "مستقبل"],
-                views=1500,
-                likes=120,
-                published_at=datetime.now() - timedelta(days=1)
-            ),
-            Article(
-                id="2",
-                title="الاقتصاد السعودي في 2024",
-                content="محتوى المقال حول الاقتصاد...",
-                summary="ملخص المقال",
-                category="أعمال",
-                tags=["اقتصاد", "سعودي", "2024"],
-                views=2000,
-                likes=200,
-                published_at=datetime.now() - timedelta(days=2)
-            ),
-            Article(
-                id="3",
-                title="كأس العالم FIFA 2026",
-                content="محتوى المقال حول كأس العالم...",
-                summary="ملخص المقال",
-                category="رياضة",
-                tags=["كأس العالم", "فيفا", "2026"],
-                views=3000,
-                likes=300,
-                published_at=datetime.now() - timedelta(days=3)
-            )
-        ]
-        
-        # الحصول على التوصيات
+        # توليد التوصيات
         recommendations = recommendation_engine.recommend_articles(
-            request.events,
-            sample_articles,
-            request.limit,
-            request.exclude_articles
+            user_events=user_events,
+            articles=articles,
+            top_n=request.top_n,
+            context=request.context
         )
         
-        result = {
-            "recommendations": recommendations,
-            "user_id": request.user_id,
-            "generated_at": datetime.now().isoformat(),
-            "algorithm": "collaborative_filtering_with_content"
-        }
+        # حساب مقاييس الجودة
+        metrics = recommendation_engine.get_recommendation_metrics(recommendations)
         
-        # حفظ النتائج في التخزين المؤقت
-        if redis_client:
-            redis_client.setex(cache_key, 3600, json.dumps(result))  # ساعة واحدة
+        # إنشاء ملف المستخدم
+        user_profile = interest_model.get_user_profile(user_events)
         
-        return result
+        return RecommendationResponse(
+            recommendations=recommendations,
+            metrics=metrics,
+            user_profile=user_profile,
+            timestamp=datetime.now().isoformat()
+        )
         
     except Exception as e:
-        logger.error(f"خطأ في توصية المقالات: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"خطأ في توصية المقالات: {str(e)}")
+        logger.error(f"Error in recommendations: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"خطأ في توليد التوصيات: {str(e)}")
 
-@app.post("/train")
-async def train_model(request: TrainRequest, background_tasks: BackgroundTasks):
-    """تدريب النموذج"""
+# تحليل اهتمامات المستخدم
+@app.post("/interest-analysis")
+async def analyze_user_interests(request: InterestAnalysisRequest):
+    """
+    تحليل اهتمامات المستخدم بناءً على سلوكه
+    """
     try:
-        # بدء تدريب النموذج في الخلفية
-        training_id = f"training_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        user_events = [event.dict() for event in request.user_events]
         
-        background_tasks.add_task(
-            train_recommendation_model,
-            request.data,
-            request.model_type,
-            training_id,
-            request.parameters
-        )
+        # حساب درجات الاهتمام
+        interest_scores = interest_model.compute_interest_score(user_events)
+        
+        # إنشاء ملف المستخدم الكامل
+        user_profile = interest_model.get_user_profile(user_events)
         
         return {
-            "message": "تم بدء تدريب النموذج",
-            "training_id": training_id,
-            "status": "started",
-            "estimated_time": "10-30 دقيقة"
+            "interest_scores": interest_scores,
+            "user_profile": user_profile,
+            "total_events": len(user_events),
+            "timestamp": datetime.now().isoformat()
         }
         
     except Exception as e:
-        logger.error(f"خطأ في تدريب النموذج: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"خطأ في تدريب النموذج: {str(e)}")
+        logger.error(f"Error in interest analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"خطأ في تحليل الاهتمامات: {str(e)}")
 
-@app.post("/analyze")
+# تحليل النصوص
+@app.post("/text-analysis")
 async def analyze_text(request: TextAnalysisRequest):
-    """تحليل النص"""
+    """
+    تحليل النصوص العربية (تحليل المشاعر، استخراج الكلمات المفتاحية، إلخ)
+    """
     try:
-        if request.analysis_type == "sentiment":
-            result = text_analyzer.analyze_sentiment(request.text)
-        elif request.analysis_type == "keywords":
-            keywords = text_analyzer.extract_keywords(request.text)
-            result = {"keywords": keywords}
-        else:
-            # تحليل شامل
-            sentiment = text_analyzer.analyze_sentiment(request.text)
-            keywords = text_analyzer.extract_keywords(request.text)
-            result = {
-                "sentiment": sentiment,
-                "keywords": keywords,
-                "text_length": len(request.text),
-                "word_count": len(request.text.split())
-            }
+        text = request.text
+        analysis_type = request.analysis_type
+        
+        results = {}
+        
+        if analysis_type in ["all", "keywords"]:
+            # استخراج الكلمات المفتاحية (مثال مبسط)
+            keywords = extract_keywords(text)
+            results["keywords"] = keywords
+        
+        if analysis_type in ["all", "sentiment"]:
+            # تحليل المشاعر (مثال مبسط)
+            sentiment = analyze_sentiment(text)
+            results["sentiment"] = sentiment
+        
+        if analysis_type in ["all", "categories"]:
+            # تصنيف النص (مثال مبسط)
+            category = classify_text(text)
+            results["category"] = category
+        
+        if analysis_type in ["all", "summary"]:
+            # تلخيص النص (مثال مبسط)
+            summary = summarize_text(text)
+            results["summary"] = summary
         
         return {
-            "analysis": result,
-            "text_sample": request.text[:100] + "..." if len(request.text) > 100 else request.text,
-            "language": request.language,
-            "analyzed_at": datetime.now().isoformat()
+            "analysis": results,
+            "text_length": len(text),
+            "analysis_type": analysis_type,
+            "timestamp": datetime.now().isoformat()
         }
         
     except Exception as e:
-        logger.error(f"خطأ في تحليل النص: {str(e)}")
+        logger.error(f"Error in text analysis: {str(e)}")
         raise HTTPException(status_code=500, detail=f"خطأ في تحليل النص: {str(e)}")
 
-# دوال مساعدة
-async def train_recommendation_model(data: List[Dict], model_type: str, training_id: str, parameters: Dict):
-    """تدريب نموذج التوصية في الخلفية"""
+# ملف المستخدم الشامل
+@app.post("/user-profile")
+async def get_user_profile(request: InterestAnalysisRequest):
+    """
+    إنشاء ملف شامل للمستخدم
+    """
     try:
-        logger.info(f"بدء تدريب النموذج {training_id}")
+        user_events = [event.dict() for event in request.user_events]
         
-        # محاكاة عملية التدريب
-        await asyncio.sleep(2)  # محاكاة وقت التدريب
+        # إنشاء ملف المستخدم
+        profile = interest_model.get_user_profile(user_events)
         
-        # حفظ النموذج المدرب
-        model_path = f"models/{model_type}_{training_id}.pkl"
-        os.makedirs(os.path.dirname(model_path), exist_ok=True)
+        # إضافة إحصائيات إضافية
+        profile["statistics"] = {
+            "total_events": len(user_events),
+            "unique_articles": len(set(
+                event.get("article_id") for event in user_events
+                if event.get("article_id")
+            )),
+            "event_types": list(set(
+                event.get("event_type") for event in user_events
+            )),
+            "analysis_date": datetime.now().isoformat()
+        }
         
-        # حفظ النموذج (مثال)
-        with open(model_path, 'wb') as f:
-            pickle.dump({"model": "trained_model", "training_id": training_id}, f)
-        
-        logger.info(f"تم الانتهاء من تدريب النموذج {training_id}")
-        
-        # تحديث حالة التدريب في Redis
-        if redis_client:
-            redis_client.setex(f"training:{training_id}", 86400, json.dumps({
-                "status": "completed",
-                "completed_at": datetime.now().isoformat(),
-                "model_path": model_path
-            }))
+        return profile
         
     except Exception as e:
-        logger.error(f"خطأ في تدريب النموذج {training_id}: {str(e)}")
-        
-        # تحديث حالة التدريب كخطأ
-        if redis_client:
-            redis_client.setex(f"training:{training_id}", 86400, json.dumps({
-                "status": "failed",
-                "error": str(e),
-                "failed_at": datetime.now().isoformat()
-            }))
+        logger.error(f"Error creating user profile: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"خطأ في إنشاء ملف المستخدم: {str(e)}")
 
-@app.get("/training/{training_id}")
-async def get_training_status(training_id: str):
-    """الحصول على حالة التدريب"""
-    if redis_client:
-        status = redis_client.get(f"training:{training_id}")
-        if status:
-            return json.loads(status)
+# إحصائيات النظام
+@app.get("/system-stats")
+async def get_system_stats():
+    """
+    إحصائيات عامة عن أداء النظام
+    """
+    return {
+        "service": "Sabq AI ML Services",
+        "version": "3.0.0",
+        "uptime": "active",
+        "models": {
+            "interest_model": {
+                "status": "loaded",
+                "algorithm_weights": interest_model.event_weights
+            },
+            "recommendation_engine": {
+                "status": "loaded",
+                "algorithm_weights": recommendation_engine.algorithm_weights
+            }
+        },
+        "capabilities": [
+            "user_interest_analysis",
+            "content_recommendations",
+            "text_analysis",
+            "sentiment_analysis",
+            "keyword_extraction",
+            "content_classification"
+        ],
+        "timestamp": datetime.now().isoformat()
+    }
+
+# دوال مساعدة لتحليل النصوص
+def extract_keywords(text: str) -> List[str]:
+    """استخراج الكلمات المفتاحية (مثال مبسط)"""
+    # في التطبيق الحقيقي، نحتاج لمكتبات NLP متخصصة
+    words = text.split()
+    # فلترة الكلمات الشائعة
+    stop_words = {'في', 'من', 'إلى', 'على', 'هذا', 'هذه', 'التي', 'الذي', 'أن', 'أو'}
+    keywords = [word for word in words if len(word) > 3 and word not in stop_words]
+    return keywords[:10]  # أفضل 10 كلمات
+
+def analyze_sentiment(text: str) -> Dict[str, Any]:
+    """تحليل المشاعر (مثال مبسط)"""
+    # في التطبيق الحقيقي، نحتاج لنموذج مدرب على النصوص العربية
+    positive_words = ['جيد', 'ممتاز', 'رائع', 'مفيد', 'إيجابي']
+    negative_words = ['سيء', 'ضعيف', 'مشكلة', 'خطأ', 'سلبي']
     
-    raise HTTPException(status_code=404, detail="معرف التدريب غير موجود")
+    positive_count = sum(1 for word in positive_words if word in text)
+    negative_count = sum(1 for word in negative_words if word in text)
+    
+    if positive_count > negative_count:
+        sentiment = 'positive'
+        confidence = min((positive_count / (positive_count + negative_count + 1)) * 100, 95)
+    elif negative_count > positive_count:
+        sentiment = 'negative'
+        confidence = min((negative_count / (positive_count + negative_count + 1)) * 100, 95)
+    else:
+        sentiment = 'neutral'
+        confidence = 50
+    
+    return {
+        'sentiment': sentiment,
+        'confidence': round(confidence, 2),
+        'positive_indicators': positive_count,
+        'negative_indicators': negative_count
+    }
+
+def classify_text(text: str) -> Dict[str, Any]:
+    """تصنيف النص (مثال مبسط)"""
+    # في التطبيق الحقيقي، نحتاج لنموذج تصنيف مدرب
+    categories = {
+        'تقنية': ['تقنية', 'ذكاء', 'اصطناعي', 'برمجة', 'حاسوب'],
+        'رياضة': ['كرة', 'رياضة', 'فريق', 'لاعب', 'مباراة'],
+        'أخبار': ['خبر', 'حدث', 'جديد', 'عاجل', 'تطور'],
+        'اقتصاد': ['اقتصاد', 'مال', 'استثمار', 'سوق', 'أسهم']
+    }
+    
+    scores = {}
+    for category, keywords in categories.items():
+        score = sum(1 for keyword in keywords if keyword in text.lower())
+        if score > 0:
+            scores[category] = score
+    
+    if scores:
+        predicted_category = max(scores, key=scores.get)
+        confidence = (scores[predicted_category] / sum(scores.values())) * 100
+    else:
+        predicted_category = 'عام'
+        confidence = 30
+    
+    return {
+        'category': predicted_category,
+        'confidence': round(confidence, 2),
+        'all_scores': scores
+    }
+
+def summarize_text(text: str) -> str:
+    """تلخيص النص (مثال مبسط)"""
+    # في التطبيق الحقيقي، نحتاج لنموذج تلخيص متقدم
+    sentences = text.split('.')
+    if len(sentences) <= 2:
+        return text
+    
+    # أخذ أول جملتين كتلخيص مبسط
+    summary = '. '.join(sentences[:2]).strip()
+    if summary and not summary.endswith('.'):
+        summary += '.'
+    
+    return summary or "ملخص غير متاح"
 
 # تشغيل الخدمة
 if __name__ == "__main__":
