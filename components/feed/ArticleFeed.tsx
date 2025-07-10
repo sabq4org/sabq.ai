@@ -1,833 +1,291 @@
-/**
- * خلاصة المقالات الشاملة
- * Comprehensive Article Feed Component
- * @version 1.0.0
- * @author Sabq AI Team
- */
+"use client";
+import { useEffect, useState } from "react";
+import { trackEvent, trackClick, usePageTracking } from "../../lib/analytics";
+import Link from "next/link";
 
-'use client';
-
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { analyticsManager, EventType } from '../../lib/analytics';
-
-// أنواع المقالات والخلاصة
-export interface Article {
+type Article = {
   id: string;
   title: string;
-  slug: string;
-  excerpt: string;
+  summary: string;
   content?: string;
-  author: {
-    id: string;
+  published_at: string;
+  category: string;
+  tags: string[];
+  author: { 
     name: string;
     avatar?: string;
-    bio?: string;
   };
-  category: {
-    id: string;
-    name: string;
-    slug: string;
-    color?: string;
-  };
-  tags: string[];
-  publishedAt: Date;
-  updatedAt?: Date;
-  readingTime: number;
-  wordCount: number;
-  viewsCount: number;
-  likesCount: number;
-  commentsCount: number;
-  sharesCount: number;
-  featured: boolean;
-  trending: boolean;
-  premium: boolean;
-  images: {
-    thumbnail?: string;
-    featured?: string;
-    gallery?: string[];
-  };
-  seo: {
-    metaTitle?: string;
-    metaDescription?: string;
-    keywords?: string[];
-  };
-  status: 'draft' | 'published' | 'archived';
-}
-
-export interface FeedConfig {
-  // التخطيط
-  layout: 'grid' | 'list' | 'cards' | 'masonry';
-  columns?: number;
-  showImages?: boolean;
-  showExcerpt?: boolean;
-  showAuthor?: boolean;
-  showDate?: boolean;
-  showCategory?: boolean;
-  showTags?: boolean;
-  showStats?: boolean;
-  
-  // التصفية والترتيب
-  category?: string;
-  tags?: string[];
-  author?: string;
-  sortBy?: 'publishedAt' | 'viewsCount' | 'likesCount' | 'trending';
-  sortOrder?: 'asc' | 'desc';
-  featured?: boolean;
-  premium?: boolean;
-  
-  // التقسيم
-  pageSize?: number;
-  enableInfiniteScroll?: boolean;
-  enableLoadMore?: boolean;
-  
-  // السلوك
-  enableSearch?: boolean;
-  enableFilters?: boolean;
-  enableBookmarks?: boolean;
-  enableSharing?: boolean;
-  trackViews?: boolean;
-}
-
-export interface ArticleFeedProps {
-  // البيانات
-  articles?: Article[];
-  loading?: boolean;
-  error?: string;
-  
-  // التكوين
-  config?: Partial<FeedConfig>;
-  
-  // التخصيص
-  title?: string;
-  subtitle?: string;
-  emptyMessage?: string;
-  loadingMessage?: string;
-  className?: string;
-  
-  // الأحداث
-  onArticleClick?: (article: Article) => void;
-  onAuthorClick?: (author: Article['author']) => void;
-  onCategoryClick?: (category: Article['category']) => void;
-  onTagClick?: (tag: string) => void;
-  onBookmark?: (article: Article) => void;
-  onShare?: (article: Article, platform: string) => void;
-  onLoadMore?: () => void;
-  onSearch?: (query: string) => void;
-  onFilter?: (filters: any) => void;
-}
-
-// التكوين الافتراضي
-const defaultConfig: FeedConfig = {
-  layout: 'cards',
-  columns: 3,
-  showImages: true,
-  showExcerpt: true,
-  showAuthor: true,
-  showDate: true,
-  showCategory: true,
-  showTags: false,
-  showStats: true,
-  sortBy: 'publishedAt',
-  sortOrder: 'desc',
-  pageSize: 12,
-  enableInfiniteScroll: true,
-  enableLoadMore: false,
-  enableSearch: true,
-  enableFilters: true,
-  enableBookmarks: true,
-  enableSharing: true,
-  trackViews: true
+  image_url?: string;
+  views_count?: number;
+  likes_count?: number;
 };
 
-// مكون خلاصة المقالات الرئيسي
-export const ArticleFeed: React.FC<ArticleFeedProps> = ({
-  articles = [],
-  loading = false,
-  error,
-  config: userConfig,
-  title,
-  subtitle,
-  emptyMessage = 'لا توجد مقالات متاحة',
-  loadingMessage = 'جاري التحميل...',
-  className = '',
-  onArticleClick,
-  onAuthorClick,
-  onCategoryClick,
-  onTagClick,
-  onBookmark,
-  onShare,
-  onLoadMore,
-  onSearch,
-  onFilter
-}) => {
-  const config = { ...defaultConfig, ...userConfig };
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilters, setActiveFilters] = useState<any>({});
-  const [bookmarkedArticles, setBookmarkedArticles] = useState<Set<string>>(new Set());
-  const [visibleArticles, setVisibleArticles] = useState<Article[]>([]);
-  const [hasMore, setHasMore] = useState(true);
+export default function ArticleFeed() {
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const router = useRouter();
-  const feedRef = useRef<HTMLDivElement>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-
-  // تحديث المقالات المرئية
   useEffect(() => {
-    let filtered = [...articles];
-
-    // تطبيق البحث
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(article => 
-        article.title.toLowerCase().includes(query) ||
-        article.excerpt.toLowerCase().includes(query) ||
-        article.tags.some(tag => tag.toLowerCase().includes(query))
-      );
-    }
-
-    // تطبيق المرشحات
-    if (config.category) {
-      filtered = filtered.filter(article => article.category.slug === config.category);
-    }
+    // تتبع مشاهدة صفحة المقالات
+    usePageTracking();
     
-    if (config.tags && config.tags.length > 0) {
-      filtered = filtered.filter(article => 
-        article.tags.some(tag => config.tags!.includes(tag))
-      );
-    }
+    // جلب المقالات
+    fetchArticles();
+  }, []);
 
-    if (config.featured !== undefined) {
-      filtered = filtered.filter(article => article.featured === config.featured);
-    }
-
-    // الترتيب
-    filtered.sort((a, b) => {
-      let aVal, bVal;
+  const fetchArticles = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/articles");
+      if (!res.ok) {
+        throw new Error("فشل في جلب المقالات");
+      }
+      const data = await res.json();
+      setArticles(data.articles || []);
       
-      switch (config.sortBy) {
-        case 'viewsCount':
-          aVal = a.viewsCount;
-          bVal = b.viewsCount;
-          break;
-        case 'likesCount':
-          aVal = a.likesCount;
-          bVal = b.likesCount;
-          break;
-        case 'trending':
-          aVal = a.trending ? 1 : 0;
-          bVal = b.trending ? 1 : 0;
-          break;
-        default:
-          aVal = new Date(a.publishedAt).getTime();
-          bVal = new Date(b.publishedAt).getTime();
-      }
-
-      return config.sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
-    });
-
-    setVisibleArticles(filtered.slice(0, config.pageSize));
-    setHasMore(filtered.length > config.pageSize);
-  }, [articles, searchQuery, activeFilters, config]);
-
-  // إعداد التمرير اللانهائي
-  useEffect(() => {
-    if (!config.enableInfiniteScroll || !loadMoreRef.current) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
-          handleLoadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    observer.observe(loadMoreRef.current);
-    observerRef.current = observer;
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, [hasMore, loading, config.enableInfiniteScroll]);
-
-  // معالج تحميل المزيد
-  const handleLoadMore = useCallback(() => {
-    if (!hasMore || loading) return;
-    
-    const currentLength = visibleArticles.length;
-    const nextBatch = articles.slice(currentLength, currentLength + config.pageSize!);
-    
-    setVisibleArticles(prev => [...prev, ...nextBatch]);
-    setHasMore(currentLength + nextBatch.length < articles.length);
-    
-    onLoadMore?.();
-  }, [articles, visibleArticles, hasMore, loading, config.pageSize, onLoadMore]);
-
-  // معالج النقر على المقال
-  const handleArticleClick = async (article: Article, event?: React.MouseEvent) => {
-    // تتبع النقرة
-    if (config.trackViews) {
-      await analyticsManager.trackArticleView({
-        id: article.id,
-        title: article.title,
-        category: article.category.name,
-        author: article.author.name,
-        publishDate: article.publishedAt,
-        wordCount: article.wordCount,
-        readingTime: article.readingTime,
-        tags: article.tags
+      // تتبع تحميل المقالات بنجاح
+      await trackEvent("articles_loaded", { 
+        articlesCount: data.articles?.length || 0 
       });
-    }
-
-    onArticleClick?.(article);
-
-    // التنقل إلى المقال
-    if (!event?.defaultPrevented) {
-      router.push(`/articles/${article.slug}`);
-    }
-  };
-
-  // معالج البحث
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    onSearch?.(query);
-
-    // تتبع البحث
-    if (query) {
-      analyticsManager.trackSearch(query, visibleArticles.length);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "حدث خطأ غير متوقع");
+      await trackEvent("articles_load_error", { 
+        error: err instanceof Error ? err.message : "unknown" 
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  // معالج المشاركة
-  const handleShare = async (article: Article, platform: string) => {
-    const url = `${window.location.origin}/articles/${article.slug}`;
-    
-    // تتبع المشاركة
-    await analyticsManager.trackEvent({
-      type: EventType.ARTICLE_SHARE,
-      category: 'social',
-      action: 'share',
-      label: platform,
-      metadata: {
-        customDimensions: {
-          articleId: article.id,
-          articleTitle: article.title,
-          platform: platform
-        },
-        customMetrics: {},
-        articleData: {
-          id: article.id,
-          title: article.title,
-          category: article.category.name,
-          author: article.author.name,
-          publishDate: article.publishedAt,
-          wordCount: article.wordCount,
-          readingTime: article.readingTime,
-          tags: article.tags
-        }
-      }
+  const handleArticleClick = async (article: Article) => {
+    // تتبع النقر على المقال
+    await trackClick("article_card", {
+      articleId: article.id,
+      articleTitle: article.title,
+      category: article.category,
+      author: article.author.name,
     });
-
-    switch (platform) {
-      case 'twitter':
-        window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(article.title)}`);
-        break;
-      case 'facebook':
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`);
-        break;
-      case 'linkedin':
-        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`);
-        break;
-      case 'whatsapp':
-        window.open(`https://wa.me/?text=${encodeURIComponent(article.title + ' ' + url)}`);
-        break;
-      case 'copy':
-        navigator.clipboard.writeText(url);
-        break;
-    }
-
-    onShare?.(article, platform);
   };
 
-  // معالج الإشارة المرجعية
-  const handleBookmark = (article: Article) => {
-    const newBookmarks = new Set(bookmarkedArticles);
-    
-    if (bookmarkedArticles.has(article.id)) {
-      newBookmarks.delete(article.id);
-    } else {
-      newBookmarks.add(article.id);
-    }
-    
-    setBookmarkedArticles(newBookmarks);
-    onBookmark?.(article);
+  const handleCategoryClick = async (category: string) => {
+    await trackClick("category_tag", { category });
   };
 
-  // تنسيق التاريخ
-  const formatDate = (date: Date): string => {
-    return new Intl.DateTimeFormat('ar', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }).format(date);
+  const handleAuthorClick = async (author: string) => {
+    await trackClick("author_name", { author });
   };
 
-  // تنسيق وقت القراءة
-  const formatReadingTime = (minutes: number): string => {
-    return `${minutes} دقيقة قراءة`;
-  };
-
-  // فئات CSS
-  const feedClasses = [
-    'sabq-feed',
-    `sabq-feed--${config.layout}`,
-    `sabq-feed--columns-${config.columns}`,
-    className
-  ].filter(Boolean).join(' ');
-
-  // عرض حالة التحميل
-  if (loading && visibleArticles.length === 0) {
-    return (
-      <div className="sabq-feed-loading">
-        <div className="sabq-feed-loading-spinner"></div>
-        <p>{loadingMessage}</p>
-      </div>
-    );
+  if (loading) {
+    return <ArticleSkeletonLoader />;
   }
 
-  // عرض حالة الخطأ
   if (error) {
     return (
-      <div className="sabq-feed-error">
-        <p>❌ {error}</p>
-        <button onClick={() => window.location.reload()}>
+      <div className="text-center py-12">
+        <div className="text-red-600 text-lg mb-4">⚠️ {error}</div>
+        <button 
+          onClick={fetchArticles}
+          className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+        >
           إعادة المحاولة
         </button>
       </div>
     );
   }
 
-  // عرض رسالة فارغة
-  if (visibleArticles.length === 0) {
-    return (
-      <div className="sabq-feed-empty">
-        <p>{emptyMessage}</p>
-      </div>
-    );
-  }
-
   return (
-    <div ref={feedRef} className={feedClasses}>
-      {/* رأس الخلاصة */}
-      {(title || subtitle || config.enableSearch) && (
-        <div className="sabq-feed-header">
-          {title && <h2 className="sabq-feed-title">{title}</h2>}
-          {subtitle && <p className="sabq-feed-subtitle">{subtitle}</p>}
-          
-          {config.enableSearch && (
-            <div className="sabq-feed-search">
-              <input
-                type="search"
-                placeholder="ابحث في المقالات..."
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="sabq-feed-search-input"
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* مرشحات الخلاصة */}
-      {config.enableFilters && (
-        <div className="sabq-feed-filters">
-          {/* مرشحات التصنيف والعلامات */}
-        </div>
-      )}
-
-      {/* شبكة المقالات */}
-      <div className="sabq-feed-grid">
-        {visibleArticles.map((article) => (
-          <ArticleCard
-            key={article.id}
-            article={article}
-            config={config}
-            isBookmarked={bookmarkedArticles.has(article.id)}
-            onClick={handleArticleClick}
-            onAuthorClick={onAuthorClick}
-            onCategoryClick={onCategoryClick}
-            onTagClick={onTagClick}
-            onBookmark={handleBookmark}
-            onShare={handleShare}
-            formatDate={formatDate}
-            formatReadingTime={formatReadingTime}
-          />
-        ))}
+    <div className="max-w-4xl mx-auto" dir="rtl">
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold text-gray-800 mb-2">أحدث المقالات</h2>
+        <p className="text-gray-600">اكتشف أحدث المقالات والأخبار من سبق</p>
       </div>
 
-      {/* تحميل المزيد */}
-      {hasMore && (
-        <div className="sabq-feed-load-more">
-          {config.enableLoadMore && (
-            <button
-              onClick={handleLoadMore}
-              disabled={loading}
-              className="sabq-feed-load-more-btn"
-            >
-              {loading ? 'جاري التحميل...' : 'تحميل المزيد'}
-            </button>
-          )}
-          
-          {config.enableInfiniteScroll && (
-            <div ref={loadMoreRef} className="sabq-feed-infinite-trigger">
-              {loading && <div className="sabq-feed-loading-spinner"></div>}
-            </div>
-          )}
+      {articles.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-gray-500 text-lg mb-4">📰 لا توجد مقالات متاحة حالياً</div>
+          <button 
+            onClick={fetchArticles}
+            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+          >
+            تحديث
+          </button>
+        </div>
+      ) : (
+        <div className="grid gap-6">
+          {articles.map((article) => (
+            <ArticleCard 
+              key={article.id} 
+              article={article} 
+              onArticleClick={handleArticleClick}
+              onCategoryClick={handleCategoryClick}
+              onAuthorClick={handleAuthorClick}
+            />
+          ))}
         </div>
       )}
     </div>
   );
-};
-
-// مكون بطاقة المقال
-interface ArticleCardProps {
-  article: Article;
-  config: FeedConfig;
-  isBookmarked: boolean;
-  onClick: (article: Article, event?: React.MouseEvent) => void;
-  onAuthorClick?: (author: Article['author']) => void;
-  onCategoryClick?: (category: Article['category']) => void;
-  onTagClick?: (tag: string) => void;
-  onBookmark: (article: Article) => void;
-  onShare: (article: Article, platform: string) => void;
-  formatDate: (date: Date) => string;
-  formatReadingTime: (minutes: number) => string;
 }
 
-const ArticleCard: React.FC<ArticleCardProps> = ({
-  article,
-  config,
-  isBookmarked,
-  onClick,
-  onAuthorClick,
-  onCategoryClick,
-  onTagClick,
-  onBookmark,
-  onShare,
-  formatDate,
-  formatReadingTime
-}) => {
-  const [shareMenuOpen, setShareMenuOpen] = useState(false);
-
+// مكون بطاقة المقال
+function ArticleCard({ 
+  article, 
+  onArticleClick, 
+  onCategoryClick, 
+  onAuthorClick 
+}: {
+  article: Article;
+  onArticleClick: (article: Article) => void;
+  onCategoryClick: (category: string) => void;
+  onAuthorClick: (author: string) => void;
+}) {
   return (
-    <article className="sabq-article-card">
-      {/* صورة المقال */}
-      {config.showImages && article.images.thumbnail && (
-        <div className="sabq-article-image">
-          <img
-            src={article.images.thumbnail}
-            alt={article.title}
-            loading="lazy"
-            onClick={(e) => onClick(article, e)}
-          />
-          
-          {article.featured && (
-            <span className="sabq-article-badge sabq-article-badge--featured">
-              مميز
-            </span>
-          )}
-          
-          {article.trending && (
-            <span className="sabq-article-badge sabq-article-badge--trending">
-              رائج
-            </span>
-          )}
-          
-          {article.premium && (
-            <span className="sabq-article-badge sabq-article-badge--premium">
-              مميز
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* محتوى المقال */}
-      <div className="sabq-article-content">
-        {/* التصنيف */}
-        {config.showCategory && (
-          <button
-            onClick={() => onCategoryClick?.(article.category)}
-            className="sabq-article-category"
-            style={{ backgroundColor: article.category.color }}
-          >
-            {article.category.name}
-          </button>
+    <article className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+      <div className="md:flex">
+        {article.image_url && (
+          <div className="md:w-1/3">
+            <img 
+              src={article.image_url} 
+              alt={article.title}
+              className="w-full h-48 md:h-full object-cover"
+            />
+          </div>
         )}
+        
+        <div className={`p-6 ${article.image_url ? 'md:w-2/3' : 'w-full'}`}>
+          {/* تصنيف المقال */}
+          <div className="mb-3">
+            <button
+              onClick={() => onCategoryClick(article.category)}
+              className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-blue-200 transition-colors"
+            >
+              {article.category}
+            </button>
+          </div>
 
-        {/* عنوان المقال */}
-        <h3 className="sabq-article-title">
-          <Link
-            href={`/articles/${article.slug}`}
-            onClick={(e) => {
-              e.preventDefault();
-              onClick(article);
-            }}
-          >
-            {article.title}
+          {/* عنوان المقال */}
+          <Link href={`/articles/${article.id}`}>
+            <h3 
+              className="text-xl font-bold text-gray-800 mb-3 hover:text-blue-600 transition-colors cursor-pointer line-clamp-2"
+              onClick={() => onArticleClick(article)}
+            >
+              {article.title}
+            </h3>
           </Link>
-        </h3>
 
-        {/* مقتطف المقال */}
-        {config.showExcerpt && (
-          <p className="sabq-article-excerpt">{article.excerpt}</p>
-        )}
+          {/* ملخص المقال */}
+          <p className="text-gray-600 mb-4 line-clamp-3">
+            {article.summary}
+          </p>
 
-        {/* العلامات */}
-        {config.showTags && article.tags.length > 0 && (
-          <div className="sabq-article-tags">
-            {article.tags.slice(0, 3).map((tag) => (
-              <button
-                key={tag}
-                onClick={() => onTagClick?.(tag)}
-                className="sabq-article-tag"
-              >
-                #{tag}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* بيانات وصفية */}
-        <div className="sabq-article-meta">
-          {/* المؤلف */}
-          {config.showAuthor && (
-            <button
-              onClick={() => onAuthorClick?.(article.author)}
-              className="sabq-article-author"
-            >
-              {article.author.avatar && (
-                <img
-                  src={article.author.avatar}
-                  alt={article.author.name}
-                  className="sabq-article-author-avatar"
-                />
-              )}
-              <span>{article.author.name}</span>
-            </button>
-          )}
-
-          {/* التاريخ */}
-          {config.showDate && (
-            <span className="sabq-article-date">
-              {formatDate(article.publishedAt)}
-            </span>
-          )}
-
-          {/* وقت القراءة */}
-          <span className="sabq-article-reading-time">
-            {formatReadingTime(article.readingTime)}
-          </span>
-        </div>
-
-        {/* إحصائيات وإجراءات */}
-        {config.showStats && (
-          <div className="sabq-article-stats">
-            <span className="sabq-article-stat">
-              👁️ {article.viewsCount.toLocaleString('ar')}
-            </span>
-            <span className="sabq-article-stat">
-              ❤️ {article.likesCount.toLocaleString('ar')}
-            </span>
-            <span className="sabq-article-stat">
-              💬 {article.commentsCount.toLocaleString('ar')}
-            </span>
-          </div>
-        )}
-
-        {/* إجراءات المقال */}
-        <div className="sabq-article-actions">
-          {config.enableBookmarks && (
-            <button
-              onClick={() => onBookmark(article)}
-              className={`sabq-article-action ${isBookmarked ? 'sabq-article-action--active' : ''}`}
-              aria-label="إضافة إلى الإشارات المرجعية"
-            >
-              🔖
-            </button>
-          )}
-
-          {config.enableSharing && (
-            <div className="sabq-article-share">
-              <button
-                onClick={() => setShareMenuOpen(!shareMenuOpen)}
-                className="sabq-article-action"
-                aria-label="مشاركة المقال"
-              >
-                📤
-              </button>
-
-              {shareMenuOpen && (
-                <div className="sabq-article-share-menu">
-                  <button onClick={() => onShare(article, 'twitter')}>
-                    تويتر
-                  </button>
-                  <button onClick={() => onShare(article, 'facebook')}>
-                    فيسبوك
-                  </button>
-                  <button onClick={() => onShare(article, 'linkedin')}>
-                    لينكدإن
-                  </button>
-                  <button onClick={() => onShare(article, 'whatsapp')}>
-                    واتساب
-                  </button>
-                  <button onClick={() => onShare(article, 'copy')}>
-                    نسخ الرابط
-                  </button>
-                </div>
+          {/* العلامات */}
+          {article.tags && article.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {article.tags.slice(0, 3).map((tag, index) => (
+                <span 
+                  key={index}
+                  className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm"
+                >
+                  #{tag}
+                </span>
+              ))}
+              {article.tags.length > 3 && (
+                <span className="text-gray-500 text-sm">
+                  +{article.tags.length - 3} أخرى
+                </span>
               )}
             </div>
           )}
+
+          {/* معلومات المقال */}
+          <div className="flex items-center justify-between text-sm text-gray-500">
+            <div className="flex items-center space-x-4 space-x-reverse">
+              <button
+                onClick={() => onAuthorClick(article.author.name)}
+                className="flex items-center space-x-2 space-x-reverse hover:text-blue-600 transition-colors"
+              >
+                {article.author.avatar && (
+                  <img 
+                    src={article.author.avatar} 
+                    alt={article.author.name}
+                    className="w-6 h-6 rounded-full"
+                  />
+                )}
+                <span>بواسطة {article.author.name}</span>
+              </button>
+              
+              <span>•</span>
+              
+              <time dateTime={article.published_at}>
+                {new Date(article.published_at).toLocaleDateString('ar-SA', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </time>
+            </div>
+
+            <div className="flex items-center space-x-4 space-x-reverse">
+              {article.views_count && (
+                <span className="flex items-center space-x-1 space-x-reverse">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <span>{article.views_count}</span>
+                </span>
+              )}
+              
+              {article.likes_count && (
+                <span className="flex items-center space-x-1 space-x-reverse">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  <span>{article.likes_count}</span>
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </article>
   );
-};
-
-// خطاف للمقالات
-export const useArticles = (config?: Partial<FeedConfig>) => {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchArticles = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      // في تطبيق حقيقي، سيتم جلب المقالات من API
-      const response = await fetch('/api/articles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config)
-      });
-
-      if (!response.ok) throw new Error('فشل في جلب المقالات');
-
-      const data = await response.json();
-      setArticles(data.articles || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'خطأ غير متوقع');
-    } finally {
-      setLoading(false);
-    }
-  }, [config]);
-
-  useEffect(() => {
-    fetchArticles();
-  }, [fetchArticles]);
-
-  return { articles, loading, error, refetch: fetchArticles };
-};
-
-// أنماط CSS أساسية
-export const ArticleFeedStyles = `
-.sabq-feed {
-  width: 100%;
 }
 
-.sabq-feed-grid {
-  display: grid;
-  gap: 2rem;
-}
+// مكون التحميل المؤقت
+function ArticleSkeletonLoader() {
+  return (
+    <div className="max-w-4xl mx-auto" dir="rtl">
+      <div className="mb-8">
+        <div className="h-8 bg-gray-200 rounded-md w-64 mb-2 animate-pulse"></div>
+        <div className="h-4 bg-gray-200 rounded-md w-96 animate-pulse"></div>
+      </div>
 
-.sabq-feed--grid .sabq-feed-grid {
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
-
-.sabq-feed--list .sabq-feed-grid {
-  grid-template-columns: 1fr;
-}
-
-.sabq-feed--cards .sabq-feed-grid {
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-}
-
-.sabq-article-card {
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.sabq-article-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.sabq-article-image {
-  position: relative;
-  aspect-ratio: 16/9;
-  overflow: hidden;
-}
-
-.sabq-article-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  cursor: pointer;
-}
-
-.sabq-article-content {
-  padding: 1.5rem;
-}
-
-.sabq-article-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0.5rem 0 1rem;
-  line-height: 1.4;
-}
-
-.sabq-article-title a {
-  text-decoration: none;
-  color: #1f2937;
-}
-
-.sabq-article-title a:hover {
-  color: #3b82f6;
-}
-
-.sabq-article-excerpt {
-  color: #6b7280;
-  line-height: 1.6;
-  margin-bottom: 1rem;
-}
-
-.sabq-article-meta {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.sabq-article-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.sabq-article-stats {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-`; 
+      <div className="grid gap-6">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="md:flex">
+              <div className="md:w-1/3">
+                <div className="w-full h-48 md:h-full bg-gray-200 animate-pulse"></div>
+              </div>
+              <div className="p-6 md:w-2/3">
+                <div className="h-6 bg-gray-200 rounded-md w-20 mb-3 animate-pulse"></div>
+                <div className="h-6 bg-gray-200 rounded-md w-full mb-3 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded-md w-full mb-2 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded-md w-3/4 mb-4 animate-pulse"></div>
+                <div className="flex space-x-2 space-x-reverse mb-4">
+                  <div className="h-6 bg-gray-200 rounded-full w-16 animate-pulse"></div>
+                  <div className="h-6 bg-gray-200 rounded-full w-16 animate-pulse"></div>
+                </div>
+                <div className="flex justify-between">
+                  <div className="h-4 bg-gray-200 rounded-md w-32 animate-pulse"></div>
+                  <div className="h-4 bg-gray-200 rounded-md w-24 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+} 

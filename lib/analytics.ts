@@ -828,3 +828,185 @@ export const AnalyticsUtils = {
     });
   }
 }; 
+
+// دوال تتبع الأحداث السلوكية - ترسل البيانات إلى API الخلفي
+
+export interface EventData {
+  [key: string]: any;
+  userId?: string;
+  sessionId?: string;
+  userAgent?: string;
+  timestamp?: string;
+  page?: string;
+  referrer?: string;
+}
+
+export interface TrackingEvent {
+  eventType: string;
+  eventData: EventData;
+  timestamp: string;
+  sessionId: string;
+  userId?: string;
+}
+
+// تتبع الأحداث العامة
+export async function trackEvent(eventType: string, eventData: EventData = {}) {
+  try {
+    const sessionId = getSessionId();
+    const userId = getCurrentUserId();
+    
+    const eventPayload: TrackingEvent = {
+      eventType,
+      eventData: {
+        ...eventData,
+        userId,
+        sessionId,
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString(),
+        page: window.location.pathname,
+        referrer: document.referrer,
+      },
+      timestamp: new Date().toISOString(),
+      sessionId,
+      userId,
+    };
+
+    await fetch("/api/analytics/events", {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "X-Session-ID": sessionId,
+      },
+      body: JSON.stringify(eventPayload),
+    });
+  } catch (e) {
+    // يمكن إرسال الأخطاء إلى Sentry أو تجاهلها إن كان الحدث غير حرج
+    console.error("Failed to track event", e);
+  }
+}
+
+// تتبع مشاهدة الصفحة
+export async function trackPageView(page: string, additionalData: EventData = {}) {
+  await trackEvent("page_view", {
+    page,
+    title: document.title,
+    ...additionalData,
+  });
+}
+
+// تتبع النقرات
+export async function trackClick(element: string, additionalData: EventData = {}) {
+  await trackEvent("click", {
+    element,
+    ...additionalData,
+  });
+}
+
+// تتبع التمرير
+export async function trackScroll(percentage: number, additionalData: EventData = {}) {
+  await trackEvent("scroll", {
+    percentage,
+    ...additionalData,
+  });
+}
+
+// تتبع قراءة المقال
+export async function trackArticleRead(articleId: string, readTime: number, additionalData: EventData = {}) {
+  await trackEvent("article_read", {
+    articleId,
+    readTime,
+    ...additionalData,
+  });
+}
+
+// تتبع البحث
+export async function trackSearch(query: string, resultsCount: number, additionalData: EventData = {}) {
+  await trackEvent("search", {
+    query,
+    resultsCount,
+    ...additionalData,
+  });
+}
+
+// تتبع التفاعل مع المحتوى
+export async function trackInteraction(interactionType: string, contentId: string, additionalData: EventData = {}) {
+  await trackEvent("interaction", {
+    interactionType,
+    contentId,
+    ...additionalData,
+  });
+}
+
+// الحصول على معرف الجلسة
+function getSessionId(): string {
+  let sessionId = localStorage.getItem("sabq_session_id");
+  if (!sessionId) {
+    sessionId = generateSessionId();
+    localStorage.setItem("sabq_session_id", sessionId);
+  }
+  return sessionId;
+}
+
+// الحصول على معرف المستخدم الحالي
+function getCurrentUserId(): string | undefined {
+  try {
+    const userStr = localStorage.getItem("sabq_user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      return user.id;
+    }
+  } catch (e) {
+    console.error("Error getting user ID", e);
+  }
+  return undefined;
+}
+
+// توليد معرف جلسة فريد
+function generateSessionId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+}
+
+// Hook لتتبع مشاهدة الصفحة تلقائياً
+export function usePageTracking() {
+  if (typeof window !== "undefined") {
+    trackPageView(window.location.pathname);
+  }
+}
+
+// Hook لتتبع التمرير
+export function useScrollTracking() {
+  if (typeof window !== "undefined") {
+    let scrollPercentage = 0;
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const currentPercentage = Math.round((scrollTop / scrollHeight) * 100);
+      
+      // تتبع كل 25%
+      if (currentPercentage >= scrollPercentage + 25) {
+        scrollPercentage = currentPercentage;
+        trackScroll(scrollPercentage);
+      }
+    };
+    
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }
+}
+
+// أمثلة استخدام:
+/*
+import { useEffect } from "react";
+import { trackEvent, trackPageView, usePageTracking } from "../lib/analytics";
+
+// في مكون React
+useEffect(() => {
+  usePageTracking();
+}, []);
+
+// تتبع حدث مخصص
+trackEvent("button_click", { buttonId: "subscribe", section: "header" });
+
+// تتبع مشاهدة مقال
+trackEvent("article_view", { articleId: "123", category: "tech" });
+*/ 
