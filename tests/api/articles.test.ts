@@ -1,626 +1,370 @@
 /**
- * اختبارات API المقالات - Sabq AI CMS
- * 
- * تاريخ الإنشاء: ${new Date().toISOString().split('T')[0]}
- * المطور: Ali Alhazmi
- * الغرض: اختبار جميع وظائف API المقالات
+ * اختبارات API المقالات
+ * Articles API Tests
+ * @version 2.1.0
+ * @author Sabq AI Team
  */
 
-import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from '@jest/globals';
-import { NextRequest } from 'next/server';
-import { createMocks } from 'node-mocks-http';
-import { GET, POST, PUT, DELETE } from '@/app/api/articles/[id]/route';
-import { prismaMock } from '@/lib/prisma-mock';
-import { createTestUser, createTestArticle, createTestSection } from '@/tests/utils/test-helpers';
+import request from "supertest";
+import { PrismaClient } from "@prisma/client";
+import app from "../../api/index";
+import { generateTokens } from "../../api/utils/auth";
 
-// موك البيانات الثابتة
-const mockUser = {
-  id: 'user-123',
-  email: 'test@example.com',
-  name: 'Test User',
-  role: { name: 'editor', permissions: ['read', 'write', 'publish'] }
-};
+describe("Articles API", () => {
+  let prisma: PrismaClient;
+  let authToken: string;
+  let testUserId: string;
+  let testArticleId: string;
+  let testCategoryId: string;
 
-const mockSection = {
-  id: 'section-123',
-  name: 'تقنية',
-  slug: 'tech',
-  color: '#3B82F6',
-  is_active: true
-};
-
-const mockArticle = {
-  id: 'article-123',
-  title: 'مقال تجريبي',
-  content: 'محتوى المقال التجريبي',
-  excerpt: 'ملخص المقال',
-  slug: 'test-article',
-  author_id: 'user-123',
-  section_id: 'section-123',
-  status: 'published',
-  views_count: 0,
-  is_featured: false,
-  created_at: new Date(),
-  updated_at: new Date(),
-  published_at: new Date()
-};
-
-describe('API اختبارات المقالات', () => {
-  
   beforeAll(async () => {
-    // إعداد قاعدة البيانات للاختبار
-    console.log('🔧 إعداد اختبارات API المقالات...');
+    prisma = new PrismaClient();
+    
+    // إنشاء مستخدم اختبار
+    const testUser = await prisma.user.create({
+      data: {
+        name: "Test User",
+        email: "test@example.com",
+        hashedPassword: "hashedpassword",
+        status: "ACTIVE",
+      },
+    });
+    testUserId = testUser.id;
+
+    // إنشاء تصنيف اختبار
+    const testCategory = await prisma.category.create({
+      data: {
+        name: "تقنية",
+        slug: "technology",
+        description: "تصنيف التقنية",
+      },
+    });
+    testCategoryId = testCategory.id;
+
+    // إنشاء دور للمستخدم
+    const userRole = await prisma.role.create({
+      data: {
+        name: "editor",
+        description: "محرر",
+        permissions: ["create:article", "update:article", "delete:article"],
+      },
+    });
+
+    await prisma.userRole.create({
+      data: {
+        userId: testUserId,
+        roleId: userRole.id,
+      },
+    });
+
+    // إنشاء رمز مصادقة
+    const tokens = generateTokens(testUserId);
+    authToken = tokens.accessToken;
   });
 
   afterAll(async () => {
-    // تنظيف قاعدة البيانات
-    console.log('🧹 تنظيف اختبارات API المقالات...');
+    // تنظيف بيانات الاختبار
+    await prisma.userRole.deleteMany({
+      where: { userId: testUserId },
+    });
+    await prisma.role.deleteMany({
+      where: { name: "editor" },
+    });
+    await prisma.article.deleteMany({
+      where: { authorId: testUserId },
+    });
+    await prisma.user.deleteMany({
+      where: { id: testUserId },
+    });
+    await prisma.category.deleteMany({
+      where: { id: testCategoryId },
+    });
+    await prisma.$disconnect();
   });
 
-  beforeEach(() => {
-    // إعادة تعيين جميع الموكات
-    jest.clearAllMocks();
+  describe("GET /api/articles", () => {
+    it("يجب أن يعيد قائمة المقالات", async () => {
+      const response = await request(app)
+        .get("/api/articles")
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(Array.isArray(response.body.articles)).toBe(true);
+      expect(response.body.pagination).toBeDefined();
+    });
+
+    it("يجب أن يدعم البحث والفلترة", async () => {
+      const response = await request(app)
+        .get("/api/articles?search=test&category=" + testCategoryId)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.articles).toBeDefined();
+    });
+
+    it("يجب أن يدعم الترقيم", async () => {
+      const response = await request(app)
+        .get("/api/articles?page=1&limit=5")
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.pagination.page).toBe(1);
+      expect(response.body.pagination.limit).toBe(5);
+    });
   });
 
-  describe('GET /api/articles/[id] - جلب مقال واحد', () => {
-    
-    it('✅ يجب أن يرجع المقال بنجاح', async () => {
-      // إعداد الموك
-      prismaMock.article.findUnique.mockResolvedValue({
-        ...mockArticle,
-        author: mockUser,
-        section: mockSection,
-        tags: []
-      });
-
-      // إنشاء الطلب
-      const request = new NextRequest(
-        'http://localhost:3000/api/articles/article-123',
-        { method: 'GET' }
-      );
-
-      // تنفيذ الطلب
-      const response = await GET(request, { params: { id: 'article-123' } });
-      const data = await response.json();
-
-      // التحقق من النتيجة
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
-      expect(data.article).toBeDefined();
-      expect(data.article.id).toBe('article-123');
-      expect(data.article.title).toBe('مقال تجريبي');
-    });
-
-    it('❌ يجب أن يرجع خطأ 404 عند عدم وجود المقال', async () => {
-      // إعداد الموك
-      prismaMock.article.findUnique.mockResolvedValue(null);
-
-      // إنشاء الطلب
-      const request = new NextRequest(
-        'http://localhost:3000/api/articles/nonexistent',
-        { method: 'GET' }
-      );
-
-      // تنفيذ الطلب
-      const response = await GET(request, { params: { id: 'nonexistent' } });
-      const data = await response.json();
-
-      // التحقق من النتيجة
-      expect(response.status).toBe(404);
-      expect(data.success).toBe(false);
-      expect(data.error).toBe('المقال غير موجود');
-    });
-
-    it('📈 يجب أن يزيد عدد المشاهدات', async () => {
-      // إعداد الموك
-      prismaMock.article.findUnique.mockResolvedValue({
-        ...mockArticle,
-        author: mockUser,
-        section: mockSection,
-        tags: []
-      });
-      
-      prismaMock.article.update.mockResolvedValue({
-        ...mockArticle,
-        views_count: 1
-      });
-
-      // إنشاء الطلب
-      const request = new NextRequest(
-        'http://localhost:3000/api/articles/article-123',
-        { method: 'GET' }
-      );
-
-      // تنفيذ الطلب
-      const response = await GET(request, { params: { id: 'article-123' } });
-
-      // التحقق من زيادة المشاهدات
-      expect(prismaMock.article.update).toHaveBeenCalledWith({
-        where: { id: 'article-123' },
-        data: { views_count: { increment: 1 } }
-      });
-    });
-
-  });
-
-  describe('POST /api/articles - إنشاء مقال جديد', () => {
-    
-    it('✅ يجب أن ينشئ مقال جديد بنجاح', async () => {
-      const newArticleData = {
-        title: 'مقال جديد',
-        content: 'محتوى المقال الجديد',
-        excerpt: 'ملخص المقال الجديد',
-        section_id: 'section-123',
-        tags: ['تقنية', 'ذكاء اصطناعي'],
-        status: 'draft'
-      };
-
-      // إعداد الموك
-      prismaMock.article.create.mockResolvedValue({
-        ...mockArticle,
-        ...newArticleData,
-        id: 'new-article-123'
-      });
-
-      // إنشاء الطلب
-      const request = new NextRequest(
-        'http://localhost:3000/api/articles',
-        {
-          method: 'POST',
-          body: JSON.stringify(newArticleData),
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-
-      // تنفيذ الطلب
-      const response = await POST(request);
-      const data = await response.json();
-
-      // التحقق من النتيجة
-      expect(response.status).toBe(201);
-      expect(data.success).toBe(true);
-      expect(data.article).toBeDefined();
-      expect(data.article.title).toBe('مقال جديد');
-    });
-
-    it('❌ يجب أن يرجع خطأ عند عدم وجود العنوان', async () => {
-      const invalidData = {
-        content: 'محتوى بدون عنوان',
-        section_id: 'section-123'
-      };
-
-      // إنشاء الطلب
-      const request = new NextRequest(
-        'http://localhost:3000/api/articles',
-        {
-          method: 'POST',
-          body: JSON.stringify(invalidData),
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-
-      // تنفيذ الطلب
-      const response = await POST(request);
-      const data = await response.json();
-
-      // التحقق من النتيجة
-      expect(response.status).toBe(400);
-      expect(data.success).toBe(false);
-      expect(data.error).toContain('العنوان مطلوب');
-    });
-
-    it('🔗 يجب أن ينشئ slug تلقائياً', async () => {
+  describe("POST /api/articles", () => {
+    it("يجب أن ينشئ مقالاً جديداً", async () => {
       const articleData = {
-        title: 'مقال تجريبي للسلاج',
-        content: 'محتوى المقال',
-        section_id: 'section-123'
+        title: "مقال اختبار",
+        summary: "ملخص المقال",
+        content: "محتوى المقال التفصيلي",
+        categoryId: testCategoryId,
+        tags: ["اختبار", "تقنية"],
+        metaTitle: "مقال اختبار",
+        metaDescription: "وصف المقال",
+        status: "draft",
       };
 
-      // إعداد الموك
-      prismaMock.article.create.mockResolvedValue({
-        ...mockArticle,
-        ...articleData,
-        slug: 'مقال-تجريبي-للسلاج'
-      });
+      const response = await request(app)
+        .post("/api/articles")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send(articleData)
+        .expect(201);
 
-      // إنشاء الطلب
-      const request = new NextRequest(
-        'http://localhost:3000/api/articles',
-        {
-          method: 'POST',
-          body: JSON.stringify(articleData),
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-
-      // تنفيذ الطلب
-      const response = await POST(request);
-      const data = await response.json();
-
-      // التحقق من إنشاء الـ slug
-      expect(data.article.slug).toBeDefined();
-      expect(data.article.slug).toBe('مقال-تجريبي-للسلاج');
+      expect(response.body.success).toBe(true);
+      expect(response.body.article.title).toBe(articleData.title);
+      expect(response.body.article.slug).toBeDefined();
+      
+      testArticleId = response.body.article.id;
     });
 
+    it("يجب أن يرفض إنشاء مقال بدون مصادقة", async () => {
+      const articleData = {
+        title: "مقال اختبار",
+        summary: "ملخص المقال",
+        content: "محتوى المقال",
+        categoryId: testCategoryId,
+      };
+
+      await request(app)
+        .post("/api/articles")
+        .send(articleData)
+        .expect(401);
+    });
+
+    it("يجب أن يرفض بيانات غير صالحة", async () => {
+      const invalidData = {
+        title: "", // عنوان فارغ
+        summary: "ملخص المقال",
+        content: "محتوى المقال",
+        categoryId: "invalid-uuid", // معرف غير صالح
+      };
+
+      await request(app)
+        .post("/api/articles")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send(invalidData)
+        .expect(400);
+    });
   });
 
-  describe('PUT /api/articles/[id] - تحديث مقال', () => {
-    
-    it('✅ يجب أن يحدث المقال بنجاح', async () => {
+  describe("GET /api/articles/:id", () => {
+    it("يجب أن يعيد مقالاً واحداً", async () => {
+      const response = await request(app)
+        .get(`/api/articles/${testArticleId}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.article.id).toBe(testArticleId);
+      expect(response.body.article.author).toBeDefined();
+      expect(response.body.article.category).toBeDefined();
+    });
+
+    it("يجب أن يزيد عدد المشاهدات", async () => {
+      const response1 = await request(app)
+        .get(`/api/articles/${testArticleId}`)
+        .expect(200);
+
+      const initialViews = response1.body.article.viewsCount;
+
+      await request(app)
+        .get(`/api/articles/${testArticleId}`)
+        .expect(200);
+
+      const response2 = await request(app)
+        .get(`/api/articles/${testArticleId}`)
+        .expect(200);
+
+      expect(response2.body.article.viewsCount).toBe(initialViews + 1);
+    });
+
+    it("يجب أن يرجع 404 للمقال غير الموجود", async () => {
+      await request(app)
+        .get("/api/articles/00000000-0000-0000-0000-000000000000")
+        .expect(404);
+    });
+  });
+
+  describe("PUT /api/articles/:id", () => {
+    it("يجب أن يحدث المقال", async () => {
       const updateData = {
-        title: 'مقال محدث',
-        content: 'محتوى محدث',
-        status: 'published'
+        title: "مقال اختبار محدث",
+        summary: "ملخص محدث",
+        content: "محتوى محدث",
       };
 
-      // إعداد الموك
-      prismaMock.article.findUnique.mockResolvedValue(mockArticle);
-      prismaMock.article.update.mockResolvedValue({
-        ...mockArticle,
-        ...updateData
-      });
+      const response = await request(app)
+        .put(`/api/articles/${testArticleId}`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send(updateData)
+        .expect(200);
 
-      // إنشاء الطلب
-      const request = new NextRequest(
-        'http://localhost:3000/api/articles/article-123',
-        {
-          method: 'PUT',
-          body: JSON.stringify(updateData),
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-
-      // تنفيذ الطلب
-      const response = await PUT(request, { params: { id: 'article-123' } });
-      const data = await response.json();
-
-      // التحقق من النتيجة
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
-      expect(data.article.title).toBe('مقال محدث');
+      expect(response.body.success).toBe(true);
+      expect(response.body.article.title).toBe(updateData.title);
+      expect(response.body.article.slug).toContain("محدث");
     });
 
-    it('❌ يجب أن يرجع خطأ 404 عند تحديث مقال غير موجود', async () => {
-      // إعداد الموك
-      prismaMock.article.findUnique.mockResolvedValue(null);
-
-      // إنشاء الطلب
-      const request = new NextRequest(
-        'http://localhost:3000/api/articles/nonexistent',
-        {
-          method: 'PUT',
-          body: JSON.stringify({ title: 'عنوان جديد' }),
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-
-      // تنفيذ الطلب
-      const response = await PUT(request, { params: { id: 'nonexistent' } });
-      const data = await response.json();
-
-      // التحقق من النتيجة
-      expect(response.status).toBe(404);
-      expect(data.success).toBe(false);
-      expect(data.error).toBe('المقال غير موجود');
-    });
-
-    it('📅 يجب أن يحدث تاريخ النشر عند تغيير الحالة لمنشور', async () => {
-      const updateData = {
-        status: 'published'
-      };
-
-      // إعداد الموك
-      prismaMock.article.findUnique.mockResolvedValue({
-        ...mockArticle,
-        status: 'draft',
-        published_at: null
-      });
-      
-      prismaMock.article.update.mockResolvedValue({
-        ...mockArticle,
-        status: 'published',
-        published_at: new Date()
+    it("يجب أن يرفض تحديث مقال غير مملوك", async () => {
+      // إنشاء مستخدم آخر
+      const otherUser = await prisma.user.create({
+        data: {
+          name: "Other User",
+          email: "other@example.com",
+          hashedPassword: "hashedpassword",
+          status: "ACTIVE",
+        },
       });
 
-      // إنشاء الطلب
-      const request = new NextRequest(
-        'http://localhost:3000/api/articles/article-123',
-        {
-          method: 'PUT',
-          body: JSON.stringify(updateData),
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
+      const otherTokens = generateTokens(otherUser.id);
 
-      // تنفيذ الطلب
-      const response = await PUT(request, { params: { id: 'article-123' } });
-      const data = await response.json();
+      await request(app)
+        .put(`/api/articles/${testArticleId}`)
+        .set("Authorization", `Bearer ${otherTokens.accessToken}`)
+        .send({ title: "محاولة تحديث" })
+        .expect(403);
 
-      // التحقق من تحديث تاريخ النشر
-      expect(data.article.published_at).toBeDefined();
-      expect(data.article.status).toBe('published');
+      // تنظيف
+      await prisma.user.delete({ where: { id: otherUser.id } });
     });
-
   });
 
-  describe('DELETE /api/articles/[id] - حذف مقال', () => {
-    
-    it('✅ يجب أن يحذف المقال بنجاح (حذف ناعم)', async () => {
-      // إعداد الموك
-      prismaMock.article.findUnique.mockResolvedValue(mockArticle);
-      prismaMock.article.update.mockResolvedValue({
-        ...mockArticle,
-        status: 'deleted'
-      });
+  describe("PATCH /api/articles/:id/publish", () => {
+    it("يجب أن ينشر المقال", async () => {
+      const response = await request(app)
+        .patch(`/api/articles/${testArticleId}/publish`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({ publish: true })
+        .expect(200);
 
-      // إنشاء الطلب
-      const request = new NextRequest(
-        'http://localhost:3000/api/articles/article-123',
-        { method: 'DELETE' }
-      );
-
-      // تنفيذ الطلب
-      const response = await DELETE(request, { params: { id: 'article-123' } });
-      const data = await response.json();
-
-      // التحقق من النتيجة
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
-      expect(data.message).toBe('تم حذف المقال بنجاح');
-      
-      // التحقق من الحذف الناعم
-      expect(prismaMock.article.update).toHaveBeenCalledWith({
-        where: { id: 'article-123' },
-        data: { status: 'deleted' }
-      });
+      expect(response.body.success).toBe(true);
+      expect(response.body.article.status).toBe("published");
+      expect(response.body.article.publishedAt).toBeDefined();
     });
 
-    it('❌ يجب أن يرجع خطأ 404 عند حذف مقال غير موجود', async () => {
-      // إعداد الموك
-      prismaMock.article.findUnique.mockResolvedValue(null);
+    it("يجب أن يلغي نشر المقال", async () => {
+      const response = await request(app)
+        .patch(`/api/articles/${testArticleId}/publish`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({ publish: false })
+        .expect(200);
 
-      // إنشاء الطلب
-      const request = new NextRequest(
-        'http://localhost:3000/api/articles/nonexistent',
-        { method: 'DELETE' }
-      );
-
-      // تنفيذ الطلب
-      const response = await DELETE(request, { params: { id: 'nonexistent' } });
-      const data = await response.json();
-
-      // التحقق من النتيجة
-      expect(response.status).toBe(404);
-      expect(data.success).toBe(false);
-      expect(data.error).toBe('المقال غير موجود');
+      expect(response.body.success).toBe(true);
+      expect(response.body.article.status).toBe("draft");
     });
-
   });
 
-  describe('🔍 اختبارات البحث والفلترة', () => {
-    
-    it('✅ يجب أن يفلتر المقالات حسب الحالة', async () => {
-      // إعداد الموك
-      prismaMock.article.findMany.mockResolvedValue([
-        { ...mockArticle, status: 'published' }
-      ]);
+  describe("POST /api/articles/:id/like", () => {
+    it("يجب أن يضيف إعجاب", async () => {
+      const response = await request(app)
+        .post(`/api/articles/${testArticleId}/like`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .expect(200);
 
-      // إنشاء الطلب
-      const request = new NextRequest(
-        'http://localhost:3000/api/articles?status=published',
-        { method: 'GET' }
-      );
-
-      // تنفيذ الطلب
-      const response = await GET(request);
-      const data = await response.json();
-
-      // التحقق من النتيجة
-      expect(response.status).toBe(200);
-      expect(data.articles).toHaveLength(1);
-      expect(data.articles[0].status).toBe('published');
+      expect(response.body.success).toBe(true);
+      expect(response.body.liked).toBe(true);
     });
 
-    it('✅ يجب أن يفلتر المقالات حسب القسم', async () => {
-      // إعداد الموك
-      prismaMock.article.findMany.mockResolvedValue([
-        { ...mockArticle, section_id: 'section-123' }
-      ]);
+    it("يجب أن يزيل الإعجاب عند الضغط مرة ثانية", async () => {
+      const response = await request(app)
+        .post(`/api/articles/${testArticleId}/like`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .expect(200);
 
-      // إنشاء الطلب
-      const request = new NextRequest(
-        'http://localhost:3000/api/articles?section_id=section-123',
-        { method: 'GET' }
-      );
-
-      // تنفيذ الطلب
-      const response = await GET(request);
-      const data = await response.json();
-
-      // التحقق من النتيجة
-      expect(response.status).toBe(200);
-      expect(data.articles[0].section_id).toBe('section-123');
+      expect(response.body.success).toBe(true);
+      expect(response.body.liked).toBe(false);
     });
-
   });
 
-  describe('🏷️ اختبارات الوسوم', () => {
-    
-    it('✅ يجب أن يحفظ الوسوم مع المقال', async () => {
-      const articleDataWithTags = {
-        title: 'مقال مع وسوم',
-        content: 'محتوى المقال',
-        section_id: 'section-123',
-        tags: ['تقنية', 'ذكاء اصطناعي', 'برمجة']
-      };
+  describe("DELETE /api/articles/:id", () => {
+    it("يجب أن يحذف المقال", async () => {
+      const response = await request(app)
+        .delete(`/api/articles/${testArticleId}`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .expect(200);
 
-      // إعداد الموك
-      prismaMock.article.create.mockResolvedValue({
-        ...mockArticle,
-        ...articleDataWithTags
-      });
-
-      // إنشاء الطلب
-      const request = new NextRequest(
-        'http://localhost:3000/api/articles',
-        {
-          method: 'POST',
-          body: JSON.stringify(articleDataWithTags),
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-
-      // تنفيذ الطلب
-      const response = await POST(request);
-      const data = await response.json();
-
-      // التحقق من حفظ الوسوم
-      expect(response.status).toBe(201);
-      expect(data.success).toBe(true);
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain("تم حذف المقال بنجاح");
     });
 
+    it("يجب أن يرجع 404 عند محاولة حذف مقال محذوف", async () => {
+      await request(app)
+        .delete(`/api/articles/${testArticleId}`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .expect(404);
+    });
   });
 
-  describe('🔒 اختبارات الأمان', () => {
-    
-    it('❌ يجب أن يرفض الطلبات بدون مصادقة', async () => {
-      // إنشاء طلب بدون مصادقة
-      const request = new NextRequest(
-        'http://localhost:3000/api/articles',
-        {
-          method: 'POST',
-          body: JSON.stringify({ title: 'مقال جديد' }),
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
+  describe("Integration Tests", () => {
+    it("يجب أن يعمل التدفق الكامل للمقال", async () => {
+      // إنشاء مقال
+      const createResponse = await request(app)
+        .post("/api/articles")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          title: "مقال تدفق كامل",
+          summary: "ملخص المقال",
+          content: "محتوى المقال",
+          categoryId: testCategoryId,
+          tags: ["تدفق", "اختبار"],
+        })
+        .expect(201);
 
-      // تنفيذ الطلب
-      const response = await POST(request);
-      const data = await response.json();
+      const articleId = createResponse.body.article.id;
 
-      // التحقق من رفض الطلب
-      expect(response.status).toBe(401);
-      expect(data.success).toBe(false);
-      expect(data.error).toBe('مطلوب تسجيل الدخول');
+      // قراءة المقال
+      await request(app)
+        .get(`/api/articles/${articleId}`)
+        .expect(200);
+
+      // تحديث المقال
+      await request(app)
+        .put(`/api/articles/${articleId}`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          title: "مقال تدفق كامل محدث",
+          content: "محتوى محدث",
+        })
+        .expect(200);
+
+      // نشر المقال
+      await request(app)
+        .patch(`/api/articles/${articleId}/publish`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({ publish: true })
+        .expect(200);
+
+      // إضافة إعجاب
+      await request(app)
+        .post(`/api/articles/${articleId}/like`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .expect(200);
+
+      // حذف المقال
+      await request(app)
+        .delete(`/api/articles/${articleId}`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .expect(200);
     });
-
-    it('❌ يجب أن يرفض تحديث مقال من غير المؤلف', async () => {
-      // إعداد مقال لمؤلف آخر
-      const otherAuthorArticle = {
-        ...mockArticle,
-        author_id: 'other-user-123'
-      };
-
-      // إعداد الموك
-      prismaMock.article.findUnique.mockResolvedValue(otherAuthorArticle);
-
-      // إنشاء الطلب
-      const request = new NextRequest(
-        'http://localhost:3000/api/articles/article-123',
-        {
-          method: 'PUT',
-          body: JSON.stringify({ title: 'تحديث غير مصرح' }),
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-
-      // تنفيذ الطلب
-      const response = await PUT(request, { params: { id: 'article-123' } });
-      const data = await response.json();
-
-      // التحقق من رفض التحديث
-      expect(response.status).toBe(403);
-      expect(data.success).toBe(false);
-      expect(data.error).toBe('غير مصرح لك بتحديث هذا المقال');
-    });
-
   });
-
-  describe('📊 اختبارات الإحصائيات', () => {
-    
-    it('📈 يجب أن يسجل إحصائيات المشاهدة', async () => {
-      // إعداد الموك
-      prismaMock.article.findUnique.mockResolvedValue({
-        ...mockArticle,
-        author: mockUser,
-        section: mockSection,
-        tags: []
-      });
-
-      // إنشاء الطلب
-      const request = new NextRequest(
-        'http://localhost:3000/api/articles/article-123',
-        {
-          method: 'GET',
-          headers: {
-            'x-forwarded-for': '127.0.0.1',
-            'user-agent': 'Mozilla/5.0 Test Browser'
-          }
-        }
-      );
-
-      // تنفيذ الطلب
-      const response = await GET(request, { params: { id: 'article-123' } });
-
-      // التحقق من تسجيل الإحصائيات
-      expect(response.status).toBe(200);
-      // يجب أن يتم تسجيل الحدث في جدول analytics_events
-    });
-
-  });
-
-  describe('🎯 اختبارات الأداء', () => {
-    
-    it('⚡ يجب أن يستجيب بسرعة', async () => {
-      // إعداد الموك
-      prismaMock.article.findUnique.mockResolvedValue({
-        ...mockArticle,
-        author: mockUser,
-        section: mockSection,
-        tags: []
-      });
-
-      // قياس الوقت
-      const startTime = Date.now();
-      
-      // إنشاء الطلب
-      const request = new NextRequest(
-        'http://localhost:3000/api/articles/article-123',
-        { method: 'GET' }
-      );
-
-      // تنفيذ الطلب
-      const response = await GET(request, { params: { id: 'article-123' } });
-      
-      const endTime = Date.now();
-      const responseTime = endTime - startTime;
-
-      // التحقق من الأداء
-      expect(response.status).toBe(200);
-      expect(responseTime).toBeLessThan(1000); // أقل من ثانية واحدة
-    });
-
-  });
-
-});
-
-/**
- * مساعدات الاختبار
- */
-export const createTestArticle = (overrides = {}) => {
-  return {
-    ...mockArticle,
-    ...overrides
-  };
-};
-
-export const createTestRequest = (method: string, url: string, body?: any) => {
-  const options: RequestInit = { method };
-  
-  if (body) {
-    options.body = JSON.stringify(body);
-    options.headers = { 'Content-Type': 'application/json' };
-  }
-  
-  return new NextRequest(url, options);
-}; 
+}); 
