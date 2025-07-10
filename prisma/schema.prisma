@@ -37,6 +37,14 @@ model User {
   integrationsChangeLogs IntegrationChangeLog[]
   cdnProvidersChangeLogs CDNProviderIntegrationChangeLog[]
   
+  // New relations
+  paymentProviderChangeLogs         PaymentProviderChangeLog[]
+  socialMediaProviderChangeLogs     SocialMediaProviderChangeLog[]
+  notificationProviderChangeLogs    NotificationProviderChangeLog[]
+  analyticsProviderChangeLogs       AnalyticsProviderChangeLog[]
+  notificationMessages              NotificationMessage[]
+  analyticsEvents                   AnalyticsEvent[]
+  
   @@map("users")
 }
 
@@ -112,6 +120,10 @@ model Article {
   articleComments        ArticleComment[]
   articleAnalyticsEvents ArticleAnalyticsEvent[]
   recommendations        Recommendation[]
+  
+  // New relations
+  socialMediaPosts                  SocialMediaPost[]
+  analyticsEvents                   AnalyticsEvent[]
   
   @@map("articles")
 }
@@ -436,4 +448,313 @@ enum NotificationStatus {
   SENT
   FAILED
   DELIVERED
+} 
+
+// Payment Integrations
+model PaymentProvider {
+  id                String                         @id @default(cuid())
+  name              String                         @unique
+  type              PaymentProviderType
+  config            Json
+  status            IntegrationStatus              @default(ACTIVE)
+  isDefault         Boolean                        @default(false)
+  createdAt         DateTime                       @default(now()) @map("created_at")
+  updatedAt         DateTime                       @updatedAt @map("updated_at")
+  
+  // Relations
+  transactions      PaymentTransaction[]
+  changeLogs        PaymentProviderChangeLog[]
+  
+  @@map("payment_providers")
+}
+
+model PaymentTransaction {
+  id                String                         @id @default(cuid())
+  providerId        String                         @map("provider_id")
+  externalId        String                         @map("external_id")
+  amount            Float
+  currency          String
+  status            PaymentStatus
+  paymentMethod     String                         @map("payment_method")
+  metadata          Json?
+  createdAt         DateTime                       @default(now()) @map("created_at")
+  updatedAt         DateTime                       @updatedAt @map("updated_at")
+  
+  // Relations
+  provider          PaymentProvider                @relation(fields: [providerId], references: [id])
+  
+  @@map("payment_transactions")
+}
+
+model PaymentProviderChangeLog {
+  id                String                         @id @default(cuid())
+  providerId        String                         @map("provider_id")
+  changedBy         String                         @map("changed_by")
+  changeType        String                         @map("change_type")
+  oldValue          Json?                          @map("old_value")
+  newValue          Json?                          @map("new_value")
+  summary           String?
+  createdAt         DateTime                       @default(now()) @map("created_at")
+  
+  // Relations
+  provider          PaymentProvider                @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  user              User                           @relation(fields: [changedBy], references: [id], onDelete: Cascade)
+  
+  @@map("payment_providers_change_log")
+}
+
+// Social Media Integrations
+model SocialMediaProvider {
+  id                String                         @id @default(cuid())
+  name              String                         @unique
+  type              SocialMediaType
+  config            Json
+  status            IntegrationStatus              @default(ACTIVE)
+  createdAt         DateTime                       @default(now()) @map("created_at")
+  updatedAt         DateTime                       @updatedAt @map("updated_at")
+  
+  // Relations
+  posts             SocialMediaPost[]
+  changeLogs        SocialMediaProviderChangeLog[]
+  
+  @@map("social_media_providers")
+}
+
+model SocialMediaPost {
+  id                String                         @id @default(cuid())
+  providerId        String                         @map("provider_id")
+  externalId        String?                        @map("external_id")
+  articleId         String?                        @map("article_id")
+  content           String
+  status            SocialMediaPostStatus
+  scheduledAt       DateTime?                      @map("scheduled_at")
+  publishedAt       DateTime?                      @map("published_at")
+  metadata          Json?
+  createdAt         DateTime                       @default(now()) @map("created_at")
+  updatedAt         DateTime                       @updatedAt @map("updated_at")
+  
+  // Relations
+  provider          SocialMediaProvider            @relation(fields: [providerId], references: [id])
+  article           Article?                       @relation(fields: [articleId], references: [id])
+  
+  @@map("social_media_posts")
+}
+
+model SocialMediaProviderChangeLog {
+  id                String                         @id @default(cuid())
+  providerId        String                         @map("provider_id")
+  changedBy         String                         @map("changed_by")
+  changeType        String                         @map("change_type")
+  oldValue          Json?                          @map("old_value")
+  newValue          Json?                          @map("new_value")
+  summary           String?
+  createdAt         DateTime                       @default(now()) @map("created_at")
+  
+  // Relations
+  provider          SocialMediaProvider            @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  user              User                           @relation(fields: [changedBy], references: [id], onDelete: Cascade)
+  
+  @@map("social_media_providers_change_log")
+}
+
+// Notification Integrations
+model NotificationProvider {
+  id                String                         @id @default(cuid())
+  name              String                         @unique
+  type              NotificationType
+  config            Json
+  status            IntegrationStatus              @default(ACTIVE)
+  isDefault         Boolean                        @default(false)
+  createdAt         DateTime                       @default(now()) @map("created_at")
+  updatedAt         DateTime                       @updatedAt @map("updated_at")
+  
+  // Relations
+  notifications     NotificationMessage[]
+  changeLogs        NotificationProviderChangeLog[]
+  
+  @@map("notification_providers")
+}
+
+model NotificationMessage {
+  id                String                         @id @default(cuid())
+  providerId        String                         @map("provider_id")
+  recipientId       String?                        @map("recipient_id")
+  title             String
+  content           String
+  type              NotificationMessageType
+  status            NotificationStatus
+  scheduledAt       DateTime?                      @map("scheduled_at")
+  sentAt            DateTime?                      @map("sent_at")
+  metadata          Json?
+  createdAt         DateTime                       @default(now()) @map("created_at")
+  updatedAt         DateTime                       @updatedAt @map("updated_at")
+  
+  // Relations
+  provider          NotificationProvider           @relation(fields: [providerId], references: [id])
+  recipient         User?                          @relation(fields: [recipientId], references: [id])
+  
+  @@map("notification_messages")
+}
+
+model NotificationProviderChangeLog {
+  id                String                         @id @default(cuid())
+  providerId        String                         @map("provider_id")
+  changedBy         String                         @map("changed_by")
+  changeType        String                         @map("change_type")
+  oldValue          Json?                          @map("old_value")
+  newValue          Json?                          @map("new_value")
+  summary           String?
+  createdAt         DateTime                       @default(now()) @map("created_at")
+  
+  // Relations
+  provider          NotificationProvider           @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  user              User                           @relation(fields: [changedBy], references: [id], onDelete: Cascade)
+  
+  @@map("notification_providers_change_log")
+}
+
+// Analytics Integrations
+model AnalyticsProvider {
+  id                String                         @id @default(cuid())
+  name              String                         @unique
+  type              AnalyticsType
+  config            Json
+  status            IntegrationStatus              @default(ACTIVE)
+  createdAt         DateTime                       @default(now()) @map("created_at")
+  updatedAt         DateTime                       @updatedAt @map("updated_at")
+  
+  // Relations
+  events            AnalyticsEvent[]
+  changeLogs        AnalyticsProviderChangeLog[]
+  
+  @@map("analytics_providers")
+}
+
+model AnalyticsEvent {
+  id                String                         @id @default(cuid())
+  providerId        String                         @map("provider_id")
+  eventName         String                         @map("event_name")
+  eventType         String                         @map("event_type")
+  userId            String?                        @map("user_id")
+  articleId         String?                        @map("article_id")
+  properties        Json?
+  createdAt         DateTime                       @default(now()) @map("created_at")
+  
+  // Relations
+  provider          AnalyticsProvider              @relation(fields: [providerId], references: [id])
+  user              User?                          @relation(fields: [userId], references: [id])
+  article           Article?                       @relation(fields: [articleId], references: [id])
+  
+  @@map("analytics_events")
+}
+
+model AnalyticsProviderChangeLog {
+  id                String                         @id @default(cuid())
+  providerId        String                         @map("provider_id")
+  changedBy         String                         @map("changed_by")
+  changeType        String                         @map("change_type")
+  oldValue          Json?                          @map("old_value")
+  newValue          Json?                          @map("new_value")
+  summary           String?
+  createdAt         DateTime                       @default(now()) @map("created_at")
+  
+  // Relations
+  provider          AnalyticsProvider              @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  user              User                           @relation(fields: [changedBy], references: [id], onDelete: Cascade)
+  
+  @@map("analytics_providers_change_log")
+}
+
+// Updated User model to include new relations
+model User {
+  // ... existing fields ...
+  
+  // New relations
+  paymentProviderChangeLogs         PaymentProviderChangeLog[]
+  socialMediaProviderChangeLogs     SocialMediaProviderChangeLog[]
+  notificationProviderChangeLogs    NotificationProviderChangeLog[]
+  analyticsProviderChangeLogs       AnalyticsProviderChangeLog[]
+  notificationMessages              NotificationMessage[]
+  analyticsEvents                   AnalyticsEvent[]
+}
+
+// Updated Article model to include new relations
+model Article {
+  // ... existing fields ...
+  
+  // New relations
+  socialMediaPosts                  SocialMediaPost[]
+  analyticsEvents                   AnalyticsEvent[]
+}
+
+// New Enums
+enum PaymentProviderType {
+  STRIPE
+  TAP
+  PAYPAL
+  CHECKOUT
+  RAZORPAY
+  SQUARE
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum SocialMediaType {
+  TWITTER
+  FACEBOOK
+  INSTAGRAM
+  LINKEDIN
+  THREADS
+  TIKTOK
+  YOUTUBE
+}
+
+enum SocialMediaPostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  FAILED
+  DELETED
+}
+
+enum NotificationType {
+  ONESIGNAL
+  FCM
+  WEBPUSH
+  EMAIL
+  SMS
+  PUSHER
+}
+
+enum NotificationMessageType {
+  PUSH
+  EMAIL
+  SMS
+  IN_APP
+  WEBHOOK
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  CLICKED
+  DISMISSED
+}
+
+enum AnalyticsType {
+  GOOGLE_ANALYTICS
+  METABASE
+  MIXPANEL
+  AMPLITUDE
+  SEGMENT
+  HOTJAR
 } 
