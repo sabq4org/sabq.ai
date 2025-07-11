@@ -19,7 +19,7 @@ async function main() {
     create: {
       email: 'admin@sabq.org',
       name: 'المدير العام',
-      hashed_password: await hash('admin123', 10),
+      password_hash: await hash('admin123', 10),
       role: 'admin',
       is_verified: true,
       preferences: {
@@ -40,7 +40,7 @@ async function main() {
     create: {
       email: 'editor@sabq.org',
       name: 'محرر الأخبار',
-      hashed_password: await hash('editor123', 10),
+      password_hash: await hash('editor123', 10),
       role: 'editor',
       is_verified: true,
       preferences: {
@@ -61,7 +61,7 @@ async function main() {
     create: {
       email: 'writer@sabq.org',
       name: 'كاتب المقالات',
-      hashed_password: await hash('writer123', 10),
+      password_hash: await hash('writer123', 10),
       role: 'writer',
       is_verified: true,
       preferences: {

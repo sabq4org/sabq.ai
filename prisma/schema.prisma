@@ -66,6 +66,21 @@ model User {
   notifications     Notification[]
   sent_notifications Notification[] @relation("NotificationSender")
   
+  // Loyalty System Relations
+  loyalty_points    LoyaltyPoint[]
+  user_badges       UserBadge[]
+  loyalty_transactions LoyaltyTransaction[]
+  achievements      UserAchievement[]
+  loyalty_stats     UserLoyaltyStats?
+  realtime_notifications RealTimeNotification[]
+  sent_realtime_notifications RealTimeNotification[] @relation("NotificationSender")
+  notification_settings UserNotificationSettings?
+  
+  // AI Moderation Relations
+  comment_appeals       CommentAppeal[]
+  moderation_training   ModerationTrainingData[]
+  moderation_configs    ModerationConfig[]
+  
   @@map("users")
 }
 
@@ -643,13 +658,30 @@ model ArticleComment {
   user_id     String
   content     String
   parent_id   String?  // For nested comments/replies
-  status      String   @default("visible") // visible, hidden, reported, deleted, pending
+  status      String   @default("pending") // pending, approved, rejected, needs_review, hidden
   like_count  Int      @default(0)
   reply_count Int      @default(0)
   report_count Int     @default(0)
   is_pinned   Boolean  @default(false)
   is_edited   Boolean  @default(false)
   edited_at   DateTime?
+  
+  // AI Moderation Fields
+  ai_category   String?  // spam, bullying, hate, politics, nsfw, normal, toxic, inappropriate
+  ai_risk_score Float?   // 0.0 to 1.0 risk score from AI
+  ai_reasons    Json?    // Array of reasons/keywords detected by AI
+  ai_notes      String?  // Additional AI analysis notes
+  ai_confidence Float?   // AI confidence level (0.0 to 1.0)
+  ai_processed  Boolean  @default(false)
+  ai_processed_at DateTime?
+  
+  // Human Review Fields
+  reviewed_by   String?  // Admin user ID who reviewed
+  reviewed_at   DateTime?
+  review_notes  String?  // Human reviewer notes
+  user_flagged  Boolean  @default(false)
+  
+  // Timestamps
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
   
@@ -660,11 +692,17 @@ model ArticleComment {
   replies     ArticleComment[] @relation("CommentReplies")
   likes       CommentLike[]
   reports     CommentReport[]
+  appeals     CommentAppeal[]
   
   @@index([article_id, status])
   @@index([user_id])
   @@index([parent_id])
   @@index([created_at])
+  @@index([status])
+  @@index([ai_category])
+  @@index([ai_risk_score])
+  @@index([ai_processed])
+  @@index([reviewed_by])
   @@map("article_comments")
 }
 
@@ -779,4 +817,370 @@ model InteractionRateLimit {
   @@index([ip_address, action_type])
   @@index([expires_at])
   @@map("interaction_rate_limits")
+} 
+
+// Loyalty System Models - Points, Badges, Achievements, Real-time Notifications
+
+model LoyaltyPoint {
+  id          String   @id @default(uuid())
+  user_id     String
+  points      Int      // النقاط المكتسبة أو المستهلكة
+  action_type String   // comment, like, share, article_read, badge_earned, daily_login, etc.
+  reference_id String? // معرف المرجع (ID التعليق، المقال، الشارة، إلخ)
+  reference_type String? // comment, article, badge, achievement, etc.
+  multiplier  Float    @default(1.0) // مضاعف النقاط (للأحداث الخاصة)
+  description String?  // وصف العملية
+  metadata    Json?    // بيانات إضافية
+  expires_at  DateTime? // تاريخ انتهاء النقاط (للنقاط المؤقتة)
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  
+  // Relations
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id, created_at])
+  @@index([action_type])
+  @@index([reference_id, reference_type])
+  @@map("loyalty_points")
+}
+
+model Badge {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  name_ar     String   // الاسم بالعربية
+  description String
+  description_ar String // الوصف بالعربية
+  icon        String   // رمز الشارة (emoji أو URL)
+  color       String   @default("#FFD700") // لون الشارة
+  category    String   // engagement, content, social, achievement, special
+  tier        String   @default("bronze") // bronze, silver, gold, platinum, diamond
+  points_required Int  @default(0) // النقاط المطلوبة للحصول على الشارة
+  conditions  Json     // شروط الحصول على الشارة
+  is_active   Boolean  @default(true)
+  is_hidden   Boolean  @default(false) // شارات مخفية للمفاجآت
+  sort_order  Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  // Relations
+  user_badges UserBadge[]
+  
+  @@index([category, tier])
+  @@index([is_active, is_hidden])
+  @@map("badges")
+}
+
+model UserBadge {
+  id          String   @id @default(uuid())
+  user_id     String
+  badge_id    String
+  awarded_at  DateTime @default(now())
+  awarded_by  String?  // معرف المستخدم/النظام الذي منح الشارة
+  reason      String?  // سبب منح الشارة
+  is_featured Boolean  @default(false) // عرض في الملف الشخصي
+  progress    Json?    // تقدم المستخدم نحو الشارة
+  metadata    Json?    // بيانات إضافية
+  
+  // Relations
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  badge       Badge    @relation(fields: [badge_id], references: [id], onDelete: Cascade)
+  
+  @@unique([user_id, badge_id])
+  @@index([user_id, awarded_at])
+  @@index([badge_id])
+  @@map("user_badges")
+}
+
+model LoyaltyTransaction {
+  id              String   @id @default(uuid())
+  user_id         String
+  transaction_type String  // earn, spend, transfer, bonus, penalty, refund
+  points_amount   Int      // كمية النقاط (موجبة للكسب، سالبة للإنفاق)
+  balance_before  Int      // الرصيد قبل العملية
+  balance_after   Int      // الرصيد بعد العملية
+  source_type     String   // system, admin, user, promotion, etc.
+  source_id       String?  // معرف المصدر
+  description     String
+  reference_id    String?  // معرف العملية المرجعية
+  reference_type  String?  // comment, article, badge, purchase, etc.
+  metadata        Json?    // بيانات إضافية
+  processed_at    DateTime @default(now())
+  created_at      DateTime @default(now())
+  
+  // Relations
+  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id, processed_at])
+  @@index([transaction_type])
+  @@index([reference_id, reference_type])
+  @@map("loyalty_transactions")
+}
+
+model Achievement {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  name_ar     String   // الاسم بالعربية
+  description String
+  description_ar String // الوصف بالعربية
+  icon        String   // رمز الإنجاز
+  category    String   // milestone, streak, social, content, special
+  type        String   // one_time, repeatable, progressive
+  difficulty  String   @default("easy") // easy, medium, hard, legendary
+  points_reward Int    @default(0) // نقاط المكافأة
+  conditions  Json     // شروط تحقيق الإنجاز
+  progress_steps Json? // خطوات التقدم للإنجازات التدريجية
+  is_active   Boolean  @default(true)
+  is_secret   Boolean  @default(false) // إنجازات سرية
+  sort_order  Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  // Relations
+  user_achievements UserAchievement[]
+  
+  @@index([category, type])
+  @@index([is_active, is_secret])
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String   @id @default(uuid())
+  user_id       String
+  achievement_id String
+  progress      Json     // تقدم المستخدم
+  current_step  Int      @default(0) // الخطوة الحالية
+  total_steps   Int      @default(1) // إجمالي الخطوات
+  is_completed  Boolean  @default(false)
+  completed_at  DateTime?
+  started_at    DateTime @default(now())
+  last_progress_at DateTime @default(now())
+  
+  // Relations
+  user          User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievement_id], references: [id], onDelete: Cascade)
+  
+  @@unique([user_id, achievement_id])
+  @@index([user_id, is_completed])
+  @@index([achievement_id])
+  @@map("user_achievements")
+}
+
+model LoyaltyLevel {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  name_ar     String   // الاسم بالعربية
+  description String
+  description_ar String // الوصف بالعربية
+  min_points  Int      // الحد الأدنى من النقاط
+  max_points  Int?     // الحد الأقصى من النقاط (null للمستوى الأعلى)
+  color       String   @default("#666666") // لون المستوى
+  icon        String   // رمز المستوى
+  benefits    Json     // مزايا المستوى
+  multiplier  Float    @default(1.0) // مضاعف النقاط لهذا المستوى
+  sort_order  Int      @default(0)
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  @@index([min_points])
+  @@index([is_active])
+  @@map("loyalty_levels")
+}
+
+model NotificationTemplate {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  title       String   // عنوان الإشعار
+  title_ar    String   // العنوان بالعربية
+  message     String   // محتوى الإشعار
+  message_ar  String   // المحتوى بالعربية
+  type        String   // email, push, in_app, sms
+  category    String   // loyalty, interaction, system, promotion
+  variables   Json?    // متغيرات القالب
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  @@index([type, category])
+  @@index([is_active])
+  @@map("notification_templates")
+}
+
+model LoyaltyRule {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  name_ar     String   // الاسم بالعربية
+  description String
+  description_ar String // الوصف بالعربية
+  action_type String   // comment, like, share, article_read, daily_login, etc.
+  points      Int      // النقاط المكتسبة
+  conditions  Json?    // شروط إضافية
+  daily_limit Int?     // حد يومي للنقاط
+  weekly_limit Int?    // حد أسبوعي للنقاط
+  monthly_limit Int?   // حد شهري للنقاط
+  multiplier_conditions Json? // شروط المضاعفات
+  is_active   Boolean  @default(true)
+  start_date  DateTime?
+  end_date    DateTime?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  @@index([action_type])
+  @@index([is_active])
+  @@index([start_date, end_date])
+  @@map("loyalty_rules")
+}
+
+model UserLoyaltyStats {
+  id                    String   @id @default(uuid())
+  user_id               String   @unique
+  total_points_earned   Int      @default(0)
+  total_points_spent    Int      @default(0)
+  current_points        Int      @default(0)
+  lifetime_points       Int      @default(0)
+  current_level         String?  // مستوى الولاء الحالي
+  badges_count          Int      @default(0)
+  achievements_count    Int      @default(0)
+  current_streak        Int      @default(0) // سلسلة الأيام المتتالية
+  longest_streak        Int      @default(0) // أطول سلسلة
+  last_activity_date    DateTime?
+  level_progress        Json?    // تقدم نحو المستوى التالي
+  monthly_points        Int      @default(0) // نقاط الشهر الحالي
+  weekly_points         Int      @default(0) // نقاط الأسبوع الحالي
+  daily_points          Int      @default(0) // نقاط اليوم الحالي
+  last_reset_date       DateTime @default(now())
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
+  
+  // Relations
+  user                  User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([current_points])
+  @@index([current_level])
+  @@index([last_activity_date])
+  @@map("user_loyalty_stats")
+}
+
+model RealTimeNotification {
+  id              String   @id @default(uuid())
+  user_id         String
+  sender_id       String?  // معرف المرسل
+  type            String   // comment_reply, like, badge_earned, achievement_unlocked, etc.
+  category        String   // loyalty, interaction, system, social
+  title           String
+  message         String
+  data            Json?    // بيانات إضافية
+  action_url      String?  // رابط الإجراء
+  icon            String?  // أيقونة الإشعار
+  priority        String   @default("normal") // low, normal, high, urgent
+  delivery_method String   @default("in_app") // in_app, push, email, sms
+  read            Boolean  @default(false)
+  read_at         DateTime?
+  delivered       Boolean  @default(false)
+  delivered_at    DateTime?
+  scheduled_for   DateTime? // للإشعارات المجدولة
+  expires_at      DateTime?
+  metadata        Json?    // بيانات إضافية
+  created_at      DateTime @default(now())
+  
+  // Relations
+  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  sender          User?    @relation("NotificationSender", fields: [sender_id], references: [id], onDelete: SetNull)
+  
+  @@index([user_id, read])
+  @@index([type, category])
+  @@index([created_at])
+  @@index([priority])
+  @@index([scheduled_for])
+  @@map("realtime_notifications")
+}
+
+model UserNotificationSettings {
+  id                    String   @id @default(uuid())
+  user_id               String   @unique
+  email_notifications   Boolean  @default(true)
+  push_notifications    Boolean  @default(true)
+  in_app_notifications  Boolean  @default(true)
+  sms_notifications     Boolean  @default(false)
+  loyalty_notifications Boolean  @default(true)
+  interaction_notifications Boolean @default(true)
+  system_notifications  Boolean  @default(true)
+  marketing_notifications Boolean @default(false)
+  notification_frequency String  @default("instant") // instant, hourly, daily, weekly
+  quiet_hours_start     String?  // وقت بداية الساعات الهادئة
+  quiet_hours_end       String?  // وقت نهاية الساعات الهادئة
+  timezone              String   @default("Asia/Riyadh")
+  preferences           Json?    // تفضيلات إضافية
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
+  
+  // Relations
+  user                  User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@map("user_notification_settings")
+} 
+
+// Add CommentAppeal model at the end
+model CommentAppeal {
+  id          String   @id @default(uuid())
+  comment_id  String
+  user_id     String
+  reason      String?  // User's reason for appeal
+  status      String   @default("pending") // pending, accepted, rejected
+  admin_notes String?  // Admin notes on the appeal
+  created_at  DateTime @default(now())
+  reviewed_by String?  // Admin who reviewed the appeal
+  reviewed_at DateTime?
+  
+  // Relations
+  comment     ArticleComment @relation(fields: [comment_id], references: [id], onDelete: Cascade)
+  user        User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([comment_id])
+  @@index([user_id])
+  @@index([status])
+  @@index([created_at])
+  @@map("comment_appeals")
+}
+
+// AI Moderation Training Data
+model ModerationTrainingData {
+  id              String   @id @default(uuid())
+  content         String   // The comment content
+  human_decision  String   // approved, rejected, needs_review
+  ai_prediction   String?  // AI's original prediction
+  ai_confidence   Float?   // AI confidence level
+  ai_category     String?  // AI's category prediction
+  feedback_type   String   // correction, confirmation, improvement
+  admin_id        String   // Admin who provided the feedback
+  created_at      DateTime @default(now())
+  
+  // Relations
+  admin           User     @relation(fields: [admin_id], references: [id])
+  
+  @@index([human_decision])
+  @@index([ai_prediction])
+  @@index([feedback_type])
+  @@index([created_at])
+  @@map("moderation_training_data")
+}
+
+// AI Moderation Configuration
+model ModerationConfig {
+  id                    String   @id @default(uuid())
+  config_name           String   @unique
+  ai_threshold_approve  Float    @default(0.3)  // Auto-approve if risk < this
+  ai_threshold_reject   Float    @default(0.7)  // Auto-reject if risk > this
+  categories_to_block   Json     @default("[]") // Categories to automatically block
+  keywords_blacklist    Json     @default("[]") // Blacklisted keywords
+  keywords_whitelist    Json     @default("[]") // Whitelisted keywords
+  is_active             Boolean  @default(true)
+  created_by            String
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
+  
+  // Relations
+  creator               User     @relation(fields: [created_by], references: [id])
+  
+  @@map("moderation_config")
 } 

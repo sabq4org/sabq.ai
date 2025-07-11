@@ -1,220 +1,143 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { authMiddleware } from '@/lib/auth-middleware';
-import { checkRateLimit } from '@/lib/security';
+import { addLoyaltyPoints } from '@/lib/loyalty-integration';
+import { sendNotificationToUser } from '@/lib/real-time-notifications';
 
 const prisma = new PrismaClient();
 
 /**
  * POST /api/comments/[id]/like
- * إضافة إعجاب للتعليق
+ * إضافة أو إزالة إعجاب على التعليق
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    // التحقق من الصلاحيات
-    const authResult = await authMiddleware(request);
-    if (!authResult.success) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const body = await request.json();
+    const { user_id } = body;
 
-    const user = authResult.user;
-    const { id: commentId } = params;
-
-    // التحقق من Rate Limiting
-    if (!checkRateLimit(`like_${user.id}`, 20, 60000)) { // 20 إعجاب في الدقيقة
+    if (!user_id) {
       return NextResponse.json(
-        { error: 'Too many likes. Please wait before liking again.' },
-        { status: 429 }
+        { success: false, error: 'معرف المستخدم مطلوب' },
+        { status: 400 }
       );
     }
 
     // التحقق من وجود التعليق
     const comment = await prisma.articleComment.findUnique({
-      where: { id: commentId },
-      select: {
-        id: true,
-        user_id: true,
-        status: true,
-        article_id: true,
+      where: { id: params.id },
+      include: {
         user: {
-          select: { id: true, name: true }
+          select: {
+            id: true,
+            name: true
+          }
         }
       }
     });
 
     if (!comment) {
       return NextResponse.json(
-        { error: 'Comment not found' },
+        { success: false, error: 'التعليق غير موجود' },
         { status: 404 }
       );
     }
 
-    if (comment.status !== 'visible') {
+    if (comment.status !== 'approved') {
       return NextResponse.json(
-        { error: 'Cannot like this comment' },
-        { status: 403 }
+        { success: false, error: 'لا يمكن الإعجاب بهذا التعليق' },
+        { status: 400 }
       );
     }
 
-    // التحقق من عدم تكرار الإعجاب
+    // التحقق من الإعجاب الموجود
     const existingLike = await prisma.commentLike.findUnique({
       where: {
         comment_id_user_id: {
-          comment_id: commentId,
-          user_id: user.id
+          comment_id: params.id,
+          user_id
         }
       }
     });
 
+    let isLiked = false;
+    let likeCount = comment.like_count;
+
     if (existingLike) {
-      return NextResponse.json(
-        { error: 'Already liked this comment' },
-        { status: 409 }
-      );
-    }
-
-    // إضافة الإعجاب
-    const result = await prisma.$transaction(async (tx) => {
-      // إنشاء الإعجاب
-      const like = await tx.commentLike.create({
+      // إزالة الإعجاب
+      await prisma.commentLike.delete({
+        where: { id: existingLike.id }
+      });
+      
+      likeCount = Math.max(0, likeCount - 1);
+      
+      await prisma.articleComment.update({
+        where: { id: params.id },
+        data: { like_count: likeCount }
+      });
+      
+      isLiked = false;
+    } else {
+      // إضافة الإعجاب
+      await prisma.commentLike.create({
         data: {
-          comment_id: commentId,
-          user_id: user.id
+          comment_id: params.id,
+          user_id
         }
       });
+      
+      likeCount = likeCount + 1;
+      
+      await prisma.articleComment.update({
+        where: { id: params.id },
+        data: { like_count: likeCount }
+      });
+      
+      isLiked = true;
 
-      // تحديث عداد الإعجابات
-      const updatedComment = await tx.articleComment.update({
-        where: { id: commentId },
-        data: {
-          like_count: { increment: 1 }
-        },
-        select: {
-          id: true,
-          like_count: true
-        }
+      // إضافة نقاط ولاء للمستخدم الذي أعجب
+      await addLoyaltyPoints(user_id, 'like_comment', {
+        comment_id: params.id,
+        article_id: comment.article_id
       });
 
-      // إنشاء إشعار لصاحب التعليق
-      if (comment.user_id !== user.id) {
-        await tx.notification.create({
+      // إضافة نقاط ولاء لصاحب التعليق
+      if (comment.user_id !== user_id) {
+        await addLoyaltyPoints(comment.user_id, 'comment_liked', {
+          comment_id: params.id,
+          article_id: comment.article_id,
+          liked_by: user_id
+        });
+
+        // إشعار صاحب التعليق
+        await sendNotificationToUser(comment.user_id, {
+          type: 'comment_liked',
+          title: 'أعجب أحدهم بتعليقك',
+          message: `أعجب أحد المستخدمين بتعليقك`,
+          link: `/articles/${comment.article_id}#comment-${params.id}`,
           data: {
-            user_id: comment.user_id,
-            sender_id: user.id,
-            type: 'comment_like',
-            title: 'إعجاب جديد',
-            message: `أعجب ${user.name} بتعليقك`,
-            action_url: `/articles/${comment.article_id}#comment-${commentId}`,
-            data: {
-              comment_id: commentId,
-              article_id: comment.article_id
-            }
+            comment_id: params.id,
+            article_id: comment.article_id,
+            liked_by: user_id
           }
         });
       }
-
-      return { like, updatedComment };
-    });
+    }
 
     return NextResponse.json({
       success: true,
       data: {
-        like: result.like,
-        comment: result.updatedComment
-      }
-    }, { status: 201 });
-
-  } catch (error) {
-    console.error('Error liking comment:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * DELETE /api/comments/[id]/like
- * إلغاء الإعجاب بالتعليق
- */
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    // التحقق من الصلاحيات
-    const authResult = await authMiddleware(request);
-    if (!authResult.success) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const user = authResult.user;
-    const { id: commentId } = params;
-
-    // التحقق من وجود الإعجاب
-    const existingLike = await prisma.commentLike.findUnique({
-      where: {
-        comment_id_user_id: {
-          comment_id: commentId,
-          user_id: user.id
-        }
-      }
-    });
-
-    if (!existingLike) {
-      return NextResponse.json(
-        { error: 'Like not found' },
-        { status: 404 }
-      );
-    }
-
-    // إلغاء الإعجاب
-    const result = await prisma.$transaction(async (tx) => {
-      // حذف الإعجاب
-      await tx.commentLike.delete({
-        where: {
-          comment_id_user_id: {
-            comment_id: commentId,
-            user_id: user.id
-          }
-        }
-      });
-
-      // تحديث عداد الإعجابات
-      const updatedComment = await tx.articleComment.update({
-        where: { id: commentId },
-        data: {
-          like_count: { decrement: 1 }
-        },
-        select: {
-          id: true,
-          like_count: true
-        }
-      });
-
-      return { updatedComment };
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        comment: result.updatedComment
+        isLiked,
+        likeCount,
+        message: isLiked ? 'تم الإعجاب بالتعليق' : 'تم إلغاء الإعجاب'
       }
     });
 
   } catch (error) {
-    console.error('Error unliking comment:', error);
+    console.error('Error toggling comment like:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'فشل في تسجيل الإعجاب' },
       { status: 500 }
     );
   }
@@ -222,44 +145,51 @@ export async function DELETE(
 
 /**
  * GET /api/comments/[id]/like
- * التحقق من حالة الإعجاب
+ * جلب حالة الإعجاب للمستخدم
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    // التحقق من الصلاحيات
-    const authResult = await authMiddleware(request);
-    if (!authResult.success) {
-      return NextResponse.json({
-        success: true,
-        data: { liked: false }
-      });
+    const { searchParams } = new URL(request.url);
+    const user_id = searchParams.get('user_id');
+
+    if (!user_id) {
+      return NextResponse.json(
+        { success: false, error: 'معرف المستخدم مطلوب' },
+        { status: 400 }
+      );
     }
 
-    const user = authResult.user;
-    const { id: commentId } = params;
-
     // التحقق من وجود الإعجاب
-    const existingLike = await prisma.commentLike.findUnique({
+    const like = await prisma.commentLike.findUnique({
       where: {
         comment_id_user_id: {
-          comment_id: commentId,
-          user_id: user.id
+          comment_id: params.id,
+          user_id
         }
       }
     });
 
+    // جلب عدد الإعجابات
+    const comment = await prisma.articleComment.findUnique({
+      where: { id: params.id },
+      select: { like_count: true }
+    });
+
     return NextResponse.json({
       success: true,
-      data: { liked: !!existingLike }
+      data: {
+        isLiked: !!like,
+        likeCount: comment?.like_count || 0
+      }
     });
 
   } catch (error) {
-    console.error('Error checking like status:', error);
+    console.error('Error fetching comment like status:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'فشل في جلب حالة الإعجاب' },
       { status: 500 }
     );
   }

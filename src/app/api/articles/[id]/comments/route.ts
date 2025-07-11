@@ -1,167 +1,116 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { z } from 'zod';
-import { authMiddleware } from '@/lib/auth-middleware';
-import { sanitizeHtml, checkRateLimit, validateInput } from '@/lib/security';
+import { moderateCommentAI } from '@/lib/ai-moderation';
+import { sendNotificationToAdmins, sendNotificationToUser } from '@/lib/real-time-notifications';
+import { addLoyaltyPoints } from '@/lib/loyalty-integration';
 
 const prisma = new PrismaClient();
 
-// Validation schemas
-const createCommentSchema = z.object({
-  content: z.string().min(1).max(2000),
-  parent_id: z.string().uuid().optional()
-});
-
-const getCommentsSchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(50).default(20),
-  sort: z.enum(['newest', 'oldest', 'popular']).default('newest'),
-  status: z.enum(['visible', 'all']).default('visible')
-});
-
 /**
  * GET /api/articles/[id]/comments
- * جلب تعليقات المقال مع الردود
+ * جلب التعليقات المعتمدة للمقال
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id: articleId } = params;
     const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const sort = searchParams.get('sort') || 'newest'; // newest, oldest, popular
+    const parent_id = searchParams.get('parent_id') || undefined;
 
-    // التحقق من صحة المعاملات
-    const queryParams = getCommentsSchema.parse({
-      page: searchParams.get('page'),
-      limit: searchParams.get('limit'),
-      sort: searchParams.get('sort'),
-      status: searchParams.get('status')
-    });
-
-    // التحقق من وجود المقال
-    const article = await prisma.article.findUnique({
-      where: { id: articleId },
-      select: { id: true, title: true, status: true }
-    });
-
-    if (!article) {
-      return NextResponse.json(
-        { error: 'Article not found' },
-        { status: 404 }
-      );
-    }
-
-    // بناء شروط البحث
-    const whereClause: any = {
-      article_id: articleId,
-      parent_id: null // جلب التعليقات الرئيسية فقط
-    };
-
-    if (queryParams.status === 'visible') {
-      whereClause.status = 'visible';
-    }
+    const skip = (page - 1) * limit;
 
     // ترتيب التعليقات
-    const orderBy: any = {};
-    switch (queryParams.sort) {
-      case 'newest':
-        orderBy.created_at = 'desc';
-        break;
-      case 'oldest':
-        orderBy.created_at = 'asc';
-        break;
-      case 'popular':
-        orderBy.like_count = 'desc';
-        break;
+    let orderBy: any = { created_at: 'desc' };
+    if (sort === 'oldest') {
+      orderBy = { created_at: 'asc' };
+    } else if (sort === 'popular') {
+      orderBy = { like_count: 'desc' };
     }
 
-    // حساب الإزاحة
-    const skip = (queryParams.page - 1) * queryParams.limit;
-
-    // جلب التعليقات الرئيسية
-    const [comments, totalCount] = await Promise.all([
-      prisma.articleComment.findMany({
-        where: whereClause,
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              avatar_url: true
-            }
-          },
-          replies: {
-            where: { status: 'visible' },
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  avatar_url: true
-                }
-              },
-              _count: {
-                select: { likes: true }
-              }
-            },
-            orderBy: { created_at: 'asc' },
-            take: 5 // أول 5 ردود لكل تعليق
-          },
-          _count: {
-            select: {
-              likes: true,
-              replies: {
-                where: { status: 'visible' }
-              }
-            }
+    // جلب التعليقات المعتمدة فقط
+    const comments = await prisma.articleComment.findMany({
+      where: {
+        article_id: params.id,
+        status: 'approved',
+        parent_id: parent_id || null
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            profile_image: true
           }
         },
-        orderBy,
-        skip,
-        take: queryParams.limit
-      }),
-      prisma.articleComment.count({ where: whereClause })
-    ]);
+        likes: {
+          select: {
+            user_id: true
+          }
+        },
+        replies: {
+          where: { status: 'approved' },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                profile_image: true
+              }
+            },
+            likes: {
+              select: {
+                user_id: true
+              }
+            }
+          },
+          orderBy: { created_at: 'asc' },
+          take: 3 // أول 3 ردود فقط
+        },
+        _count: {
+          select: {
+            replies: {
+              where: { status: 'approved' }
+            }
+          }
+        }
+      },
+      orderBy,
+      skip,
+      take: limit
+    });
 
-    // تنسيق النتائج
-    const formattedComments = comments.map(comment => ({
-      ...comment,
-      likes_count: comment._count.likes,
-      replies_count: comment._count.replies,
-      has_more_replies: comment._count.replies > 5,
-      _count: undefined
-    }));
+    // إجمالي عدد التعليقات
+    const total = await prisma.articleComment.count({
+      where: {
+        article_id: params.id,
+        status: 'approved',
+        parent_id: parent_id || null
+      }
+    });
 
     return NextResponse.json({
       success: true,
       data: {
-        comments: formattedComments,
+        comments,
         pagination: {
-          page: queryParams.page,
-          limit: queryParams.limit,
-          total: totalCount,
-          pages: Math.ceil(totalCount / queryParams.limit)
-        },
-        article: {
-          id: article.id,
-          title: article.title
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit)
         }
       }
     });
 
   } catch (error) {
     console.error('Error fetching comments:', error);
-    
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid parameters', details: error.errors },
-        { status: 400 }
-      );
-    }
-
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'فشل في جلب التعليقات' },
       { status: 500 }
     );
   }
@@ -169,228 +118,412 @@ export async function GET(
 
 /**
  * POST /api/articles/[id]/comments
- * إضافة تعليق جديد أو رد
+ * إضافة تعليق جديد مع الإشراف الذكي
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    // التحقق من الصلاحيات
-    const authResult = await authMiddleware(request);
-    if (!authResult.success) {
+    const body = await request.json();
+    const { user_id, content, parent_id } = body;
+
+    // التحقق من صحة البيانات
+    if (!user_id || !content || content.trim().length < 2) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { success: false, error: 'بيانات غير صحيحة' },
+        { status: 400 }
       );
     }
 
-    const user = authResult.user;
-    const { id: articleId } = params;
+    // التحقق من وجود المستخدم والمقال
+    const [user, article] = await Promise.all([
+      prisma.user.findUnique({ where: { id: user_id } }),
+      prisma.article.findUnique({ where: { id: params.id } })
+    ]);
 
-    // التحقق من Rate Limiting
-    const clientIp = request.headers.get('x-forwarded-for') || 'unknown';
-    if (!checkRateLimit(`comment_${user.id}`, 10, 60000)) { // 10 تعليقات في الدقيقة
+    if (!user || !article) {
       return NextResponse.json(
-        { error: 'Too many comments. Please wait before posting again.' },
-        { status: 429 }
-      );
-    }
-
-    // التحقق من وجود المقال
-    const article = await prisma.article.findUnique({
-      where: { id: articleId },
-      select: { id: true, status: true, author_id: true }
-    });
-
-    if (!article) {
-      return NextResponse.json(
-        { error: 'Article not found' },
+        { success: false, error: 'المستخدم أو المقال غير موجود' },
         { status: 404 }
       );
     }
 
-    if (article.status !== 'published') {
-      return NextResponse.json(
-        { error: 'Cannot comment on unpublished article' },
-        { status: 403 }
-      );
-    }
-
-    const body = await request.json();
-    const validatedData = createCommentSchema.parse(body);
-
-    // تنظيف المحتوى
-    const sanitizedContent = sanitizeHtml(validatedData.content);
-
-    // فحص السبام والمحتوى المسيء
-    const isSpam = await checkForSpam(sanitizedContent, user.id);
-    if (isSpam) {
-      return NextResponse.json(
-        { error: 'Comment flagged as spam' },
-        { status: 403 }
-      );
-    }
-
-    // التحقق من التعليق الأب إذا كان رد
-    let parentComment = null;
-    if (validatedData.parent_id) {
-      parentComment = await prisma.articleComment.findFirst({
-        where: {
-          id: validatedData.parent_id,
-          article_id: articleId,
-          status: 'visible'
-        }
+    // التحقق من التعليق الأصلي (إذا كان رد)
+    if (parent_id) {
+      const parentComment = await prisma.articleComment.findUnique({
+        where: { id: parent_id }
       });
-
-      if (!parentComment) {
+      
+      if (!parentComment || parentComment.article_id !== params.id) {
         return NextResponse.json(
-          { error: 'Parent comment not found' },
+          { success: false, error: 'التعليق الأصلي غير موجود' },
           { status: 404 }
         );
       }
     }
 
-    // إنشاء التعليق
-    const comment = await prisma.$transaction(async (tx) => {
-      // إنشاء التعليق
-      const newComment = await tx.articleComment.create({
-        data: {
-          article_id: articleId,
-          user_id: user.id,
-          content: sanitizedContent,
-          parent_id: validatedData.parent_id || null,
-          status: 'visible' // يمكن تغييرها إلى 'pending' للمراجعة
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              avatar_url: true
-            }
+    // 1. إنشاء التعليق في حالة الانتظار
+    const comment = await prisma.articleComment.create({
+      data: {
+        article_id: params.id,
+        user_id,
+        content: content.trim(),
+        parent_id: parent_id || null,
+        status: 'pending'
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            profile_image: true
           }
         }
+      }
+    });
+
+    // 2. تطبيق الإشراف الذكي
+    let moderationResult;
+    try {
+      moderationResult = await moderateCommentAI({
+        comment: content.trim(),
+        user_id,
+        article_id: params.id,
+        lang: 'ar'
+      });
+    } catch (error) {
+      console.error('AI Moderation Error:', error);
+      // في حالة فشل الذكاء الاصطناعي، ضع التعليق للمراجعة البشرية
+      moderationResult = {
+        status: 'needs_review' as const,
+        ai_response: {
+          accepted: false,
+          category: 'ai_error',
+          risk_score: 0.5,
+          confidence: 0,
+          reasons: ['AI service unavailable']
+        },
+        final_decision: 'AI service error - needs human review',
+        reasons: ['AI service unavailable']
+      };
+    }
+
+    // 3. تحديث التعليق بنتائج الإشراف
+    const updatedComment = await prisma.articleComment.update({
+      where: { id: comment.id },
+      data: {
+        status: moderationResult.status,
+        ai_category: moderationResult.ai_response.category,
+        ai_risk_score: moderationResult.ai_response.risk_score,
+        ai_confidence: moderationResult.ai_response.confidence,
+        ai_reasons: moderationResult.ai_response.reasons,
+        ai_notes: moderationResult.ai_response.notes,
+        ai_processed: true,
+        ai_processed_at: new Date()
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            profile_image: true
+          }
+        }
+      }
+    });
+
+    // 4. إرسال الإشعارات والمكافآت بناءً على النتيجة
+    if (moderationResult.status === 'approved') {
+      // إضافة نقاط الولاء للمستخدم
+      await addLoyaltyPoints(user_id, 'comment', {
+        article_id: params.id,
+        comment_id: comment.id
       });
 
-      // تحديث عداد التعليقات في المقال
-      await tx.article.update({
-        where: { id: articleId },
+      // إشعار كاتب المقال (إذا لم يكن هو المعلق)
+      if (article.author_id !== user_id) {
+        await sendNotificationToUser(article.author_id, {
+          type: 'comment_added',
+          title: 'تعليق جديد على مقالك',
+          message: `علق ${user.name} على مقالك: ${article.title}`,
+          link: `/articles/${params.id}#comment-${comment.id}`,
+          data: {
+            article_id: params.id,
+            comment_id: comment.id,
+            user_id
+          }
+        });
+      }
+
+      // تحديث عدد التعليقات في المقال
+      await prisma.article.update({
+        where: { id: params.id },
         data: {
           comment_count: { increment: 1 }
         }
       });
 
-      // تحديث عداد الردود في التعليق الأب
-      if (parentComment) {
-        await tx.articleComment.update({
-          where: { id: parentComment.id },
+      // تحديث عدد الردود في التعليق الأصلي
+      if (parent_id) {
+        await prisma.articleComment.update({
+          where: { id: parent_id },
           data: {
             reply_count: { increment: 1 }
           }
         });
       }
-
-      // إنشاء إشعار للكاتب أو صاحب التعليق الأب
-      const notificationUserId = parentComment ? parentComment.user_id : article.author_id;
-      if (notificationUserId !== user.id) {
-        await tx.notification.create({
-          data: {
-            user_id: notificationUserId,
-            sender_id: user.id,
-            type: parentComment ? 'comment_reply' : 'comment_new',
-            title: parentComment ? 'رد جديد على تعليقك' : 'تعليق جديد على مقالك',
-            message: `${user.name} ${parentComment ? 'رد على تعليقك' : 'علق على مقالك'}`,
-            action_url: `/articles/${articleId}#comment-${newComment.id}`,
-            data: {
-              article_id: articleId,
-              comment_id: newComment.id,
-              parent_id: validatedData.parent_id
-            }
-          }
-        });
-      }
-
-      return newComment;
-    });
+    } else if (moderationResult.status === 'needs_review') {
+      // إشعار المشرفين
+      await sendNotificationToAdmins({
+        type: 'comment_needs_review',
+        title: 'تعليق يحتاج مراجعة',
+        message: `تعليق من ${user.name} يحتاج مراجعة بشرية`,
+        link: `/admin/moderation/comments/${comment.id}`,
+        data: {
+          comment_id: comment.id,
+          user_id,
+          article_id: params.id,
+          ai_category: moderationResult.ai_response.category,
+          risk_score: moderationResult.ai_response.risk_score
+        }
+      });
+    } else if (moderationResult.status === 'rejected') {
+      // إشعار المستخدم برفض التعليق
+      await sendNotificationToUser(user_id, {
+        type: 'comment_rejected',
+        title: 'تم رفض تعليقك',
+        message: `تم رفض تعليقك بسبب: ${moderationResult.reasons.join(', ')}`,
+        link: `/articles/${params.id}`,
+        data: {
+          comment_id: comment.id,
+          reasons: moderationResult.reasons,
+          can_appeal: true
+        }
+      });
+    }
 
     return NextResponse.json({
       success: true,
-      data: { comment }
-    }, { status: 201 });
+      data: {
+        comment: updatedComment,
+        moderation: {
+          status: moderationResult.status,
+          reasons: moderationResult.reasons,
+          can_appeal: moderationResult.status === 'rejected'
+        }
+      }
+    });
 
   } catch (error) {
     console.error('Error creating comment:', error);
-    
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid data', details: error.errors },
-        { status: 400 }
-      );
-    }
-
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'فشل في إضافة التعليق' },
       { status: 500 }
     );
   }
 }
 
 /**
- * فحص السبام والمحتوى المسيء
+ * PUT /api/articles/[id]/comments
+ * تحديث تعليق موجود
  */
-async function checkForSpam(content: string, userId: string): Promise<boolean> {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    // فحص الفلاتر المحفوظة
-    const spamFilters = await prisma.spamFilter.findMany({
-      where: { is_active: true }
-    });
+    const body = await request.json();
+    const { comment_id, content, user_id } = body;
 
-    for (const filter of spamFilters) {
-      if (filter.type === 'keyword') {
-        if (content.toLowerCase().includes(filter.pattern.toLowerCase())) {
-          return true;
-        }
-      } else if (filter.type === 'regex') {
-        const regex = new RegExp(filter.pattern, 'i');
-        if (regex.test(content)) {
-          return true;
-        }
-      }
+    if (!comment_id || !content || !user_id) {
+      return NextResponse.json(
+        { success: false, error: 'بيانات غير صحيحة' },
+        { status: 400 }
+      );
     }
 
-    // فحص التكرار المفرط
-    const recentComments = await prisma.articleComment.count({
-      where: {
-        user_id: userId,
-        created_at: {
-          gte: new Date(Date.now() - 5 * 60 * 1000) // آخر 5 دقائق
+    // التحقق من وجود التعليق وصاحبه
+    const comment = await prisma.articleComment.findUnique({
+      where: { id: comment_id },
+      include: { user: true }
+    });
+
+    if (!comment) {
+      return NextResponse.json(
+        { success: false, error: 'التعليق غير موجود' },
+        { status: 404 }
+      );
+    }
+
+    if (comment.user_id !== user_id) {
+      return NextResponse.json(
+        { success: false, error: 'غير مسموح لك بتعديل هذا التعليق' },
+        { status: 403 }
+      );
+    }
+
+    // التحقق من إمكانية التعديل (خلال 30 دقيقة من النشر)
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    if (comment.created_at < thirtyMinutesAgo) {
+      return NextResponse.json(
+        { success: false, error: 'انتهت مدة التعديل المسموحة' },
+        { status: 400 }
+      );
+    }
+
+    // إعادة الإشراف على التعليق المحدث
+    const moderationResult = await moderateCommentAI({
+      comment: content.trim(),
+      user_id,
+      article_id: params.id,
+      lang: 'ar'
+    });
+
+    // تحديث التعليق
+    const updatedComment = await prisma.articleComment.update({
+      where: { id: comment_id },
+      data: {
+        content: content.trim(),
+        status: moderationResult.status,
+        ai_category: moderationResult.ai_response.category,
+        ai_risk_score: moderationResult.ai_response.risk_score,
+        ai_confidence: moderationResult.ai_response.confidence,
+        ai_reasons: moderationResult.ai_response.reasons,
+        ai_notes: moderationResult.ai_response.notes,
+        ai_processed: true,
+        ai_processed_at: new Date(),
+        is_edited: true,
+        edited_at: new Date()
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            profile_image: true
+          }
         }
       }
     });
 
-    if (recentComments >= 5) {
-      return true;
+    // إشعار المشرفين إذا احتاج التعليق المحدث لمراجعة
+    if (moderationResult.status === 'needs_review') {
+      await sendNotificationToAdmins({
+        type: 'comment_edited_needs_review',
+        title: 'تعليق محدث يحتاج مراجعة',
+        message: `تعليق محدث من ${comment.user.name} يحتاج مراجعة`,
+        link: `/admin/moderation/comments/${comment_id}`,
+        data: {
+          comment_id,
+          user_id,
+          article_id: params.id,
+          is_edited: true
+        }
+      });
     }
 
-    // فحص المحتوى المكرر
-    const duplicateComment = await prisma.articleComment.findFirst({
-      where: {
-        user_id: userId,
-        content: content,
-        created_at: {
-          gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // آخر 24 ساعة
+    return NextResponse.json({
+      success: true,
+      data: {
+        comment: updatedComment,
+        moderation: {
+          status: moderationResult.status,
+          reasons: moderationResult.reasons
         }
       }
     });
 
-    if (duplicateComment) {
-      return true;
-    }
-
-    return false;
   } catch (error) {
-    console.error('Error checking spam:', error);
-    return false;
+    console.error('Error updating comment:', error);
+    return NextResponse.json(
+      { success: false, error: 'فشل في تحديث التعليق' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * DELETE /api/articles/[id]/comments
+ * حذف تعليق
+ */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const comment_id = searchParams.get('comment_id');
+    const user_id = searchParams.get('user_id');
+
+    if (!comment_id || !user_id) {
+      return NextResponse.json(
+        { success: false, error: 'بيانات غير صحيحة' },
+        { status: 400 }
+      );
+    }
+
+    // التحقق من وجود التعليق وصاحبه
+    const comment = await prisma.articleComment.findUnique({
+      where: { id: comment_id }
+    });
+
+    if (!comment) {
+      return NextResponse.json(
+        { success: false, error: 'التعليق غير موجود' },
+        { status: 404 }
+      );
+    }
+
+    if (comment.user_id !== user_id) {
+      return NextResponse.json(
+        { success: false, error: 'غير مسموح لك بحذف هذا التعليق' },
+        { status: 403 }
+      );
+    }
+
+    // حذف التعليق (soft delete)
+    await prisma.articleComment.update({
+      where: { id: comment_id },
+      data: {
+        status: 'deleted',
+        content: '[تم حذف التعليق]'
+      }
+    });
+
+    // تحديث عدد التعليقات في المقال
+    if (comment.status === 'approved') {
+      await prisma.article.update({
+        where: { id: params.id },
+        data: {
+          comment_count: { decrement: 1 }
+        }
+      });
+
+      // تحديث عدد الردود في التعليق الأصلي
+      if (comment.parent_id) {
+        await prisma.articleComment.update({
+          where: { id: comment.parent_id },
+          data: {
+            reply_count: { decrement: 1 }
+          }
+        });
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'تم حذف التعليق بنجاح'
+    });
+
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    return NextResponse.json(
+      { success: false, error: 'فشل في حذف التعليق' },
+      { status: 500 }
+    );
   }
 } 
