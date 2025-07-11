@@ -58,6 +58,14 @@ model User {
   changed_workflows WorkflowStatus[] @relation("ChangedWorkflows")
   editing_sessions  EditingSession[]
   
+  // Interaction Relations
+  article_comments  ArticleComment[]
+  comment_likes     CommentLike[]
+  comment_reports   CommentReport[]
+  article_shares    ArticleShare[]
+  notifications     Notification[]
+  sent_notifications Notification[] @relation("NotificationSender")
+  
   @@map("users")
 }
 
@@ -116,6 +124,7 @@ model Article {
   view_count      Int       @default(0)
   like_count      Int       @default(0)
   comment_count   Int       @default(0)
+  share_count     Int       @default(0)
   reading_time    Int?      // estimated reading time in minutes
   tags            String[]  // Array of tags
   seo_data        Json?     // SEO metadata
@@ -141,6 +150,10 @@ model Article {
   collaborators   ArticleCollaborator[]
   workflow_status WorkflowStatus[]
   editing_sessions EditingSession[]
+  
+  // Interaction Relations
+  article_comments ArticleComment[]
+  article_shares   ArticleShare[]
   
   @@map("articles")
 }
@@ -620,4 +633,150 @@ model EditingSession {
   @@index([article_id, is_active])
   @@index([user_id])
   @@map("editing_sessions")
+}
+
+// Interaction System Models - Comments, Likes, Shares, Reports
+
+model ArticleComment {
+  id          String   @id @default(uuid())
+  article_id  String
+  user_id     String
+  content     String
+  parent_id   String?  // For nested comments/replies
+  status      String   @default("visible") // visible, hidden, reported, deleted, pending
+  like_count  Int      @default(0)
+  reply_count Int      @default(0)
+  report_count Int     @default(0)
+  is_pinned   Boolean  @default(false)
+  is_edited   Boolean  @default(false)
+  edited_at   DateTime?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  // Relations
+  article     Article  @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  parent      ArticleComment? @relation("CommentReplies", fields: [parent_id], references: [id])
+  replies     ArticleComment[] @relation("CommentReplies")
+  likes       CommentLike[]
+  reports     CommentReport[]
+  
+  @@index([article_id, status])
+  @@index([user_id])
+  @@index([parent_id])
+  @@index([created_at])
+  @@map("article_comments")
+}
+
+model CommentLike {
+  id         String   @id @default(uuid())
+  comment_id String
+  user_id    String
+  created_at DateTime @default(now())
+  
+  // Relations
+  comment    ArticleComment @relation(fields: [comment_id], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([comment_id, user_id])
+  @@index([user_id])
+  @@map("comment_likes")
+}
+
+model CommentReport {
+  id          String   @id @default(uuid())
+  comment_id  String
+  user_id     String
+  reason      String   // spam, inappropriate, offensive, harassment, other
+  description String?  // Additional details
+  status      String   @default("pending") // pending, reviewed, resolved, dismissed
+  reviewed_by String?  // Admin who reviewed the report
+  reviewed_at DateTime?
+  created_at  DateTime @default(now())
+  
+  // Relations
+  comment     ArticleComment @relation(fields: [comment_id], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([comment_id, user_id])
+  @@index([status])
+  @@index([created_at])
+  @@map("comment_reports")
+}
+
+model ArticleShare {
+  id          String   @id @default(uuid())
+  article_id  String
+  user_id     String?  // Can be null for anonymous shares
+  platform    String   // facebook, twitter, whatsapp, linkedin, telegram, copy, email, other
+  share_url   String?  // Generated share URL with tracking
+  ip_address  String?  // For anonymous tracking
+  user_agent  String?  // Browser/device info
+  referrer    String?  // Where the share originated
+  created_at  DateTime @default(now())
+  
+  // Relations
+  article     Article  @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  
+  @@index([article_id])
+  @@index([user_id])
+  @@index([platform])
+  @@index([created_at])
+  @@map("article_shares")
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  user_id     String   // Recipient
+  sender_id   String?  // Who triggered the notification
+  type        String   // comment_reply, comment_like, article_like, mention, system
+  title       String
+  message     String
+  data        Json?    // Additional notification data
+  read        Boolean  @default(false)
+  read_at     DateTime?
+  action_url  String?  // URL to navigate when clicked
+  created_at  DateTime @default(now())
+  expires_at  DateTime? // Optional expiration
+  
+  // Relations
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  sender      User?    @relation("NotificationSender", fields: [sender_id], references: [id], onDelete: SetNull)
+  
+  @@index([user_id, read])
+  @@index([created_at])
+  @@index([type])
+  @@map("notifications")
+}
+
+model SpamFilter {
+  id          String   @id @default(uuid())
+  pattern     String   // Regex pattern or keyword
+  type        String   // keyword, regex, domain, ip
+  action      String   // block, flag, moderate
+  severity    Int      @default(1) // 1-10 severity level
+  is_active   Boolean  @default(true)
+  description String?
+  created_by  String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  @@index([type, is_active])
+  @@map("spam_filters")
+}
+
+model InteractionRateLimit {
+  id          String   @id @default(uuid())
+  user_id     String?  // Can be null for IP-based limiting
+  ip_address  String?
+  action_type String   // comment, like, share, report
+  count       Int      @default(1)
+  window_start DateTime @default(now())
+  expires_at  DateTime
+  
+  @@index([user_id, action_type])
+  @@index([ip_address, action_type])
+  @@index([expires_at])
+  @@map("interaction_rate_limits")
 } 
