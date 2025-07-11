@@ -14,12 +14,20 @@ model User {
   id                String    @id @default(uuid())
   email             String    @unique
   name              String
-  hashed_password   String
-  role              String    @default("user") // user, editor, admin
+  password_hash     String    // Updated field name for consistency
+  role              String    @default("reader") // "reader" | "editor" | "admin"
   is_verified       Boolean   @default(false)
+  is_active         Boolean   @default(true)
   avatar_url        String?
   bio               String?
   preferences       Json?     // JSON object for user preferences
+  phone             String?   // Optional phone number
+  failed_login_attempts Int   @default(0)
+  locked_until      DateTime? // Account lockout timestamp
+  password_reset_token String?
+  password_reset_expires DateTime?
+  email_verification_token String?
+  email_verification_expires DateTime?
   created_at        DateTime  @default(now())
   updated_at        DateTime  @updatedAt
   last_login        DateTime?
@@ -34,22 +42,29 @@ model User {
   article_bookmarks ArticleBookmark[]
   comments          Comment[]
   reason_feedback   RecommendationReasonFeedback[]
+  audit_logs        AuditLog[]
+  user_behavior     UserBehavior?
+  user_sessions     UserSession[]
   
   @@map("users")
 }
 
 model Session {
   id             String    @id @default(uuid())
-  user_id        String?
-  session_token  String    @unique
+  user_id        String
+  jwt_token      String    @unique // JWT token for this session
+  refresh_token  String?   @unique // Optional refresh token
   device_info    Json?     // Device, browser, OS info
   ip_address     String?
-  started_at     DateTime  @default(now())
-  ended_at       DateTime?
-  duration       Int?      // in seconds
+  user_agent     String?   // Browser user agent
+  is_active      Boolean   @default(true)
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  expires_at     DateTime  // JWT expiration time
+  last_used      DateTime  @default(now())
   
   // Relations
-  user           User?     @relation(fields: [user_id], references: [id])
+  user           User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
   analytics_events AnalyticsEvent[]
   reason_feedback RecommendationReasonFeedback[]
   
@@ -250,4 +265,118 @@ model Integration {
   updated_at  DateTime @updatedAt
   
   @@map("integrations")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  user_id     String?  // User who performed the action (if applicable)
+  action      String   // login, logout, failed_login, register, password_change, etc.
+  resource    String?  // Resource affected (user, article, etc.)
+  resource_id String?  // ID of the resource
+  details     Json?    // Additional details about the action
+  ip_address  String?  // IP address of the user
+  user_agent  String?  // Browser/device information
+  success     Boolean  @default(true)
+  error_message String? // Error message if action failed
+  created_at  DateTime @default(now())
+  
+  // Relations
+  user        User?    @relation(fields: [user_id], references: [id])
+  
+  @@map("audit_logs")
+}
+
+// Additional Analytics Models
+model UserBehavior {
+  id                    String   @id @default(uuid())
+  user_id               String   @unique
+  total_sessions        Int      @default(0)
+  total_page_views      Int      @default(0)
+  total_time_spent      Int      @default(0) // in seconds
+  avg_session_duration  Float    @default(0)
+  bounce_rate           Float    @default(0)
+  pages_per_session     Float    @default(0)
+  favorite_categories   Json?    // array of category preferences
+  reading_speed         Float    @default(0) // words per minute
+  interaction_score     Float    @default(0) // engagement score
+  last_activity_at      DateTime?
+  updated_at            DateTime @updatedAt
+  created_at            DateTime @default(now())
+  
+  user User @relation(fields: [user_id], references: [id])
+  
+  @@map("user_behaviors")
+}
+
+model ContentAnalytics {
+  id                String   @id @default(uuid())
+  content_id        String   // article, page, or content identifier
+  content_type      String   // article, page, video, etc.
+  title             String?
+  url               String?
+  views             Int      @default(0)
+  unique_views      Int      @default(0)
+  avg_time_on_page  Float    @default(0)
+  bounce_rate       Float    @default(0)
+  shares            Int      @default(0)
+  likes             Int      @default(0)
+  comments          Int      @default(0)
+  scroll_depth      Float    @default(0) // percentage
+  conversion_rate   Float    @default(0)
+  traffic_sources   Json?    // breakdown of traffic sources
+  top_keywords      Json?    // search keywords leading to content
+  performance_score Float    @default(0)
+  updated_at        DateTime @updatedAt
+  created_at        DateTime @default(now())
+  
+  @@unique([content_id, content_type])
+  @@index([content_type])
+  @@index([views])
+  @@index([performance_score])
+  @@map("content_analytics")
+}
+
+model UserSession {
+  id              String   @id @default(uuid())
+  user_id         String?
+  session_id      String   @unique
+  start_time      DateTime @default(now())
+  end_time        DateTime?
+  duration        Int?     // in seconds
+  page_views      Int      @default(0)
+  events_count    Int      @default(0)
+  ip_address      String?
+  user_agent      String?
+  country         String?
+  city            String?
+  device_type     String?
+  browser         String?
+  os              String?
+  referrer        String?
+  landing_page    String?
+  exit_page       String?
+  is_bounce       Boolean  @default(false)
+  conversion_goal String?
+  converted       Boolean  @default(false)
+  updated_at      DateTime @updatedAt
+  
+  user User? @relation(fields: [user_id], references: [id])
+  
+  @@index([user_id])
+  @@index([start_time])
+  @@index([session_id])
+  @@map("user_sessions")
+}
+
+model RealtimeMetrics {
+  id              String   @id @default(uuid())
+  metric_type     String   // active_users, page_views, events, etc.
+  metric_name     String
+  value           Float
+  dimensions      Json?    // additional breakdown data
+  timestamp       DateTime @default(now())
+  
+  @@index([metric_type])
+  @@index([timestamp])
+  @@map("realtime_metrics")
 } 

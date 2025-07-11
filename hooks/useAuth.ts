@@ -1,211 +1,443 @@
-import { useState, useEffect, createContext, useContext } from 'react';
-import { trackEvent } from '../lib/analytics';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
-  role: string;
+  phone?: string;
   avatar?: string;
-  createdAt: string;
-  lastLoginAt?: string;
+  role: {
+    name: string;
+    permissions: string[];
+  };
+  emailVerified: boolean;
+  phoneVerified: boolean;
+  preferences: {
+    language: string;
+    theme: string;
+    notifications: {
+      email: boolean;
+      push: boolean;
+      sms: boolean;
+    };
+  };
+  stats: {
+    articlesRead: number;
+    totalReadingTime: number;
+    commentsCount: number;
+    sharesCount: number;
+  };
+  security: {
+    twoFactorEnabled: boolean;
+    lastPasswordChangeAt?: string;
+  };
 }
 
-interface AuthContextType {
+interface AuthState {
   user: User | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  refreshUser: () => Promise<void>;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  error: string | null;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+interface LoginCredentials {
+  email: string;
+  password: string;
+  rememberMe?: boolean;
 }
 
-export function useAuthProvider(): AuthContextType {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+interface RegisterData {
+  name: string;
+  email: string;
+  phone?: string;
+  password: string;
+  confirmPassword: string;
+  terms: boolean;
+  newsletter?: boolean;
+  referralCode?: string;
+}
 
-  // جلب معلومات المستخدم الحالي
-  const refreshUser = async () => {
+export const useAuth = () => {
+  const router = useRouter();
+  const [state, setState] = useState<AuthState>({
+    user: null,
+    isLoading: true,
+    isAuthenticated: false,
+    error: null,
+  });
+
+  // Check authentication status
+  const checkAuth = useCallback(async () => {
     try {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+      
       const response = await fetch('/api/auth/me', {
         credentials: 'include',
       });
 
       if (response.ok) {
         const data = await response.json();
-        setUser(data.user);
-        
-        // حفظ معلومات المستخدم في localStorage للتتبع
-        localStorage.setItem('sabq_user', JSON.stringify(data.user));
+        setState({
+          user: data.user,
+          isLoading: false,
+          isAuthenticated: true,
+          error: null,
+        });
       } else {
-        setUser(null);
-        localStorage.removeItem('sabq_user');
+        setState({
+          user: null,
+          isLoading: false,
+          isAuthenticated: false,
+          error: null,
+        });
       }
     } catch (error) {
-      console.error('Error fetching user:', error);
-      setUser(null);
-      localStorage.removeItem('sabq_user');
-    } finally {
-      setLoading(false);
+      setState({
+        user: null,
+        isLoading: false,
+        isAuthenticated: false,
+        error: 'فشل في التحقق من حالة المصادقة',
+      });
     }
-  };
+  }, []);
 
-  // تسجيل الدخول
-  const login = async (email: string, password: string) => {
+  // Login function
+  const login = useCallback(async (credentials: LoginCredentials) => {
     try {
-      setLoading(true);
-      
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(credentials),
         credentials: 'include',
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setUser(data.user);
-        localStorage.setItem('sabq_user', JSON.stringify(data.user));
-        
-        // تتبع نجاح تسجيل الدخول
-        await trackEvent('login_success', {
-          userId: data.user.id,
-          method: 'email',
+        setState({
+          user: data.data.user,
+          isLoading: false,
+          isAuthenticated: true,
+          error: null,
         });
-
-        return { success: true };
+        return { success: true, data: data.data };
       } else {
-        // تتبع فشل تسجيل الدخول
-        await trackEvent('login_failure', {
-          email,
-          error: data.error,
-        });
-
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: data.error || 'فشل في تسجيل الدخول',
+        }));
         return { success: false, error: data.error };
       }
     } catch (error) {
-      console.error('Login error:', error);
-      
-      await trackEvent('login_error', {
-        email,
-        error: 'network_error',
-      });
-
-      return { success: false, error: 'حدث خطأ في الاتصال' };
-    } finally {
-      setLoading(false);
+      const errorMessage = 'حدث خطأ في الشبكة';
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage,
+      }));
+      return { success: false, error: errorMessage };
     }
-  };
+  }, []);
 
-  // تسجيل الخروج
-  const logout = async () => {
+  // Register function
+  const register = useCallback(async (userData: RegisterData) => {
     try {
-      const userId = user?.id;
-      
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      setUser(null);
-      localStorage.removeItem('sabq_user');
-      
-      // تتبع تسجيل الخروج
-      await trackEvent('logout_success', { userId });
-      
-    } catch (error) {
-      console.error('Logout error:', error);
-      
-      // حتى لو فشل في الخادم، امسح البيانات محلياً
-      setUser(null);
-      localStorage.removeItem('sabq_user');
-      
-      await trackEvent('logout_error', {
-        userId: user?.id,
-        error: 'network_error',
-      });
-    }
-  };
-
-  // التسجيل
-  const register = async (name: string, email: string, password: string) => {
-    try {
-      setLoading(true);
-      
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify(userData),
         credentials: 'include',
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setUser(data.user);
-        localStorage.setItem('sabq_user', JSON.stringify(data.user));
-        
-        // تتبع نجاح التسجيل
-        await trackEvent('register_success', {
-          userId: data.user.id,
-          name,
-          email,
-        });
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: null,
+        }));
+        return { success: true, data };
+      } else {
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: data.error || 'فشل في التسجيل',
+        }));
+        return { success: false, error: data.error, details: data.details };
+      }
+    } catch (error) {
+      const errorMessage = 'حدث خطأ في الشبكة';
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage,
+      }));
+      return { success: false, error: errorMessage };
+    }
+  }, []);
 
+  // Logout function
+  const logout = useCallback(async (logoutAll = false) => {
+    try {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+      const response = await fetch('/api/auth/logout', {
+        method: logoutAll ? 'DELETE' : 'POST',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        setState({
+          user: null,
+          isLoading: false,
+          isAuthenticated: false,
+          error: null,
+        });
+        router.push('/auth/login');
         return { success: true };
       } else {
-        // تتبع فشل التسجيل
-        await trackEvent('register_failure', {
-          name,
-          email,
-          error: data.error,
-        });
-
+        const data = await response.json();
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: data.error || 'فشل في تسجيل الخروج',
+        }));
         return { success: false, error: data.error };
       }
     } catch (error) {
-      console.error('Register error:', error);
-      
-      await trackEvent('register_error', {
-        name,
-        email,
-        error: 'network_error',
+      const errorMessage = 'حدث خطأ في الشبكة';
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage,
+      }));
+      return { success: false, error: errorMessage };
+    }
+  }, [router]);
+
+  // Update user profile
+  const updateProfile = useCallback(async (profileData: Partial<User>) => {
+    try {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+      const response = await fetch('/api/auth/me', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileData),
+        credentials: 'include',
       });
 
-      return { success: false, error: 'حدث خطأ في الاتصال' };
-    } finally {
-      setLoading(false);
-    }
-  };
+      const data = await response.json();
 
-  // تحميل المستخدم عند بداية التطبيق
-  useEffect(() => {
-    refreshUser();
+      if (response.ok) {
+        setState(prev => ({
+          ...prev,
+          user: { ...prev.user, ...data.user },
+          isLoading: false,
+          error: null,
+        }));
+        return { success: true, data: data.user };
+      } else {
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: data.error || 'فشل في تحديث الملف الشخصي',
+        }));
+        return { success: false, error: data.error };
+      }
+    } catch (error) {
+      const errorMessage = 'حدث خطأ في الشبكة';
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage,
+      }));
+      return { success: false, error: errorMessage };
+    }
   }, []);
 
-  return {
-    user,
-    loading,
-    login,
-    logout,
-    register,
-    refreshUser,
-  };
-}
+  // Change password
+  const changePassword = useCallback(async (passwords: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => {
+    try {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
 
-export { AuthContext }; 
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(passwords),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: null,
+        }));
+        return { success: true, data };
+      } else {
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: data.error || 'فشل في تغيير كلمة المرور',
+        }));
+        return { success: false, error: data.error };
+      }
+    } catch (error) {
+      const errorMessage = 'حدث خطأ في الشبكة';
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage,
+      }));
+      return { success: false, error: errorMessage };
+    }
+  }, []);
+
+  // Request password reset
+  const requestPasswordReset = useCallback(async (email: string) => {
+    try {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: null,
+        }));
+        return { success: true, data };
+      } else {
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: data.error || 'فشل في إرسال رابط إعادة تعيين كلمة المرور',
+        }));
+        return { success: false, error: data.error };
+      }
+    } catch (error) {
+      const errorMessage = 'حدث خطأ في الشبكة';
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage,
+      }));
+      return { success: false, error: errorMessage };
+    }
+  }, []);
+
+  // Verify email
+  const verifyEmail = useCallback(async (token: string) => {
+    try {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+      const response = await fetch('/api/auth/verify-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setState(prev => ({
+          ...prev,
+          user: prev.user ? { ...prev.user, emailVerified: true } : null,
+          isLoading: false,
+          error: null,
+        }));
+        return { success: true, data };
+      } else {
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: data.error || 'فشل في التحقق من البريد الإلكتروني',
+        }));
+        return { success: false, error: data.error };
+      }
+    } catch (error) {
+      const errorMessage = 'حدث خطأ في الشبكة';
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage,
+      }));
+      return { success: false, error: errorMessage };
+    }
+  }, []);
+
+  // Check if user has permission
+  const hasPermission = useCallback((permission: string): boolean => {
+    return state.user?.role.permissions.includes(permission) || false;
+  }, [state.user]);
+
+  // Check if user has role
+  const hasRole = useCallback((role: string): boolean => {
+    return state.user?.role.name === role || false;
+  }, [state.user]);
+
+  // Clear error
+  const clearError = useCallback(() => {
+    setState(prev => ({ ...prev, error: null }));
+  }, []);
+
+  // Initialize auth check on mount
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  return {
+    // State
+    user: state.user,
+    isLoading: state.isLoading,
+    isAuthenticated: state.isAuthenticated,
+    error: state.error,
+
+    // Actions
+    login,
+    register,
+    logout,
+    updateProfile,
+    changePassword,
+    requestPasswordReset,
+    verifyEmail,
+    checkAuth,
+    clearError,
+
+    // Utilities
+    hasPermission,
+    hasRole,
+  };
+}; 

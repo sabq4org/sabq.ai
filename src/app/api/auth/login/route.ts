@@ -8,17 +8,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { signIn } from 'next-auth/react';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
+import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { logAuditEvent } from '@/lib/audit-logger';
-import { hashPassword, verifyPassword } from '@/lib/password-utils';
-import { generateTwoFactorCode, sendTwoFactorCode } from '@/lib/two-factor';
-import { rateLimiter } from '@/lib/rate-limiter';
-import { detectDevice, getClientIP } from '@/lib/device-detection';
-import { sendSecurityAlert } from '@/lib/email-service';
+import { 
+  PasswordSecurity, 
+  JWTSecurity, 
+  RequestSecurity, 
+  AuditLogger 
+} from '@/lib/auth-security';
+import { checkRateLimit } from '@/lib/rate-limiter';
+
+const prisma = new PrismaClient();
 
 // Validation schemas
 const loginSchema = z.object({
@@ -215,11 +215,7 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get('user-agent') || '';
 
     // Rate limiting
-    const rateLimitResult = await rateLimiter.check(
-      `login:${ipAddress}`,
-      5, // 5 attempts
-      60 * 1000 // per minute
-    );
+    const rateLimitResult = await checkRateLimit(request, 'login');
 
     if (!rateLimitResult.success) {
       return NextResponse.json(

@@ -7,203 +7,239 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
+import { AnalyticsCore, extractClientInfo } from '@/lib/analytics-core';
+import { checkRateLimit } from '@/lib/rate-limiter';
 
 const prisma = new PrismaClient();
 
-// نموذج التحقق من البيانات
-const eventSchema = z.object({
-  eventType: z.string(),
-  eventData: z.record(z.any()),
-  timestamp: z.string(),
-  sessionId: z.string(),
-  userId: z.string().optional(),
+// Validation schema for analytics events
+const analyticsEventSchema = z.object({
+  eventType: z.string().min(1, 'نوع الحدث مطلوب'),
+  eventData: z.record(z.any()).optional().default({}),
   articleId: z.string().optional(),
+  userId: z.string().optional(),
+  sessionId: z.string().optional(),
   pageUrl: z.string().optional(),
-  deviceInfo: z.object({
-    userAgent: z.string(),
-    screenResolution: z.string(),
-    deviceType: z.enum(['desktop', 'tablet', 'mobile']),
-    language: z.string(),
-  }).optional(),
+  referrer: z.string().optional(),
 });
 
-const eventsRequestSchema = z.object({
-  events: z.array(eventSchema),
+const batchEventsSchema = z.object({
+  events: z.array(analyticsEventSchema).min(1, 'يجب إرسال حدث واحد على الأقل'),
 });
 
+/**
+ * POST /api/analytics/events
+ * Track analytics events
+ */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const validatedData = eventsRequestSchema.parse(body);
-
-    // معالجة كل حدث
-    const processedEvents = await Promise.all(
-      validatedData.events.map(async (event) => {
-        try {
-          // إنشاء الحدث في قاعدة البيانات
-          const savedEvent = await prisma.analyticsEvent.create({
-            data: {
-              event_type: event.eventType,
-              event_data: event.eventData,
-              article_id: event.articleId || null,
-              user_id: event.userId || null,
-              session_id: event.sessionId,
-              ip_address: getClientIP(request),
-              user_agent: event.deviceInfo?.userAgent || request.headers.get('user-agent'),
-              referrer: request.headers.get('referer'),
-              page_url: event.pageUrl,
-              timestamp: new Date(event.timestamp),
-            },
-          });
-
-          // تحديث إحصائيات المقال إذا كان مرتبطًا
-          if (event.articleId && event.eventType === 'article_view') {
-            await prisma.article.update({
-              where: { id: event.articleId },
-              data: { 
-                view_count: { increment: 1 }
-              },
-            });
-          }
-
-          // تحديث اهتمامات المستخدم
-          if (event.userId && event.articleId) {
-            await updateUserInterests(event.userId, event.articleId, event.eventType);
-          }
-
-          return { success: true, eventId: savedEvent.id };
-        } catch (error) {
-          console.error('Error processing event:', error);
-          return { success: false, error: error.message };
-        }
-      })
-    );
-
-    // إحصائيات الاستجابة
-    const successCount = processedEvents.filter(e => e.success).length;
-    const failureCount = processedEvents.length - successCount;
-
-    return NextResponse.json({
-      success: true,
-      processed: processedEvents.length,
-      successful: successCount,
-      failed: failureCount,
-      timestamp: new Date().toISOString(),
-    });
-
-  } catch (error) {
-    console.error('Analytics API error:', error);
-    
-    return NextResponse.json({
-      success: false,
-      error: 'فشل في معالجة الأحداث التحليلية',
-      details: error.message,
-      timestamp: new Date().toISOString(),
-    }, { status: 500 });
-  }
-}
-
-// دالة لتحديث اهتمامات المستخدم
-async function updateUserInterests(userId: string, articleId: string, eventType: string) {
-  try {
-    // الحصول على تفاصيل المقال
-    const article = await prisma.article.findUnique({
-      where: { id: articleId },
-      include: { category: true },
-    });
-
-    if (!article) return;
-
-    // حساب درجة الاهتمام حسب نوع الحدث
-    let interestScore = 0;
-    switch (eventType) {
-      case 'article_view':
-        interestScore = 1.0;
-        break;
-      case 'article_like':
-        interestScore = 3.0;
-        break;
-      case 'article_share':
-        interestScore = 2.5;
-        break;
-      case 'reading_time':
-        const duration = 1; // يجب حساب المدة الفعلية
-        interestScore = Math.min(duration / 60, 2.0);
-        break;
-      case 'scroll_depth':
-        interestScore = 0.5;
-        break;
-      default:
-        interestScore = 0.1;
+    // Rate limiting
+    const rateLimitResult = await checkRateLimit(request, 'general');
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { 
+          error: 'تم تجاوز الحد الأقصى للطلبات',
+          retryAfter: rateLimitResult.retryAfter 
+        },
+        { status: 429 }
+      );
     }
 
-    // تحديث أو إنشاء اهتمام المستخدم بالتصنيف
-    await prisma.userInterest.upsert({
-      where: {
-        user_id_category_id: {
-          user_id: userId,
-          category_id: article.category_id,
-        }
-      },
-      update: {
-        interest_score: {
-          increment: interestScore
-        },
-        last_updated: new Date(),
-      },
-      create: {
-        user_id: userId,
-        category_id: article.category_id,
-        interest_score: interestScore,
-        last_updated: new Date(),
-      },
-    });
+    // Extract client info
+    const clientInfo = extractClientInfo(request);
+    
+    // Parse request body
+    const body = await request.json();
+    
+    // Validate single event or batch
+    let events: any[] = [];
+    if (body.events && Array.isArray(body.events)) {
+      // Batch events
+      const validation = batchEventsSchema.safeParse(body);
+      if (!validation.success) {
+        return NextResponse.json(
+          { 
+            error: 'بيانات غير صحيحة',
+            details: validation.error.errors 
+          },
+          { status: 400 }
+        );
+      }
+      events = validation.data.events;
+    } else {
+      // Single event
+      const validation = analyticsEventSchema.safeParse(body);
+      if (!validation.success) {
+        return NextResponse.json(
+          { 
+            error: 'بيانات غير صحيحة',
+            details: validation.error.errors 
+          },
+          { status: 400 }
+        );
+      }
+      events = [validation.data];
+    }
 
-    // تحديث اهتمام المستخدم بالكلمات المفتاحية
-    if (article.tags && article.tags.length > 0) {
-      for (const tag of article.tags) {
-        await prisma.userInterest.upsert({
-          where: {
-            user_id_topic: {
-              user_id: userId,
-              topic: tag,
-            }
-          },
-          update: {
-            interest_score: {
-              increment: interestScore * 0.5
-            },
-            last_updated: new Date(),
-          },
-          create: {
-            user_id: userId,
-            topic: tag,
-            interest_score: interestScore * 0.5,
-            last_updated: new Date(),
-          },
+    // Process each event
+    const results = [];
+    for (const event of events) {
+      try {
+        await AnalyticsCore.trackEvent({
+          eventType: event.eventType,
+          eventData: event.eventData,
+          articleId: event.articleId,
+          userId: event.userId,
+          sessionId: event.sessionId,
+          pageUrl: event.pageUrl,
+          referrer: event.referrer,
+          ipAddress: clientInfo.ipAddress,
+          userAgent: clientInfo.userAgent,
+          timestamp: new Date(),
+        });
+        
+        results.push({ success: true, eventType: event.eventType });
+      } catch (error) {
+        console.error('Failed to track event:', error);
+        results.push({ 
+          success: false, 
+          eventType: event.eventType, 
+          error: 'فشل في تسجيل الحدث' 
         });
       }
     }
 
+    return NextResponse.json({
+      success: true,
+      processed: results.length,
+      results,
+      timestamp: new Date().toISOString(),
+    });
+
   } catch (error) {
-    console.error('Error updating user interests:', error);
+    console.error('Analytics events API error:', error);
+    return NextResponse.json(
+      { 
+        error: 'خطأ في الخادم',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      },
+      { status: 500 }
+    );
   }
 }
 
-// دالة للحصول على IP العميل
-function getClientIP(request: NextRequest): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  const realIP = request.headers.get('x-real-ip');
-  
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
+/**
+ * GET /api/analytics/events
+ * Get analytics events for a user or session
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+    const sessionId = searchParams.get('sessionId');
+    const eventType = searchParams.get('eventType');
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const offset = parseInt(searchParams.get('offset') || '0');
+
+    if (!userId && !sessionId) {
+      return NextResponse.json(
+        { error: 'معرف المستخدم أو معرف الجلسة مطلوب' },
+        { status: 400 }
+      );
+    }
+
+    // Build where clause
+    const where: any = {};
+    if (userId) where.user_id = userId;
+    if (sessionId) where.session_id = sessionId;
+    if (eventType) where.event_type = eventType;
+
+    // Get events
+    const events = await prisma.analyticsEvent.findMany({
+      where,
+      orderBy: { timestamp: 'desc' },
+      take: Math.min(limit, 100), // Max 100 events per request
+      skip: offset,
+      include: {
+        article: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    // Get total count
+    const total = await prisma.analyticsEvent.count({ where });
+
+    return NextResponse.json({
+      events,
+      pagination: {
+        total,
+        limit,
+        offset,
+        hasMore: offset + limit < total,
+      },
+    });
+
+  } catch (error) {
+    console.error('Get analytics events error:', error);
+    return NextResponse.json(
+      { error: 'خطأ في جلب البيانات' },
+      { status: 500 }
+    );
   }
-  
-  if (realIP) {
-    return realIP;
+}
+
+/**
+ * DELETE /api/analytics/events
+ * Delete analytics events (for privacy/GDPR compliance)
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+    const sessionId = searchParams.get('sessionId');
+    const beforeDate = searchParams.get('beforeDate');
+
+    if (!userId && !sessionId) {
+      return NextResponse.json(
+        { error: 'معرف المستخدم أو معرف الجلسة مطلوب' },
+        { status: 400 }
+      );
+    }
+
+    // Build where clause
+    const where: any = {};
+    if (userId) where.user_id = userId;
+    if (sessionId) where.session_id = sessionId;
+    if (beforeDate) where.timestamp = { lt: new Date(beforeDate) };
+
+    // Delete events
+    const result = await prisma.analyticsEvent.deleteMany({ where });
+
+    return NextResponse.json({
+      success: true,
+      deleted: result.count,
+      message: `تم حذف ${result.count} حدث`,
+    });
+
+  } catch (error) {
+    console.error('Delete analytics events error:', error);
+    return NextResponse.json(
+      { error: 'خطأ في حذف البيانات' },
+      { status: 500 }
+    );
   }
-  
-  return request.headers.get('remote-addr') || 'unknown';
 }
 
 // دعم طرق HTTP أخرى

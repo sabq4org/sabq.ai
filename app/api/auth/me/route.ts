@@ -1,193 +1,221 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
+import { 
+  JWTSecurity, 
+  RequestSecurity
+} from '../../../../lib/auth-security';
 
-export async function GET(request: NextRequest) {
-  // في بيئة الإنتاج، يجب التحقق من الجلسة أو الرمز المميز
-  // هنا سنرجع مستخدم وهمي للاختبار
-  
-  // التحقق من وجود رمز مميز في الرأس (للاختبار فقط)
-  const authHeader = request.headers.get('authorization');
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return NextResponse.json(
-      { error: 'غير مصرح' },
-      { status: 401 }
-    );
-  }
+const prisma = new PrismaClient();
 
-  // استخراج معرف المستخدم من الرمز الوهمي
-  const token = authHeader.substring(7);
-  const match = token.match(/fake-jwt-token-(\d+)/);
-  
-  if (!match) {
-    return NextResponse.json(
-      { error: 'رمز غير صالح' },
-      { status: 401 }
-    );
-  }
-
-  const userId = match[1];
-  
-  // إرجاع بيانات المستخدم بناءً على المعرف
-  const users = {
-    '1': {
-      id: '1',
-      email: 'admin@sabq.org',
-      name: 'المدير العام',
-      role: 'admin'
-    },
-    '2': {
-      id: '2',
-      email: 'editor@sabq.org',
-      name: 'محرر المحتوى',
-      role: 'editor'
-    },
-    '3': {
-      id: '3',
-      email: 'writer@sabq.org',
-      name: 'كاتب المحتوى',
-      role: 'writer'
+// Handle CORS preflight
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, PATCH, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400'
     }
-  };
-
-  const user = users[userId as keyof typeof users];
-  
-  if (!user) {
-    return NextResponse.json(
-      { error: 'المستخدم غير موجود' },
-      { status: 404 }
-    );
-  }
-
-  return NextResponse.json({
-    user,
-    success: true
   });
 }
 
-// تحديث البيانات الشخصية
-export async function PATCH(request: NextRequest) {
+// Get current user information
+export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+    // Extract JWT token
+    const authHeader = request.headers.get('authorization');
+    const token = JWTSecurity.extractTokenFromHeader(authHeader);
 
-    if (!session?.user?.email) {
+    if (!token) {
       return NextResponse.json(
-        { error: 'المستخدم غير مسجل دخول' },
+        { error: 'مطلوب رمز المصادقة' },
         { status: 401 }
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      select: { id: true, email: true }
-    });
-
-    if (!user) {
+    // Verify JWT token
+    const payload = JWTSecurity.verifyToken(token);
+    if (!payload) {
       return NextResponse.json(
-        { error: 'المستخدم غير موجود' },
-        { status: 404 }
+        { error: 'رمز المصادقة غير صالح' },
+        { status: 401 }
       );
     }
 
-    const body = await request.json();
-    const allowedFields = [
-      'name', 'phone', 'bio', 'website', 'location', 
-      'birthDate', 'gender', 'socialMedia', 'preferences'
-    ];
-
-    // تصفية الحقول المسموحة فقط
-    const updateData: any = {};
-    const profileData: any = {};
-
-    Object.keys(body).forEach(key => {
-      if (allowedFields.includes(key)) {
-        if (['name', 'phone'].includes(key)) {
-          updateData[key] = body[key];
-        } else {
-          profileData[key] = body[key];
-        }
-      }
+    // Find user and session
+    const session = await prisma.session.findUnique({
+      where: { session_token: token },
+      include: { user: true }
     });
 
-    // تحديث البيانات في transaction
-    const updatedUser = await prisma.$transaction(async (tx) => {
-      // تحديث بيانات المستخدم الأساسية
-      if (Object.keys(updateData).length > 0) {
-        await tx.user.update({
-          where: { id: user.id },
-          data: updateData
-        });
-      }
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: 'الجلسة غير موجودة أو منتهية الصلاحية' },
+        { status: 401 }
+      );
+    }
 
-      // تحديث الملف الشخصي
-      if (Object.keys(profileData).length > 0) {
-        await tx.userProfile.upsert({
-          where: { userId: user.id },
-          update: profileData,
-          create: {
-            userId: user.id,
-            ...profileData
-          }
-        });
-      }
-
-      // إرجاع البيانات المحدثة
-      return await tx.user.findUnique({
-        where: { id: user.id },
-        include: {
-          profile: true,
-          role: {
-            select: {
-              name: true,
-              permissions: true
-            }
-          }
-        }
-      });
+    // Update session last used
+    await prisma.session.update({
+      where: { id: session.id },
+      data: { started_at: new Date() } // Using existing field
     });
 
-    // تسجيل التحديث
-    await logAuthEvent({
-      type: 'profile_updated',
-      ip,
-      userId: user.id,
-      email: user.email,
+    // Prepare response
+    const response = NextResponse.json({
       success: true,
-      reason: 'تحديث الملف الشخصي',
-      details: {
-        updatedFields: Object.keys({ ...updateData, ...profileData })
+      user: {
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+        role: session.user.role,
+        is_verified: session.user.is_verified,
+        avatar_url: session.user.avatar_url,
+        bio: session.user.bio,
+        last_login: session.user.last_login,
+        created_at: session.user.created_at,
+        updated_at: session.user.updated_at
+      },
+      session: {
+        id: session.id,
+        created_at: session.started_at,
+        ip_address: session.ip_address
       }
     });
 
-    return NextResponse.json({
-      message: 'تم تحديث الملف الشخصي بنجاح',
-      user: {
-        id: updatedUser?.id,
-        name: updatedUser?.name,
-        email: updatedUser?.email,
-        phone: updatedUser?.phone,
-        profile: updatedUser?.profile
-      }
-    });
+    // Add security headers
+    response.headers.set('X-XSS-Protection', '1; mode=block');
+    response.headers.set('X-Frame-Options', 'DENY');
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, PATCH, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    return response;
 
   } catch (error) {
-    console.error('خطأ في تحديث الملف الشخصي:', error);
-
-    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+    console.error('Get user error:', error);
     
-    await logAuthEvent({
-      type: 'profile_update_error',
-      ip,
-      success: false,
-      reason: 'خطأ داخلي في الخادم',
-      error: error instanceof Error ? error.message : 'خطأ غير معروف'
-    });
-
     return NextResponse.json(
-      { error: 'حدث خطأ أثناء تحديث الملف الشخصي' },
+      { error: 'خطأ في استرجاع بيانات المستخدم' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
+  }
+}
+
+// Update user profile
+export async function PATCH(request: NextRequest) {
+  try {
+    // Extract JWT token
+    const authHeader = request.headers.get('authorization');
+    const token = JWTSecurity.extractTokenFromHeader(authHeader);
+
+    if (!token) {
+      return NextResponse.json(
+        { error: 'مطلوب رمز المصادقة' },
+        { status: 401 }
+      );
+    }
+
+    // Verify JWT token
+    const payload = JWTSecurity.verifyToken(token);
+    if (!payload) {
+      return NextResponse.json(
+        { error: 'رمز المصادقة غير صالح' },
+        { status: 401 }
+      );
+    }
+
+    // Find user and session
+    const session = await prisma.session.findUnique({
+      where: { session_token: token },
+      include: { user: true }
+    });
+
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: 'الجلسة غير موجودة أو منتهية الصلاحية' },
+        { status: 401 }
+      );
+    }
+
+    // Parse request body
+    const body = await request.json();
+    
+    // Validate and sanitize input
+    const allowedFields = ['name', 'bio', 'avatar_url'];
+    const updateData: any = {};
+
+    allowedFields.forEach(field => {
+      if (body[field] !== undefined) {
+        if (field === 'name' || field === 'bio') {
+          updateData[field] = RequestSecurity.sanitizeInput(body[field]);
+        } else {
+          updateData[field] = body[field];
+        }
+      }
+    });
+
+    // Validate name length
+    if (updateData.name && (updateData.name.length < 2 || updateData.name.length > 100)) {
+      return NextResponse.json(
+        { error: 'الاسم يجب أن يكون بين 2 و 100 حرف' },
+        { status: 400 }
+      );
+    }
+
+    // Validate bio length
+    if (updateData.bio && updateData.bio.length > 500) {
+      return NextResponse.json(
+        { error: 'النبذة الشخصية يجب أن تكون أقل من 500 حرف' },
+        { status: 400 }
+      );
+    }
+
+    // Update user data
+    const updatedUser = await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
+        ...updateData,
+        updated_at: new Date()
+      }
+    });
+
+    // Prepare response
+    const response = NextResponse.json({
+      success: true,
+      message: 'تم تحديث الملف الشخصي بنجاح',
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        role: updatedUser.role,
+        is_verified: updatedUser.is_verified,
+        avatar_url: updatedUser.avatar_url,
+        bio: updatedUser.bio,
+        last_login: updatedUser.last_login,
+        created_at: updatedUser.created_at,
+        updated_at: updatedUser.updated_at
+      }
+    });
+
+    // Add security headers
+    response.headers.set('X-XSS-Protection', '1; mode=block');
+    response.headers.set('X-Frame-Options', 'DENY');
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, PATCH, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    return response;
+
+  } catch (error) {
+    console.error('Update user error:', error);
+    
+    return NextResponse.json(
+      { error: 'خطأ في تحديث الملف الشخصي' },
+      { status: 500 }
+    );
   }
 } 
