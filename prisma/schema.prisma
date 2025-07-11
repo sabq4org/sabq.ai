@@ -15,7 +15,7 @@ model User {
   email             String    @unique
   name              String
   password_hash     String    // Updated field name for consistency
-  role              String    @default("reader") // "reader" | "editor" | "admin"
+  legacy_role       String?   @default("reader") // Kept for backward compatibility
   is_verified       Boolean   @default(false)
   is_active         Boolean   @default(true)
   avatar_url        String?
@@ -28,9 +28,22 @@ model User {
   password_reset_expires DateTime?
   email_verification_token String?
   email_verification_expires DateTime?
+  two_factor_enabled Boolean @default(false)
+  two_factor_secret String?
+  backup_codes      String[]  // Array of backup codes for 2FA
+  password_changed_at DateTime? // Track password changes
+  force_password_change Boolean @default(false)
   created_at        DateTime  @default(now())
   updated_at        DateTime  @updatedAt
   last_login        DateTime?
+  
+  // RBAC Relations
+  user_roles        UserRole[]
+  team_users        TeamUser[]
+  created_roles     Role[] @relation("CreatedRoles")
+  created_teams     Team[] @relation("CreatedTeams")
+  user_permissions  UserPermission[]
+  sessions_advanced UserSessionAdvanced[]
   
   // Relations
   articles          Article[]
@@ -80,6 +93,9 @@ model User {
   comment_appeals       CommentAppeal[]
   moderation_training   ModerationTrainingData[]
   moderation_configs    ModerationConfig[]
+  
+  // Analytics Relations
+  article_analytics_events ArticleAnalyticsEvent[]
   
   @@map("users")
 }
@@ -169,6 +185,9 @@ model Article {
   // Interaction Relations
   article_comments ArticleComment[]
   article_shares   ArticleShare[]
+  
+  // Analytics Relations
+  article_analytics_events ArticleAnalyticsEvent[]
   
   @@map("articles")
 }
@@ -429,6 +448,32 @@ model RealtimeMetrics {
   @@index([metric_type])
   @@index([timestamp])
   @@map("realtime_metrics")
+}
+
+model ArticleAnalyticsEvent {
+  id           String   @id @default(uuid())
+  article_id   String
+  user_id      String?
+  session_id   String?
+  event_type   String   // view, scroll, click, reading_time, like, share, comment, bookmark
+  value        Float?   // for reading_time (seconds), scroll percentage, etc.
+  meta         Json?    // additional metadata like device, browser, location
+  ip_address   String?  // for anonymous tracking
+  user_agent   String?  // browser/device information
+  referrer     String?  // where the user came from
+  device_type  String?  // mobile, desktop, tablet
+  created_at   DateTime @default(now())
+  
+  // Relations
+  article      Article  @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  user         User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  
+  @@index([article_id, event_type])
+  @@index([user_id, created_at])
+  @@index([session_id, created_at])
+  @@index([event_type, created_at])
+  @@index([created_at])
+  @@map("article_analytics_events")
 }
 
 // New Recommendation System Models
@@ -1183,4 +1228,253 @@ model ModerationConfig {
   creator               User     @relation(fields: [created_by], references: [id])
   
   @@map("moderation_config")
+} 
+
+// =============================================================================
+// RBAC (Role-Based Access Control) System Models
+// =============================================================================
+
+// الأدوار - Roles
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique // admin, editor, author, moderator, analyst, etc.
+  name_ar     String   // الاسم بالعربية
+  description String?
+  description_ar String? // الوصف بالعربية
+  color       String?  @default("#6B7280") // لون الدور في الواجهة
+  icon        String?  // أيقونة الدور
+  is_system   Boolean  @default(false) // الأدوار النظامية لا يمكن حذفها
+  is_active   Boolean  @default(true)
+  sort_order  Int      @default(0)
+  metadata    Json?    // بيانات إضافية للدور
+  created_by  String?  // من أنشأ هذا الدور
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  // Relations
+  creator           User?           @relation("CreatedRoles", fields: [created_by], references: [id])
+  permissions       RolePermission[]
+  user_roles        UserRole[]
+  team_roles        TeamRole[]
+  
+  @@index([is_active])
+  @@index([is_system])
+  @@index([sort_order])
+  @@map("roles")
+}
+
+// الصلاحيات - Permissions
+model Permission {
+  id          String   @id @default(uuid())
+  code        String   @unique // manage:users, edit:articles, moderate:comments, view:analytics, etc.
+  name        String   // اسم الصلاحية
+  name_ar     String   // الاسم بالعربية
+  description String?
+  description_ar String? // الوصف بالعربية
+  category    String   // users, content, moderation, analytics, system, etc.
+  resource    String?  // المورد المرتبط بالصلاحية
+  action      String   // create, read, update, delete, manage, etc.
+  scope       String   @default("global") // global, team, own, custom
+  is_dangerous Boolean @default(false) // صلاحيات خطيرة تحتاج تأكيد إضافي
+  is_system   Boolean  @default(false) // صلاحيات نظامية لا يمكن حذفها
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  // Relations
+  roles       RolePermission[]
+  user_permissions UserPermission[]
+  
+  @@index([category])
+  @@index([resource, action])
+  @@index([is_active])
+  @@index([is_system])
+  @@map("permissions")
+}
+
+// ربط الأدوار بالصلاحيات - Role Permissions
+model RolePermission {
+  id            String   @id @default(uuid())
+  role_id       String
+  permission_id String
+  granted_at    DateTime @default(now())
+  granted_by    String?  // من منح هذه الصلاحية
+  conditions    Json?    // شروط إضافية للصلاحية
+  
+  // Relations
+  role          Role       @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  permission    Permission @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+  
+  @@unique([role_id, permission_id])
+  @@index([role_id])
+  @@index([permission_id])
+  @@map("role_permissions")
+}
+
+// ربط المستخدمين بالأدوار - User Roles (دعم متعدد الأدوار)
+model UserRole {
+  id          String   @id @default(uuid())
+  user_id     String
+  role_id     String
+  granted_at  DateTime @default(now())
+  granted_by  String?  // من منح هذا الدور
+  expires_at  DateTime? // تاريخ انتهاء الدور (اختياري)
+  is_active   Boolean  @default(true)
+  scope       String?  // نطاق الدور (team, department, global)
+  scope_id    String?  // معرف النطاق
+  conditions  Json?    // شروط إضافية
+  
+  // Relations
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  role        Role     @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  
+  @@unique([user_id, role_id, scope, scope_id])
+  @@index([user_id, is_active])
+  @@index([role_id])
+  @@index([expires_at])
+  @@map("user_roles")
+}
+
+// الفرق/المجموعات - Teams
+model Team {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  name_ar     String   // الاسم بالعربية
+  description String?
+  description_ar String? // الوصف بالعربية
+  color       String?  @default("#3B82F6") // لون الفريق
+  icon        String?  // أيقونة الفريق
+  type        String   @default("department") // department, project, editorial, moderation, etc.
+  parent_id   String?  // للدعم الهرمي للفرق
+  is_active   Boolean  @default(true)
+  max_members Int?     // الحد الأقصى لأعضاء الفريق
+  settings    Json?    // إعدادات الفريق
+  created_by  String?  // من أنشأ هذا الفريق
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  // Relations
+  creator     User?     @relation("CreatedTeams", fields: [created_by], references: [id])
+  parent      Team?     @relation("TeamHierarchy", fields: [parent_id], references: [id])
+  children    Team[]    @relation("TeamHierarchy")
+  roles       TeamRole[]
+  users       TeamUser[]
+  
+  @@index([type])
+  @@index([parent_id])
+  @@index([is_active])
+  @@map("teams")
+}
+
+// ربط الفرق بالأدوار - Team Roles
+model TeamRole {
+  id          String   @id @default(uuid())
+  team_id     String
+  role_id     String
+  assigned_at DateTime @default(now())
+  assigned_by String?  // من ربط هذا الدور بالفريق
+  is_inherited Boolean @default(false) // هل الدور موروث من فريق أب
+  conditions  Json?    // شروط إضافية
+  
+  // Relations
+  team        Team     @relation(fields: [team_id], references: [id], onDelete: Cascade)
+  role        Role     @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  
+  @@unique([team_id, role_id])
+  @@index([team_id])
+  @@index([role_id])
+  @@map("team_roles")
+}
+
+// ربط المستخدمين بالفرق - Team Users
+model TeamUser {
+  id          String   @id @default(uuid())
+  team_id     String
+  user_id     String
+  role_in_team String? // team_lead, member, observer, etc.
+  joined_at   DateTime @default(now())
+  added_by    String?  // من أضاف المستخدم للفريق
+  is_active   Boolean  @default(true)
+  permissions Json?    // صلاحيات إضافية خاصة بالفريق
+  
+  // Relations
+  team        Team     @relation(fields: [team_id], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([team_id, user_id])
+  @@index([team_id, is_active])
+  @@index([user_id, is_active])
+  @@map("team_users")
+}
+
+// صلاحيات المستخدمين المخصصة - Custom User Permissions (للاستثناءات)
+model UserPermission {
+  id            String   @id @default(uuid())
+  user_id       String
+  permission_id String
+  granted       Boolean  @default(true) // true = منح، false = منع
+  granted_at    DateTime @default(now())
+  granted_by    String?  // من منح/منع هذه الصلاحية
+  expires_at    DateTime? // تاريخ انتهاء الصلاحية
+  reason        String?  // سبب المنح/المنع
+  conditions    Json?    // شروط إضافية
+  
+  // Relations
+  user          User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  permission    Permission @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+  
+  @@unique([user_id, permission_id])
+  @@index([user_id])
+  @@index([permission_id])
+  @@index([expires_at])
+  @@map("user_permissions")
+}
+
+// تاريخ تغيير الصلاحيات - Permission Change History
+model PermissionChangeLog {
+  id              String   @id @default(uuid())
+  target_type     String   // user, role, team
+  target_id       String   // معرف الهدف
+  change_type     String   // grant, revoke, add_role, remove_role, create_team, etc.
+  old_permissions Json?    // الصلاحيات القديمة
+  new_permissions Json?    // الصلاحيات الجديدة
+  changed_by      String   // من قام بالتغيير
+  reason          String?  // سبب التغيير
+  ip_address      String?  // عنوان IP
+  user_agent      String?  // معلومات المتصفح
+  created_at      DateTime @default(now())
+  
+  @@index([target_type, target_id])
+  @@index([changed_by])
+  @@index([created_at])
+  @@map("permission_change_logs")
+}
+
+// جلسات المستخدمين المتقدمة - Advanced User Sessions
+model UserSessionAdvanced {
+  id              String   @id @default(uuid())
+  user_id         String
+  session_token   String   @unique
+  device_id       String?  // معرف الجهاز الفريد
+  device_name     String?  // اسم الجهاز المخصص
+  device_type     String?  // mobile, desktop, tablet, api
+  browser         String?
+  os              String?
+  ip_address      String?
+  location        Json?    // معلومات الموقع
+  last_activity   DateTime @default(now())
+  expires_at      DateTime
+  is_active       Boolean  @default(true)
+  is_trusted      Boolean  @default(false) // جهاز موثوق
+  permissions_cache Json? // كاش الصلاحيات للأداء
+  created_at      DateTime @default(now())
+  
+  // Relations
+  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id, is_active])
+  @@index([session_token])
+  @@index([expires_at])
+  @@index([last_activity])
+  @@map("user_sessions_advanced")
 } 
