@@ -1,287 +1,234 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { authOptions } from '@/lib/auth';
-import { logAuthEvent } from '@/lib/audit-log';
-import { sanitizeInput } from '@/lib/security';
-import { generateSlug } from '@/lib/utils-simple';
+import { authMiddleware } from '@/lib/auth-middleware';
+import { validateInput, sanitizeHtml } from '@/lib/security';
 
 const prisma = new PrismaClient();
 
-// مخطط التحقق من بيانات المقالة
-const articleSchema = z.object({
-  title: z.string()
-    .min(5, 'العنوان قصير جداً')
-    .max(200, 'العنوان طويل جداً'),
-  content: z.string()
-    .min(50, 'المحتوى قصير جداً')
-    .max(50000, 'المحتوى طويل جداً'),
-  excerpt: z.string()
-    .min(10, 'المقتطف قصير جداً')
-    .max(500, 'المقتطف طويل جداً'),
-  sectionId: z.string().uuid('معرف القسم غير صحيح'),
-  tags: z.array(z.string()).max(10, 'عدد الوسوم كبير جداً'),
-  status: z.enum(['draft', 'published', 'archived'], {
-    errorMap: () => ({ message: 'حالة المقالة غير صحيحة' })
-  }),
-  featuredImage: z.string().url().optional(),
-  publishAt: z.string().datetime().optional(),
-  metaTitle: z.string().max(60).optional(),
-  metaDescription: z.string().max(160).optional(),
-  allowComments: z.boolean().default(true),
-  isPremium: z.boolean().default(false)
+// Validation schemas
+const createArticleSchema = z.object({
+  title: z.string().min(1).max(200),
+  slug: z.string().min(1).max(200).regex(/^[a-z0-9-]+$/),
+  content: z.string().min(1),
+  summary: z.string().optional(),
+  featured_image: z.string().url().optional(),
+  category_id: z.string().uuid(),
+  status: z.enum(['draft', 'published', 'scheduled', 'archived', 'in_review']).default('draft'),
+  featured: z.boolean().default(false),
+  tags: z.array(z.string()).optional(),
+  scheduled_at: z.string().datetime().optional(),
+  seo_data: z.object({
+    meta_title: z.string().optional(),
+    meta_description: z.string().optional(),
+    keywords: z.array(z.string()).optional()
+  }).optional()
 });
 
-// مخطط التحقق من معاملات البحث
-const querySchema = z.object({
-  page: z.string().transform(val => parseInt(val) || 1),
-  limit: z.string().transform(val => Math.min(parseInt(val) || 10, 100)),
-  search: z.string().optional(),
-  section: z.string().optional(),
-  status: z.enum(['draft', 'published', 'archived']).optional(),
+const searchSchema = z.object({
+  q: z.string().optional(),
+  status: z.string().optional(),
+  category: z.string().optional(),
   author: z.string().optional(),
+  featured: z.boolean().optional(),
   tags: z.string().optional(),
-  sortBy: z.enum(['createdAt', 'publishedAt', 'title', 'views']).default('createdAt'),
-  sortOrder: z.enum(['asc', 'desc']).default('desc'),
-  featured: z.string().transform(val => val === 'true').optional(),
-  premium: z.string().transform(val => val === 'true').optional()
+  page: z.coerce.number().min(1).default(1),
+  limit: z.coerce.number().min(1).max(100).default(20),
+  sort: z.enum(['created_at', 'updated_at', 'published_at', 'title', 'view_count']).default('created_at'),
+  order: z.enum(['asc', 'desc']).default('desc'),
+  date_from: z.string().datetime().optional(),
+  date_to: z.string().datetime().optional()
 });
 
+/**
+ * GET /api/articles
+ * جلب قائمة المقالات مع البحث والفلترة
+ */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const session = await getServerSession(authOptions);
-    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
-
-    // التحقق من صحة المعاملات
-    const queryValidation = querySchema.safeParse(Object.fromEntries(searchParams));
     
-    if (!queryValidation.success) {
-      return NextResponse.json(
-        { error: 'معاملات البحث غير صحيحة', details: queryValidation.error.errors },
-        { status: 400 }
-      );
-    }
-
-    const {
-      page,
-      limit,
-      search,
-      section,
-      status,
-      author,
-      tags,
-      sortBy,
-      sortOrder,
-      featured,
-      premium
-    } = queryValidation.data;
+    // التحقق من صحة المعاملات
+    const params = searchSchema.parse({
+      q: searchParams.get('q'),
+      status: searchParams.get('status'),
+      category: searchParams.get('category'),
+      author: searchParams.get('author'),
+      featured: searchParams.get('featured') === 'true',
+      tags: searchParams.get('tags'),
+      page: searchParams.get('page'),
+      limit: searchParams.get('limit'),
+      sort: searchParams.get('sort'),
+      order: searchParams.get('order'),
+      date_from: searchParams.get('date_from'),
+      date_to: searchParams.get('date_to')
+    });
 
     // بناء شروط البحث
-    const where: any = {};
-
-    // فلترة حسب الحالة
-    if (status) {
-      where.status = status;
-    } else if (!session || session.user?.role !== 'admin') {
-      // عرض المقالات المنشورة فقط للمستخدمين العاديين
-      where.status = 'published';
-      where.publishedAt = { lte: new Date() };
-    }
+    const whereClause: any = {};
 
     // البحث النصي
-    if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { content: { contains: search, mode: 'insensitive' } },
-        { excerpt: { contains: search, mode: 'insensitive' } }
+    if (params.q) {
+      whereClause.OR = [
+        { title: { contains: params.q, mode: 'insensitive' } },
+        { summary: { contains: params.q, mode: 'insensitive' } },
+        { content: { contains: params.q, mode: 'insensitive' } }
       ];
     }
 
-    // فلترة حسب القسم
-    if (section) {
-      where.sectionId = section;
+    // فلترة حسب الحالة
+    if (params.status) {
+      whereClause.status = params.status;
     }
 
-    // فلترة حسب المؤلف
-    if (author) {
-      where.authorId = author;
+    // فلترة حسب الفئة
+    if (params.category) {
+      whereClause.category_id = params.category;
     }
 
-    // فلترة حسب الوسوم
-    if (tags) {
-      const tagList = tags.split(',').map(tag => tag.trim());
-      where.tags = {
-        hasSome: tagList
-      };
+    // فلترة حسب الكاتب
+    if (params.author) {
+      whereClause.author_id = params.author;
     }
 
     // فلترة المقالات المميزة
-    if (featured !== undefined) {
-      where.featured = featured;
+    if (params.featured !== undefined) {
+      whereClause.featured = params.featured;
     }
 
-    // فلترة المقالات المدفوعة
-    if (premium !== undefined) {
-      where.isPremium = premium;
+    // فلترة حسب الوسوم
+    if (params.tags) {
+      const tagsList = params.tags.split(',');
+      whereClause.article_tags = {
+        some: {
+          tag: {
+            slug: { in: tagsList }
+          }
+        }
+      };
     }
 
-    // حساب التخطي والترتيب
-    const skip = (page - 1) * limit;
+    // فلترة حسب التاريخ
+    if (params.date_from || params.date_to) {
+      whereClause.created_at = {};
+      if (params.date_from) {
+        whereClause.created_at.gte = new Date(params.date_from);
+      }
+      if (params.date_to) {
+        whereClause.created_at.lte = new Date(params.date_to);
+      }
+    }
+
+    // حساب الإزاحة للصفحات
+    const skip = (params.page - 1) * params.limit;
+
+    // ترتيب النتائج
     const orderBy: any = {};
-    orderBy[sortBy] = sortOrder;
+    orderBy[params.sort] = params.order;
 
-    // جلب المقالات مع الإحصائيات
+    // جلب المقالات
     const [articles, totalCount] = await Promise.all([
       prisma.article.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
+        where: whereClause,
         include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-              profile: {
-                select: {
-                  avatar: true
-                }
-              }
-            }
+          category: {
+            select: { id: true, name: true, slug: true }
           },
-          section: {
-            select: {
-              id: true,
-              name: true,
-              slug: true
+          author: {
+            select: { id: true, name: true, email: true }
+          },
+          article_tags: {
+            include: {
+              tag: {
+                select: { id: true, name: true, slug: true }
+              }
             }
           },
           _count: {
             select: {
               comments: true,
-              likes: true
+              article_likes: true,
+              revisions: true
             }
           }
-        }
+        },
+        orderBy,
+        skip,
+        take: params.limit
       }),
-      prisma.article.count({ where })
+      prisma.article.count({ where: whereClause })
     ]);
 
-    // تنظيف البيانات للإرجاع
-    const cleanedArticles = articles.map(article => ({
-      id: article.id,
-      title: article.title,
-      slug: article.slug,
-      excerpt: article.excerpt,
-      featuredImage: article.featuredImage,
-      status: article.status,
-      featured: article.featured,
-      isPremium: article.isPremium,
-      views: article.views,
-      publishedAt: article.publishedAt,
-      createdAt: article.createdAt,
-      updatedAt: article.updatedAt,
-      readingTime: article.readingTime,
-      tags: article.tags,
-      author: article.author,
-      section: article.section,
+    // تنسيق النتائج
+    const formattedArticles = articles.map(article => ({
+      ...article,
+      tags: article.article_tags.map(at => at.tag),
+      article_tags: undefined,
       stats: {
         comments: article._count.comments,
-        likes: article._count.likes,
-        shares: article.shares || 0
-      }
+        likes: article._count.article_likes,
+        revisions: article._count.revisions
+      },
+      _count: undefined
     }));
 
-    // حساب معلومات التصفح
-    const totalPages = Math.ceil(totalCount / limit);
-    const hasNextPage = page < totalPages;
-    const hasPreviousPage = page > 1;
-
-    // تسجيل الوصول
-    await logAuthEvent({
-      type: 'articles_accessed',
-      ip,
-      userId: session?.user?.id,
-      success: true,
-      reason: 'جلب قائمة المقالات',
-      details: {
-        page,
-        limit,
-        search,
-        totalCount
-      }
-    });
-
     return NextResponse.json({
-      articles: cleanedArticles,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalCount,
-        hasNextPage,
-        hasPreviousPage,
-        limit
-      },
-      filters: {
-        search,
-        section,
-        status,
-        author,
-        tags,
-        featured,
-        premium
+      success: true,
+      data: {
+        articles: formattedArticles,
+        pagination: {
+          page: params.page,
+          limit: params.limit,
+          total: totalCount,
+          pages: Math.ceil(totalCount / params.limit)
+        },
+        filters: {
+          q: params.q,
+          status: params.status,
+          category: params.category,
+          author: params.author,
+          featured: params.featured,
+          tags: params.tags
+        }
       }
     });
 
   } catch (error) {
-    console.error('خطأ في جلب المقالات:', error);
-
-    await logAuthEvent({
-      type: 'articles_access_error',
-      ip: request.headers.get('x-forwarded-for') || '127.0.0.1',
-      success: false,
-      reason: 'خطأ داخلي في الخادم',
-      error: error instanceof Error ? error.message : 'خطأ غير معروف'
-    });
+    console.error('Error fetching articles:', error);
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid parameters', details: error.errors },
+        { status: 400 }
+      );
+    }
 
     return NextResponse.json(
-      { error: 'حدث خطأ أثناء جلب المقالات' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
+/**
+ * POST /api/articles
+ * إنشاء مقال جديد
+ */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
-
-    if (!session?.user?.email) {
+    // التحقق من الصلاحيات
+    const authResult = await authMiddleware(request);
+    if (!authResult.success) {
       return NextResponse.json(
-        { error: 'المستخدم غير مسجل دخول' },
+        { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    // التحقق من صلاحيات النشر
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: {
-        role: {
-          select: {
-            permissions: true
-          }
-        }
-      }
-    });
-
-    if (!user || !user.role.permissions.includes('write_articles')) {
+    const user = authResult.user;
+    if (!['editor', 'admin'].includes(user.role)) {
       return NextResponse.json(
-        { error: 'ليس لديك صلاحية لإنشاء المقالات' },
+        { error: 'Insufficient permissions' },
         { status: 403 }
       );
     }
@@ -289,201 +236,148 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     // التحقق من صحة البيانات
-    const validationResult = articleSchema.safeParse(body);
-    
-    if (!validationResult.success) {
-      return NextResponse.json(
-        { 
-          error: 'بيانات المقالة غير صحيحة',
-          details: validationResult.error.errors
-        },
-        { status: 400 }
-      );
-    }
+    const validatedData = createArticleSchema.parse(body);
 
-    const articleData = validationResult.data;
+    // تنظيف المحتوى من أكواد خبيثة
+    const sanitizedContent = sanitizeHtml(validatedData.content);
 
-    // تنظيف وتجهيز البيانات
-    const cleanTitle = sanitizeInput(articleData.title);
-    const cleanContent = sanitizeInput(articleData.content);
-    const cleanExcerpt = sanitizeInput(articleData.excerpt);
-    
-    // إنشاء الـ slug
-    const slug = generateSlug(cleanTitle);
-    
     // التحقق من عدم تكرار الـ slug
-    const existingSlug = await prisma.article.findUnique({
-      where: { slug }
+    const existingArticle = await prisma.article.findUnique({
+      where: { slug: validatedData.slug }
     });
 
-    const finalSlug = existingSlug 
-      ? `${slug}-${Date.now()}`
-      : slug;
-
-    // حساب وقت القراءة (تقريبياً 200 كلمة في الدقيقة)
-    const wordCount = cleanContent.split(/\s+/).length;
-    const readingTime = Math.ceil(wordCount / 200);
-
-    // التحقق من صحة القسم
-    const section = await prisma.section.findUnique({
-      where: { id: articleData.sectionId }
-    });
-
-    if (!section) {
+    if (existingArticle) {
       return NextResponse.json(
-        { error: 'القسم المحدد غير موجود' },
-        { status: 400 }
+        { error: 'Slug already exists' },
+        { status: 409 }
       );
     }
 
-    // تحديد وقت النشر
-    const publishedAt = articleData.status === 'published' 
-      ? (articleData.publishAt ? new Date(articleData.publishAt) : new Date())
-      : null;
+    // التحقق من وجود الفئة
+    const category = await prisma.category.findUnique({
+      where: { id: validatedData.category_id }
+    });
 
-    // إنشاء المقالة
-    const newArticle = await prisma.$transaction(async (tx) => {
-      const article = await tx.article.create({
+    if (!category) {
+      return NextResponse.json(
+        { error: 'Category not found' },
+        { status: 404 }
+      );
+    }
+
+    // حساب وقت القراءة التقديري
+    const wordCount = sanitizedContent.split(/\s+/).length;
+    const readingTime = Math.ceil(wordCount / 200); // 200 كلمة في الدقيقة
+
+    // إنشاء المقال
+    const article = await prisma.$transaction(async (tx) => {
+      // إنشاء المقال
+      const newArticle = await tx.article.create({
         data: {
-          title: cleanTitle,
-          slug: finalSlug,
-          content: cleanContent,
-          excerpt: cleanExcerpt,
-          authorId: user.id,
-          sectionId: articleData.sectionId,
-          status: articleData.status,
-          tags: articleData.tags,
-          featuredImage: articleData.featuredImage || null,
-          publishedAt,
-          readingTime,
-          metaTitle: articleData.metaTitle || cleanTitle.substring(0, 60),
-          metaDescription: articleData.metaDescription || cleanExcerpt.substring(0, 160),
-          allowComments: articleData.allowComments,
-          isPremium: articleData.isPremium,
-          featured: false,
-          views: 0,
-          shares: 0
+          title: validatedData.title,
+          slug: validatedData.slug,
+          content: sanitizedContent,
+          summary: validatedData.summary,
+          featured_image: validatedData.featured_image,
+          category_id: validatedData.category_id,
+          author_id: user.id,
+          status: validatedData.status,
+          featured: validatedData.featured,
+          reading_time: readingTime,
+          seo_data: validatedData.seo_data,
+          scheduled_at: validatedData.scheduled_at ? new Date(validatedData.scheduled_at) : null,
+          published_at: validatedData.status === 'published' ? new Date() : null
+        }
+      });
+
+      // إضافة الوسوم إذا كانت موجودة
+      if (validatedData.tags && validatedData.tags.length > 0) {
+        for (const tagName of validatedData.tags) {
+          // البحث عن الوسم أو إنشاؤه
+          const tag = await tx.tag.upsert({
+            where: { name: tagName },
+            update: { usage_count: { increment: 1 } },
+            create: {
+              name: tagName,
+              slug: tagName.toLowerCase().replace(/\s+/g, '-'),
+              usage_count: 1
+            }
+          });
+
+          // ربط الوسم بالمقال
+          await tx.articleTag.create({
+            data: {
+              article_id: newArticle.id,
+              tag_id: tag.id
+            }
+          });
+        }
+      }
+
+      // إنشاء أول مراجعة
+      await tx.articleRevision.create({
+        data: {
+          article_id: newArticle.id,
+          title: validatedData.title,
+          content: sanitizedContent,
+          summary: validatedData.summary,
+          author_id: user.id,
+          revision_number: 1,
+          change_summary: 'Initial version'
+        }
+      });
+
+      // إنشاء حالة سير العمل
+      await tx.workflowStatus.create({
+        data: {
+          article_id: newArticle.id,
+          status: validatedData.status,
+          changed_by: user.id,
+          notes: 'Article created'
+        }
+      });
+
+      return newArticle;
+    });
+
+    // جلب المقال مع العلاقات
+    const fullArticle = await prisma.article.findUnique({
+      where: { id: article.id },
+      include: {
+        category: true,
+        author: {
+          select: { id: true, name: true, email: true }
         },
-        include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-              profile: {
-                select: {
-                  avatar: true
-                }
-              }
-            }
-          },
-          section: {
-            select: {
-              id: true,
-              name: true,
-              slug: true
-            }
-          }
+        article_tags: {
+          include: { tag: true }
         }
-      });
-
-      // إضافة إشعار للمتابعين إذا كانت المقالة منشورة
-      if (articleData.status === 'published') {
-        await tx.notification.createMany({
-          data: await getFollowersNotifications(user.id, article.id, article.title)
-        });
       }
-
-      // تحديث إحصائيات المؤلف
-      await tx.user.update({
-        where: { id: user.id },
-        data: {
-          articlesCount: {
-            increment: 1
-          }
-        }
-      });
-
-      // تحديث إحصائيات القسم
-      await tx.section.update({
-        where: { id: articleData.sectionId },
-        data: {
-          articlesCount: {
-            increment: 1
-          }
-        }
-      });
-
-      return article;
     });
 
-    // تسجيل إنشاء المقالة
-    await logAuthEvent({
-      type: 'article_created',
-      ip,
-      userId: user.id,
-      email: user.email,
+    return NextResponse.json({
       success: true,
-      reason: 'إنشاء مقالة جديدة',
-      details: {
-        articleId: newArticle.id,
-        title: newArticle.title,
-        status: newArticle.status
-      }
-    });
-
-    return NextResponse.json(
-      {
-        message: 'تم إنشاء المقالة بنجاح',
+      data: {
         article: {
-          id: newArticle.id,
-          title: newArticle.title,
-          slug: newArticle.slug,
-          status: newArticle.status,
-          publishedAt: newArticle.publishedAt,
-          createdAt: newArticle.createdAt,
-          author: newArticle.author,
-          section: newArticle.section
+          ...fullArticle,
+          tags: fullArticle?.article_tags.map(at => at.tag) || [],
+          article_tags: undefined
         }
-      },
-      { status: 201 }
-    );
+      }
+    }, { status: 201 });
 
   } catch (error) {
-    console.error('خطأ في إنشاء المقالة:', error);
-
-    await logAuthEvent({
-      type: 'article_creation_error',
-      ip: request.headers.get('x-forwarded-for') || '127.0.0.1',
-      success: false,
-      reason: 'خطأ داخلي في الخادم',
-      error: error instanceof Error ? error.message : 'خطأ غير معروف'
-    });
+    console.error('Error creating article:', error);
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid data', details: error.errors },
+        { status: 400 }
+      );
+    }
 
     return NextResponse.json(
-      { error: 'حدث خطأ أثناء إنشاء المقالة' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
-}
-
-// إنشاء إشعارات للمتابعين
-async function getFollowersNotifications(authorId: string, articleId: string, title: string) {
-  const followers = await prisma.userFollow.findMany({
-    where: { followingId: authorId },
-    select: { followerId: true }
-  });
-
-  return followers.map(follow => ({
-    userId: follow.followerId,
-    type: 'new_article',
-    title: 'مقالة جديدة',
-    message: `تم نشر مقالة جديدة: ${title}`,
-    data: {
-      articleId,
-      authorId
-    },
-    read: false
-  }));
 } 

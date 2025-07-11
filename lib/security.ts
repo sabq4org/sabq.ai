@@ -1,539 +1,410 @@
 // نظام أمان شامل لمشروع Sabq AI CMS
 // يتضمن التشفير، المصادقة، وحماية البيانات
 
-import * as crypto from 'crypto';
-import * as bcrypt from 'bcrypt';
+import crypto from 'crypto';
+import DOMPurify from 'isomorphic-dompurify';
+import { z } from 'zod';
 
-// ============================================================================
-// تشفير كلمات المرور
-// ============================================================================
+// إعدادات الأمان
+export const SECURITY_CONFIG = {
+  // حد أقصى لعدد الطلبات لكل دقيقة
+  RATE_LIMIT_PER_MINUTE: 60,
+  // حد أقصى لعدد محاولات تسجيل الدخول الفاشلة
+  MAX_LOGIN_ATTEMPTS: 5,
+  // مدة قفل الحساب بالدقائق
+  ACCOUNT_LOCKOUT_DURATION: 30,
+  // طول كلمة المرور الأدنى
+  MIN_PASSWORD_LENGTH: 8,
+  // أنماط كلمات المرور المطلوبة
+  PASSWORD_REQUIREMENTS: {
+    minLength: 8,
+    requireUppercase: true,
+    requireLowercase: true,
+    requireNumbers: true,
+    requireSpecialChars: true
+  }
+};
 
 /**
- * تشفير كلمة مرور باستخدام bcrypt
- * @param password كلمة المرور الخام
- * @param saltRounds عدد جولات التشفير (افتراضي 12)
- * @returns Promise<string> كلمة المرور المشفرة
+ * تنظيف HTML من الأكواد الخبيثة
  */
-export const hashPassword = async (
-  password: string,
-  saltRounds: number = 12
-): Promise<string> => {
-  if (!password) {
-    throw new Error('كلمة المرور مطلوبة');
+export function sanitizeHtml(html: string): string {
+  if (!html || typeof html !== 'string') {
+    return '';
   }
-  
-  if (password.length < 8) {
-    throw new Error('كلمة المرور يجب أن تكون 8 أحرف على الأقل');
-  }
+
+  // إعدادات DOMPurify للمحرر
+  const config = {
+    ALLOWED_TAGS: [
+      'p', 'br', 'strong', 'em', 'u', 'strike', 'sub', 'sup',
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'ul', 'ol', 'li',
+      'blockquote', 'pre', 'code',
+      'a', 'img', 'video', 'audio', 'iframe',
+      'table', 'thead', 'tbody', 'tr', 'th', 'td',
+      'div', 'span'
+    ],
+    ALLOWED_ATTR: [
+      'href', 'title', 'alt', 'src', 'width', 'height',
+      'class', 'id', 'style', 'target', 'rel',
+      'controls', 'autoplay', 'loop', 'muted',
+      'frameborder', 'allowfullscreen'
+    ],
+    ALLOW_DATA_ATTR: false,
+    ALLOW_UNKNOWN_PROTOCOLS: false,
+    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    FORBID_TAGS: ['script', 'object', 'embed', 'form', 'input', 'button'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur'],
+    KEEP_CONTENT: true,
+    RETURN_DOM: false,
+    RETURN_DOM_FRAGMENT: false,
+    RETURN_TRUSTED_TYPE: false
+  };
 
   try {
-    return await bcrypt.hash(password, saltRounds);
+    return DOMPurify.sanitize(html, config);
   } catch (error) {
-    throw new Error('فشل في تشفير كلمة المرور');
+    console.error('Error sanitizing HTML:', error);
+    return '';
   }
-};
+}
 
 /**
- * التحقق من كلمة مرور
- * @param password كلمة المرور الخام
- * @param hashedPassword كلمة المرور المشفرة
- * @returns Promise<boolean> true إذا كانت متطابقة
+ * تنظيف النص من الأحرف الخطيرة
  */
-export const verifyPassword = async (
-  password: string,
-  hashedPassword: string
-): Promise<boolean> => {
-  if (!password || !hashedPassword) {
-    return false;
+export function sanitizeText(text: string): string {
+  if (!text || typeof text !== 'string') {
+    return '';
   }
 
+  return text
+    .replace(/[<>]/g, '') // إزالة أقواس HTML
+    .replace(/javascript:/gi, '') // إزالة JavaScript URLs
+    .replace(/on\w+=/gi, '') // إزالة event handlers
+    .trim();
+}
+
+/**
+ * التحقق من صحة عنوان URL
+ */
+export function validateUrl(url: string): boolean {
   try {
-    return await bcrypt.compare(password, hashedPassword);
-  } catch (error) {
+    const parsedUrl = new URL(url);
+    return ['http:', 'https:'].includes(parsedUrl.protocol);
+  } catch {
     return false;
   }
-};
-
-// ============================================================================
-// توليد كلمات مرور وأرقام آمنة
-// ============================================================================
+}
 
 /**
- * توليد كلمة مرور قوية
- * @param length الطول المطلوب
- * @param includeSpecialChars تضمين أحرف خاصة
- * @returns string كلمة مرور قوية
+ * تشفير كلمة المرور
  */
-export const generateSecurePassword = (
-  length: number = 16,
-  includeSpecialChars: boolean = true
-): string => {
-  const lowercase = 'abcdefghijklmnopqrstuvwxyz';
-  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const numbers = '0123456789';
-  const specialChars = '!@#$%^&*()_+-=[]{}|;:,.<>?';
-
-  let charset = lowercase + uppercase + numbers;
-  if (includeSpecialChars) {
-    charset += specialChars;
-  }
-
-  let password = '';
-  
-  // ضمان وجود نوع واحد على الأقل من كل فئة
-  password += getRandomChar(lowercase);
-  password += getRandomChar(uppercase);
-  password += getRandomChar(numbers);
-  if (includeSpecialChars) {
-    password += getRandomChar(specialChars);
-  }
-
-  // إكمال الطول المطلوب
-  for (let i = password.length; i < length; i++) {
-    password += getRandomChar(charset);
-  }
-
-  // خلط الأحرف
-  return shuffleString(password);
-};
+export async function hashPassword(password: string): Promise<string> {
+  const bcrypt = await import('bcryptjs');
+  const saltRounds = 12;
+  return bcrypt.hash(password, saltRounds);
+}
 
 /**
- * توليد رمز تحقق رقمي
- * @param length عدد الأرقام
- * @returns string رمز التحقق
+ * التحقق من كلمة المرور
  */
-export const generateVerificationCode = (length: number = 6): string => {
-  const numbers = '0123456789';
-  let code = '';
-
-  for (let i = 0; i < length; i++) {
-    code += getRandomChar(numbers);
-  }
-
-  return code;
-};
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  const bcrypt = await import('bcryptjs');
+  return bcrypt.compare(password, hash);
+}
 
 /**
- * توليد رمز آمن للجلسات
- * @param length الطول بالبايت
- * @returns string الرمز المشفر hex
+ * إنشاء رمز عشوائي آمن
  */
-export const generateSecureToken = (length: number = 32): string => {
+export function generateSecureToken(length: number = 32): string {
   return crypto.randomBytes(length).toString('hex');
-};
-
-// ============================================================================
-// تشفير النصوص
-// ============================================================================
-
-export interface EncryptionResult {
-  encryptedData: string;
-  iv: string;
-  authTag: string;
 }
 
 /**
- * تشفير نص باستخدام AES-256-GCM
- * @param text النص المراد تشفيره
- * @param key مفتاح التشفير (32 بايت)
- * @returns EncryptionResult نتيجة التشفير
+ * تشفير البيانات الحساسة
  */
-export const encryptText = (text: string, key: string): EncryptionResult => {
-  if (!text) {
-    throw new Error('النص مطلوب للتشفير');
-  }
-
-  if (!key || key.length !== 64) { // 32 bytes = 64 hex chars
-    throw new Error('مفتاح التشفير يجب أن يكون 64 حرف hex (32 بايت)');
-  }
-
-  const keyBuffer = Buffer.from(key, 'hex');
+export function encryptData(data: string, key: string): string {
+  const algorithm = 'aes-256-gcm';
   const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv('aes-256-gcm', keyBuffer, iv);
-  cipher.setAAD(Buffer.from('sabq-cms-aad'));
-
-  let encrypted = cipher.update(text, 'utf8', 'hex');
+  const cipher = crypto.createCipher(algorithm, key);
+  
+  let encrypted = cipher.update(data, 'utf8', 'hex');
   encrypted += cipher.final('hex');
-
-  const authTag = cipher.getAuthTag();
-
-  return {
-    encryptedData: encrypted,
-    iv: iv.toString('hex'),
-    authTag: authTag.toString('hex'),
-  };
-};
-
-/**
- * فك تشفير نص
- * @param encryptionResult نتيجة التشفير
- * @param key مفتاح التشفير
- * @returns string النص المفكوك
- */
-export const decryptText = (
-  encryptionResult: EncryptionResult,
-  key: string
-): string => {
-  if (!encryptionResult.encryptedData || !encryptionResult.iv || !encryptionResult.authTag) {
-    throw new Error('بيانات التشفير غير مكتملة');
-  }
-
-  if (!key || key.length !== 64) {
-    throw new Error('مفتاح التشفير يجب أن يكون 64 حرف hex');
-  }
-
-  try {
-    const keyBuffer = Buffer.from(key, 'hex');
-    const iv = Buffer.from(encryptionResult.iv, 'hex');
-    const authTag = Buffer.from(encryptionResult.authTag, 'hex');
-
-    const decipher = crypto.createDecipheriv('aes-256-gcm', keyBuffer, iv);
-    decipher.setAAD(Buffer.from('sabq-cms-aad'));
-    decipher.setAuthTag(authTag);
-
-    let decrypted = decipher.update(encryptionResult.encryptedData, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-
-    return decrypted;
-  } catch (error) {
-    throw new Error('فشل في فك التشفير - مفتاح خاطئ أو بيانات تالفة');
-  }
-};
-
-// ============================================================================
-// Hash و HMAC
-// ============================================================================
-
-/**
- * إنشاء hash للنص
- * @param text النص
- * @param algorithm الخوارزمية (افتراضي sha256)
- * @returns string الهاش hex
- */
-export const createHash = (
-  text: string,
-  algorithm: 'sha256' | 'sha384' | 'sha512' = 'sha256'
-): string => {
-  if (!text) {
-    throw new Error('النص مطلوب لإنشاء الهاش');
-  }
-
-  return crypto.createHash(algorithm).update(text, 'utf8').digest('hex');
-};
-
-/**
- * إنشاء HMAC
- * @param text النص
- * @param key المفتاح السري
- * @param algorithm الخوارزمية
- * @returns string الـ HMAC hex
- */
-export const createHMAC = (
-  text: string,
-  key: string,
-  algorithm: 'sha256' | 'sha384' | 'sha512' = 'sha256'
-): string => {
-  if (!text || !key) {
-    throw new Error('النص والمفتاح مطلوبان لإنشاء HMAC');
-  }
-
-  return crypto.createHmac(algorithm, key).update(text, 'utf8').digest('hex');
-};
-
-/**
- * التحقق من HMAC
- * @param text النص الأصلي
- * @param key المفتاح السري
- * @param providedHMAC الـ HMAC المقدم للتحقق
- * @param algorithm الخوارزمية
- * @returns boolean true إذا كان صحيح
- */
-export const verifyHMAC = (
-  text: string,
-  key: string,
-  providedHMAC: string,
-  algorithm: 'sha256' | 'sha384' | 'sha512' = 'sha256'
-): boolean => {
-  try {
-    const computedHMAC = createHMAC(text, key, algorithm);
-    return crypto.timingSafeEqual(
-      Buffer.from(computedHMAC, 'hex'),
-      Buffer.from(providedHMAC, 'hex')
-    );
-  } catch (error) {
-    return false;
-  }
-};
-
-// ============================================================================
-// JWT بسيط (بدون مكتبة خارجية)
-// ============================================================================
-
-export interface JWTPayload {
-  [key: string]: any;
-  exp?: number;
-  iat?: number;
+  
+  return iv.toString('hex') + ':' + encrypted;
 }
 
 /**
- * إنشاء JWT بسيط
- * @param payload البيانات
- * @param secret المفتاح السري
- * @param expiresIn انتهاء الصلاحية بالثواني
- * @returns string JWT
+ * فك تشفير البيانات
  */
-export const createSimpleJWT = (
-  payload: JWTPayload,
-  secret: string,
-  expiresIn?: number
-): string => {
-  const header = {
-    alg: 'HS256',
-    typ: 'JWT',
-  };
-
-  const now = Math.floor(Date.now() / 1000);
-  const fullPayload = {
-    ...payload,
-    iat: now,
-    ...(expiresIn && { exp: now + expiresIn }),
-  };
-
-  const encodedHeader = base64URLEncode(JSON.stringify(header));
-  const encodedPayload = base64URLEncode(JSON.stringify(fullPayload));
-  const signature = createHMAC(`${encodedHeader}.${encodedPayload}`, secret);
-
-  return `${encodedHeader}.${encodedPayload}.${signature}`;
-};
-
-/**
- * التحقق من JWT بسيط
- * @param token الرمز
- * @param secret المفتاح السري
- * @returns JWTPayload | null البيانات أو null إذا كان غير صحيح
- */
-export const verifySimpleJWT = (
-  token: string,
-  secret: string
-): JWTPayload | null => {
-  try {
-    const [encodedHeader, encodedPayload, signature] = token.split('.');
-    
-    if (!encodedHeader || !encodedPayload || !signature) {
-      return null;
-    }
-
-    // التحقق من التوقيع
-    const expectedSignature = createHMAC(`${encodedHeader}.${encodedPayload}`, secret);
-    if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
-      return null;
-    }
-
-    // فك تشفير البيانات
-    const payload = JSON.parse(base64URLDecode(encodedPayload)) as JWTPayload;
-
-    // التحقق من انتهاء الصلاحية
-    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
-      return null;
-    }
-
-    return payload;
-  } catch (error) {
-    return null;
-  }
-};
-
-// ============================================================================
-// إدارة الجلسات
-// ============================================================================
-
-/**
- * إنشاء معرف جلسة آمن
- * @returns string معرف الجلسة
- */
-export const generateSessionId = (): string => {
-  const timestamp = Date.now().toString();
-  const randomBytes = crypto.randomBytes(16).toString('hex');
-  const combined = `${timestamp}-${randomBytes}`;
-  return createHash(combined);
-};
-
-/**
- * تشفير معرف المستخدم للجلسة
- * @param userId معرف المستخدم
- * @param secret المفتاح السري
- * @returns string المعرف المشفر
- */
-export const encryptUserId = (userId: string, secret: string): string => {
-  const key = createHash(secret + 'user-id-salt').substring(0, 64);
-  const result = encryptText(userId, key);
-  return `${result.encryptedData}.${result.iv}.${result.authTag}`;
-};
-
-/**
- * فك تشفير معرف المستخدم من الجلسة
- * @param encryptedUserId المعرف المشفر
- * @param secret المفتاح السري
- * @returns string | null معرف المستخدم أو null
- */
-export const decryptUserId = (
-  encryptedUserId: string,
-  secret: string
-): string | null => {
-  try {
-    const [encryptedData, iv, authTag] = encryptedUserId.split('.');
-    if (!encryptedData || !iv || !authTag) {
-      return null;
-    }
-
-    const key = createHash(secret + 'user-id-salt').substring(0, 64);
-    return decryptText({ encryptedData, iv, authTag }, key);
-  } catch (error) {
-    return null;
-  }
-};
-
-// ============================================================================
-// تقييم قوة كلمة المرور
-// ============================================================================
-
-export interface PasswordStrength {
-  score: number; // 0-100
-  level: 'ضعيف' | 'متوسط' | 'قوي' | 'قوي جداً';
-  feedback: string[];
+export function decryptData(encryptedData: string, key: string): string {
+  const algorithm = 'aes-256-gcm';
+  const parts = encryptedData.split(':');
+  const iv = Buffer.from(parts[0], 'hex');
+  const encrypted = parts[1];
+  
+  const decipher = crypto.createDecipher(algorithm, key);
+  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  
+  return decrypted;
 }
 
 /**
- * تقييم قوة كلمة المرور
- * @param password كلمة المرور
- * @returns PasswordStrength تقييم القوة
+ * التحقق من قوة كلمة المرور
  */
-export const evaluatePasswordStrength = (password: string): PasswordStrength => {
-  const feedback: string[] = [];
+export function validatePasswordStrength(password: string): {
+  isValid: boolean;
+  errors: string[];
+  score: number;
+} {
+  const errors: string[] = [];
   let score = 0;
 
-  // التحقق من الطول
-  if (password.length >= 8) {
+  // الطول الأدنى
+  if (password.length < SECURITY_CONFIG.PASSWORD_REQUIREMENTS.minLength) {
+    errors.push(`Password must be at least ${SECURITY_CONFIG.PASSWORD_REQUIREMENTS.minLength} characters long`);
+  } else {
     score += 20;
-  } else {
-    feedback.push('كلمة المرور قصيرة جداً (أقل من 8 أحرف)');
   }
 
-  if (password.length >= 12) {
-    score += 10;
+  // الأحرف الكبيرة
+  if (SECURITY_CONFIG.PASSWORD_REQUIREMENTS.requireUppercase && !/[A-Z]/.test(password)) {
+    errors.push('Password must contain at least one uppercase letter');
+  } else if (/[A-Z]/.test(password)) {
+    score += 20;
   }
 
-  // التحقق من الأحرف الصغيرة
-  if (/[a-z]/.test(password)) {
-    score += 10;
-  } else {
-    feedback.push('أضف أحرف صغيرة (a-z)');
+  // الأحرف الصغيرة
+  if (SECURITY_CONFIG.PASSWORD_REQUIREMENTS.requireLowercase && !/[a-z]/.test(password)) {
+    errors.push('Password must contain at least one lowercase letter');
+  } else if (/[a-z]/.test(password)) {
+    score += 20;
   }
 
-  // التحقق من الأحرف الكبيرة
-  if (/[A-Z]/.test(password)) {
-    score += 10;
-  } else {
-    feedback.push('أضف أحرف كبيرة (A-Z)');
+  // الأرقام
+  if (SECURITY_CONFIG.PASSWORD_REQUIREMENTS.requireNumbers && !/[0-9]/.test(password)) {
+    errors.push('Password must contain at least one number');
+  } else if (/[0-9]/.test(password)) {
+    score += 20;
   }
 
-  // التحقق من الأرقام
-  if (/[0-9]/.test(password)) {
-    score += 10;
-  } else {
-    feedback.push('أضف أرقام (0-9)');
-  }
-
-  // التحقق من الأحرف الخاصة
-  if (/[^a-zA-Z0-9]/.test(password)) {
-    score += 15;
-  } else {
-    feedback.push('أضف أحرف خاصة (!@#$%^&*)');
-  }
-
-  // التحقق من التنوع
-  const uniqueChars = new Set(password).size;
-  if (uniqueChars >= password.length * 0.8) {
-    score += 15;
-  } else {
-    feedback.push('تجنب تكرار الأحرف كثيراً');
-  }
-
-  // التحقق من الأنماط الشائعة
-  const commonPatterns = [
-    /123456/,
-    /password/i,
-    /qwerty/i,
-    /abc123/i,
-    /(.)\1{3,}/, // تكرار الحرف نفسه
-  ];
-
-  for (const pattern of commonPatterns) {
-    if (pattern.test(password)) {
-      score -= 20;
-      feedback.push('تجنب الأنماط الشائعة والتسلسلات');
-      break;
-    }
-  }
-
-  // تحديد المستوى
-  let level: PasswordStrength['level'];
-  if (score >= 80) {
-    level = 'قوي جداً';
-  } else if (score >= 60) {
-    level = 'قوي';
-  } else if (score >= 40) {
-    level = 'متوسط';
-  } else {
-    level = 'ضعيف';
+  // الأحرف الخاصة
+  if (SECURITY_CONFIG.PASSWORD_REQUIREMENTS.requireSpecialChars && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    errors.push('Password must contain at least one special character');
+  } else if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    score += 20;
   }
 
   return {
-    score: Math.max(0, Math.min(100, score)),
-    level,
-    feedback: feedback.length === 0 ? ['كلمة مرور ممتازة!'] : feedback,
+    isValid: errors.length === 0,
+    errors,
+    score
   };
-};
-
-// ============================================================================
-// دوال مساعدة
-// ============================================================================
+}
 
 /**
- * الحصول على حرف عشوائي من مجموعة أحرف
+ * التحقق من صحة عنوان البريد الإلكتروني
  */
-const getRandomChar = (charset: string): string => {
-  const randomIndex = crypto.randomInt(0, charset.length);
-  return charset[randomIndex];
-};
+export function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
 
 /**
- * خلط أحرف النص
+ * التحقق من صحة رقم الهاتف
  */
-const shuffleString = (str: string): string => {
-  const array = str.split('');
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = crypto.randomInt(0, i + 1);
-    [array[i], array[j]] = [array[j], array[i]];
+export function validatePhone(phone: string): boolean {
+  const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+  return phoneRegex.test(phone.replace(/\s/g, ''));
+}
+
+/**
+ * منع حقن SQL
+ */
+export function preventSqlInjection(input: string): string {
+  if (!input || typeof input !== 'string') {
+    return '';
   }
-  return array.join('');
-};
+
+  return input
+    .replace(/'/g, "''") // Escape single quotes
+    .replace(/;/g, '') // Remove semicolons
+    .replace(/--/g, '') // Remove SQL comments
+    .replace(/\/\*/g, '') // Remove SQL block comments start
+    .replace(/\*\//g, '') // Remove SQL block comments end
+    .replace(/xp_/gi, '') // Remove xp_ stored procedures
+    .replace(/sp_/gi, '') // Remove sp_ stored procedures
+    .replace(/exec/gi, '') // Remove exec statements
+    .replace(/union/gi, '') // Remove union statements
+    .replace(/select/gi, '') // Remove select statements
+    .replace(/insert/gi, '') // Remove insert statements
+    .replace(/update/gi, '') // Remove update statements
+    .replace(/delete/gi, '') // Remove delete statements
+    .replace(/drop/gi, '') // Remove drop statements
+    .replace(/create/gi, '') // Remove create statements
+    .replace(/alter/gi, ''); // Remove alter statements
+}
 
 /**
- * ترميز Base64 URL آمن
+ * تنظيف معاملات الاستعلام
  */
-const base64URLEncode = (str: string): string => {
-  return Buffer.from(str)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
-};
+export function sanitizeQueryParams(params: Record<string, any>): Record<string, any> {
+  const sanitized: Record<string, any> = {};
+
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === 'string') {
+      sanitized[key] = sanitizeText(value);
+    } else if (typeof value === 'number') {
+      sanitized[key] = value;
+    } else if (typeof value === 'boolean') {
+      sanitized[key] = value;
+    } else if (Array.isArray(value)) {
+      sanitized[key] = value.map(item => 
+        typeof item === 'string' ? sanitizeText(item) : item
+      );
+    } else {
+      sanitized[key] = value;
+    }
+  }
+
+  return sanitized;
+}
 
 /**
- * فك ترميز Base64 URL آمن
+ * التحقق من صحة المدخلات باستخدام Zod
  */
-const base64URLDecode = (str: string): string => {
-  str += '='.repeat((4 - str.length % 4) % 4);
-  return Buffer.from(str.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString();
-}; 
+export function validateInput<T>(schema: z.ZodSchema<T>, data: any): {
+  success: boolean;
+  data?: T;
+  errors?: z.ZodError;
+} {
+  try {
+    const validatedData = schema.parse(data);
+    return { success: true, data: validatedData };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return { success: false, errors: error };
+    }
+    throw error;
+  }
+}
+
+/**
+ * حماية من هجمات CSRF
+ */
+export function generateCSRFToken(): string {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+/**
+ * التحقق من رمز CSRF
+ */
+export function validateCSRFToken(token: string, expectedToken: string): boolean {
+  if (!token || !expectedToken) {
+    return false;
+  }
+  
+  return crypto.timingSafeEqual(
+    Buffer.from(token, 'hex'),
+    Buffer.from(expectedToken, 'hex')
+  );
+}
+
+/**
+ * تنظيف اسم الملف
+ */
+export function sanitizeFilename(filename: string): string {
+  return filename
+    .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special characters with underscore
+    .replace(/_{2,}/g, '_') // Replace multiple underscores with single
+    .replace(/^_|_$/g, '') // Remove leading/trailing underscores
+    .toLowerCase();
+}
+
+/**
+ * التحقق من نوع الملف المسموح
+ */
+export function validateFileType(filename: string, allowedTypes: string[]): boolean {
+  const extension = filename.split('.').pop()?.toLowerCase();
+  return extension ? allowedTypes.includes(extension) : false;
+}
+
+/**
+ * حماية من هجمات XSS في JSON
+ */
+export function sanitizeJsonData(data: any): any {
+  if (typeof data === 'string') {
+    return sanitizeText(data);
+  } else if (Array.isArray(data)) {
+    return data.map(item => sanitizeJsonData(item));
+  } else if (typeof data === 'object' && data !== null) {
+    const sanitized: any = {};
+    for (const [key, value] of Object.entries(data)) {
+      sanitized[sanitizeText(key)] = sanitizeJsonData(value);
+    }
+    return sanitized;
+  }
+  return data;
+}
+
+/**
+ * تسجيل محاولات الأمان المشبوهة
+ */
+export function logSecurityEvent(event: {
+  type: string;
+  userId?: string;
+  ip?: string;
+  userAgent?: string;
+  details?: any;
+}) {
+  console.warn('Security Event:', {
+    timestamp: new Date().toISOString(),
+    ...event
+  });
+  
+  // يمكن إضافة تسجيل في قاعدة البيانات أو خدمة مراقبة خارجية
+}
+
+/**
+ * التحقق من حد الطلبات (Rate Limiting)
+ */
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+export function checkRateLimit(identifier: string, limit: number = SECURITY_CONFIG.RATE_LIMIT_PER_MINUTE): boolean {
+  const now = Date.now();
+  const windowMs = 60 * 1000; // دقيقة واحدة
+  
+  const record = rateLimitStore.get(identifier);
+  
+  if (!record || now > record.resetTime) {
+    // إنشاء سجل جديد أو إعادة تعيين السجل المنتهي الصلاحية
+    rateLimitStore.set(identifier, {
+      count: 1,
+      resetTime: now + windowMs
+    });
+    return true;
+  }
+  
+  if (record.count >= limit) {
+    return false; // تجاوز الحد المسموح
+  }
+  
+  record.count++;
+  return true;
+}
+
+/**
+ * تنظيف ذاكرة Rate Limiting
+ */
+export function cleanupRateLimit() {
+  const now = Date.now();
+  for (const [key, record] of rateLimitStore.entries()) {
+    if (now > record.resetTime) {
+      rateLimitStore.delete(key);
+    }
+  }
+}
+
+// تنظيف دوري لذاكرة Rate Limiting
+setInterval(cleanupRateLimit, 5 * 60 * 1000); // كل 5 دقائق 

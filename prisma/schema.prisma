@@ -45,6 +45,18 @@ model User {
   audit_logs        AuditLog[]
   user_behavior     UserBehavior?
   user_sessions     UserSession[]
+  recommendation_logs RecommendationLog[]
+  interest_profile  UserInterestProfile?
+  
+  // CMS Relations
+  article_revisions ArticleRevision[]
+  media_files       MediaFile[]
+  collaborations    ArticleCollaborator[]
+  added_collaborators ArticleCollaborator[] @relation("AddedCollaborators")
+  content_templates ContentTemplate[]
+  assigned_workflows WorkflowStatus[] @relation("AssignedWorkflows")
+  changed_workflows WorkflowStatus[] @relation("ChangedWorkflows")
+  editing_sessions  EditingSession[]
   
   @@map("users")
 }
@@ -99,7 +111,7 @@ model Article {
   featured_image  String?
   category_id     String
   author_id       String
-  status          String    @default("draft") // draft, published, archived
+  status          String    @default("draft") // draft, published, archived, scheduled, in_review
   featured        Boolean   @default(false)
   view_count      Int       @default(0)
   like_count      Int       @default(0)
@@ -108,6 +120,8 @@ model Article {
   tags            String[]  // Array of tags
   seo_data        Json?     // SEO metadata
   published_at    DateTime?
+  scheduled_at    DateTime? // For scheduled publishing
+  archived_at     DateTime? // When article was archived
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt
   
@@ -119,6 +133,14 @@ model Article {
   article_likes   ArticleLike[]
   article_bookmarks ArticleBookmark[]
   comments        Comment[]
+  recommendation_logs RecommendationLog[]
+  
+  // CMS Relations
+  revisions       ArticleRevision[]
+  article_tags    ArticleTag[]
+  collaborators   ArticleCollaborator[]
+  workflow_status WorkflowStatus[]
+  editing_sessions EditingSession[]
   
   @@map("articles")
 }
@@ -379,4 +401,223 @@ model RealtimeMetrics {
   @@index([metric_type])
   @@index([timestamp])
   @@map("realtime_metrics")
+}
+
+// New Recommendation System Models
+model RecommendationLog {
+  id                  String   @id @default(uuid())
+  user_id             String?
+  session_id          String?
+  article_id          String
+  algorithm_type      String   // 'personal', 'collaborative', 'graph', 'ai', 'trending'
+  reason_type         String   // 'interest', 'trending', 'diversity', 'ai', 'collaborative', 'graph'
+  reason_explanation  String
+  score               Float?
+  shown               Boolean  @default(false)
+  clicked             Boolean  @default(false)
+  feedback            String?  // 'like', 'dislike', 'report', 'not_interested', 'already_read'
+  context_data        Json?    // Additional context like time, location, device
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+  
+  user                User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  article             Article  @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id, created_at])
+  @@index([session_id, created_at])
+  @@index([article_id, created_at])
+  @@index([algorithm_type, created_at])
+  @@map("recommendation_log")
+}
+
+model UserInterestProfile {
+  id                  String   @id @default(uuid())
+  user_id             String   @unique
+  interests           Json     // { "technology": 0.8, "sports": 0.3, "politics": 0.1 }
+  categories          Json     // Category preferences
+  reading_patterns    Json     // Time preferences, device preferences, etc.
+  behavioral_signals  Json     // Engagement patterns, reading speed, etc.
+  last_updated        DateTime @default(now())
+  created_at          DateTime @default(now())
+  
+  user                User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@map("user_interest_profile")
+}
+
+model RecommendationMetrics {
+  id                  String   @id @default(uuid())
+  algorithm_type      String
+  total_shown         Int      @default(0)
+  total_clicked       Int      @default(0)
+  total_liked         Int      @default(0)
+  total_disliked      Int      @default(0)
+  click_through_rate  Float    @default(0.0)
+  satisfaction_rate   Float    @default(0.0)
+  date                DateTime @default(now())
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+  
+  @@unique([algorithm_type, date])
+  @@map("recommendation_metrics")
+}
+
+model SimilarityMatrix {
+  id                  String   @id @default(uuid())
+  item_a_id           String   // Article ID
+  item_b_id           String   // Article ID
+  similarity_score    Float    // Cosine similarity or other metric
+  algorithm_type      String   // 'content', 'collaborative', 'hybrid'
+  last_calculated     DateTime @default(now())
+  
+  @@unique([item_a_id, item_b_id, algorithm_type])
+  @@index([item_a_id])
+  @@index([item_b_id])
+  @@index([similarity_score])
+  @@map("similarity_matrix")
+}
+
+// CMS Models - Content Management System
+
+model ArticleRevision {
+  id              String   @id @default(uuid())
+  article_id      String
+  title           String
+  content         String
+  summary         String?
+  author_id       String
+  revision_number Int
+  change_summary  String?  // Summary of changes made
+  created_at      DateTime @default(now())
+  
+  article         Article  @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  author          User     @relation(fields: [author_id], references: [id])
+  
+  @@index([article_id, revision_number])
+  @@index([created_at])
+  @@map("article_revisions")
+}
+
+model Tag {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  color       String?  // Hex color for UI
+  is_active   Boolean  @default(true)
+  usage_count Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  article_tags ArticleTag[]
+  
+  @@map("tags")
+}
+
+model ArticleTag {
+  id         String @id @default(uuid())
+  article_id String
+  tag_id     String
+  
+  article    Article @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  tag        Tag     @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+  
+  @@unique([article_id, tag_id])
+  @@map("article_tags")
+}
+
+model MediaFile {
+  id           String   @id @default(uuid())
+  filename     String
+  original_name String
+  file_path    String
+  file_url     String
+  file_type    String   // image, video, audio, document
+  mime_type    String
+  file_size    Int      // in bytes
+  width        Int?     // for images/videos
+  height       Int?     // for images/videos
+  duration     Int?     // for videos/audio in seconds
+  alt_text     String?
+  caption      String?
+  uploaded_by  String
+  is_public    Boolean  @default(true)
+  usage_count  Int      @default(0)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  
+  uploader     User     @relation(fields: [uploaded_by], references: [id])
+  
+  @@index([file_type])
+  @@index([uploaded_by])
+  @@index([created_at])
+  @@map("media_files")
+}
+
+model ArticleCollaborator {
+  id         String   @id @default(uuid())
+  article_id String
+  user_id    String
+  role       String   // 'editor', 'reviewer', 'viewer'
+  added_by   String
+  added_at   DateTime @default(now())
+  
+  article    Article  @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  added_by_user User  @relation("AddedCollaborators", fields: [added_by], references: [id])
+  
+  @@unique([article_id, user_id])
+  @@map("article_collaborators")
+}
+
+model ContentTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  template    Json     // Template structure
+  category    String   // 'news', 'feature', 'interview', etc.
+  is_active   Boolean  @default(true)
+  created_by  String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  creator     User     @relation(fields: [created_by], references: [id])
+  
+  @@map("content_templates")
+}
+
+model WorkflowStatus {
+  id          String   @id @default(uuid())
+  article_id  String
+  status      String   // 'draft', 'in_review', 'approved', 'published', 'archived'
+  assigned_to String?
+  notes       String?
+  changed_by  String
+  changed_at  DateTime @default(now())
+  
+  article     Article  @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  assignee    User?    @relation("AssignedWorkflows", fields: [assigned_to], references: [id])
+  changer     User     @relation("ChangedWorkflows", fields: [changed_by], references: [id])
+  
+  @@index([article_id, changed_at])
+  @@index([assigned_to])
+  @@map("workflow_status")
+}
+
+model EditingSession {
+  id              String   @id @default(uuid())
+  article_id      String
+  user_id         String
+  session_token   String   @unique
+  is_active       Boolean  @default(true)
+  last_activity   DateTime @default(now())
+  cursor_position Json?    // Cursor position for collaborative editing
+  created_at      DateTime @default(now())
+  
+  article         Article  @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([article_id, is_active])
+  @@index([user_id])
+  @@map("editing_sessions")
 } 

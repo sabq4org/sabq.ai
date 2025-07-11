@@ -1,481 +1,445 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { 
-  JWTSecurity, 
-  RequestSecurity, 
-  RateLimiter, 
-  AuditLogger,
-  JWTPayload,
-  SecurityContext
-} from './auth-security';
+import jwt from 'jsonwebtoken';
+import { checkRateLimit, logSecurityEvent } from './security';
 
 const prisma = new PrismaClient();
 
-// Types
-export interface AuthenticatedRequest extends NextRequest {
-  user?: {
-    id: string;
-    email: string;
-    name: string;
-    role: string;
-    sessionId: string;
-  };
-  securityContext?: SecurityContext;
+interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  is_active: boolean;
+  is_verified: boolean;
 }
 
-export interface MiddlewareOptions {
-  requireAuth?: boolean;
-  allowedRoles?: string[];
-  rateLimitKey?: string;
-  rateLimitAttempts?: number;
-  rateLimitWindow?: number;
-  skipCSRF?: boolean;
-  auditAction?: string;
+interface AuthResult {
+  success: boolean;
+  user?: AuthUser;
+  error?: string;
 }
 
-// Authentication Middleware
-export class AuthMiddleware {
-  /**
-   * Main authentication middleware
-   */
-  static async authenticate(
-    request: NextRequest,
-    options: MiddlewareOptions = {}
-  ): Promise<{
-    success: boolean;
-    user?: any;
-    error?: string;
-    response?: NextResponse;
-  }> {
-    const securityContext = RequestSecurity.createSecurityContext(request);
-    
-    try {
-      // Rate limiting check
-      if (options.rateLimitKey) {
-        const rateLimitId = `${options.rateLimitKey}:${securityContext.ipAddress}`;
-        if (RateLimiter.isRateLimited(
-          rateLimitId, 
-          options.rateLimitAttempts || 10, 
-          options.rateLimitWindow || 15 * 60 * 1000
-        )) {
-          return {
-            success: false,
-            error: 'تم تجاوز الحد المسموح من الطلبات',
-            response: NextResponse.json(
-              { 
-                error: 'تم تجاوز الحد المسموح من الطلبات',
-                retryAfter: Math.ceil((options.rateLimitWindow || 15 * 60 * 1000) / 1000)
-              },
-              { status: 429 }
-            )
-          };
-        }
-      }
-
-      // Extract and verify JWT token
-      const authHeader = request.headers.get('authorization');
-      const token = JWTSecurity.extractTokenFromHeader(authHeader);
-
-      if (!token) {
-        if (options.requireAuth) {
-          return {
-            success: false,
-            error: 'مطلوب رمز المصادقة',
-            response: NextResponse.json(
-              { error: 'مطلوب رمز المصادقة' },
-              { status: 401 }
-            )
-          };
-        }
-        return { success: true };
-      }
-
-      // Verify JWT token
-      const payload = JWTSecurity.verifyToken(token);
-      if (!payload) {
-        return {
-          success: false,
-          error: 'رمز المصادقة غير صالح',
-          response: NextResponse.json(
-            { error: 'رمز المصادقة غير صالح' },
-            { status: 401 }
-          )
-        };
-      }
-
-      // Check if session exists and is active
-      const session = await prisma.session.findUnique({
-        where: { jwt_token: token },
-        include: { user: true }
-      });
-
-      if (!session || !session.is_active || session.expires_at < new Date()) {
-        return {
-          success: false,
-          error: 'الجلسة منتهية الصلاحية',
-          response: NextResponse.json(
-            { error: 'الجلسة منتهية الصلاحية' },
-            { status: 401 }
-          )
-        };
-      }
-
-      // Check if user is active
-      if (!session.user.is_active) {
-        return {
-          success: false,
-          error: 'الحساب معطل',
-          response: NextResponse.json(
-            { error: 'الحساب معطل' },
-            { status: 403 }
-          )
-        };
-      }
-
-      // Check role permissions
-      if (options.allowedRoles && !options.allowedRoles.includes(session.user.role)) {
-        return {
-          success: false,
-          error: 'ليس لديك صلاحية للوصول',
-          response: NextResponse.json(
-            { error: 'ليس لديك صلاحية للوصول' },
-            { status: 403 }
-          )
-        };
-      }
-
-      // Update session last_used
-      await prisma.session.update({
-        where: { id: session.id },
-        data: { last_used: new Date() }
-      });
-
-      // Update user last_login
-      await prisma.user.update({
-        where: { id: session.user.id },
-        data: { last_login: new Date() }
-      });
-
-      // Log successful authentication if audit action is specified
-      if (options.auditAction) {
-        try {
-          await prisma.auditLog.create({
-            data: AuditLogger.createLogEntry(
-              options.auditAction,
-              session.user.id,
-              'session',
-              session.id,
-              { endpoint: request.nextUrl.pathname },
-              securityContext,
-              true
-            )
-          });
-        } catch (auditError) {
-          console.error('Failed to create audit log:', auditError);
-        }
-      }
-
-      return {
-        success: true,
-        user: {
-          id: session.user.id,
-          email: session.user.email,
-          name: session.user.name,
-          role: session.user.role,
-          sessionId: session.id
-        }
-      };
-
-    } catch (error) {
-      console.error('Authentication middleware error:', error);
-      
-      // Log failed authentication
-      if (options.auditAction) {
-        try {
-          await prisma.auditLog.create({
-            data: AuditLogger.createLogEntry(
-              'failed_auth',
-              undefined,
-              'middleware',
-              undefined,
-              { endpoint: request.nextUrl.pathname, error: error.message },
-              securityContext,
-              false,
-              error.message
-            )
-          });
-        } catch (auditError) {
-          console.error('Failed to create audit log:', auditError);
-        }
-      }
-
-      return {
-        success: false,
-        error: 'خطأ في المصادقة',
-        response: NextResponse.json(
-          { error: 'خطأ في المصادقة' },
-          { status: 500 }
-        )
-      };
-    }
+/**
+ * استخراج التوكن من الطلب
+ */
+function extractToken(request: NextRequest): string | null {
+  // من Authorization header
+  const authHeader = request.headers.get('authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.substring(7);
   }
 
-  /**
-   * Middleware for admin-only routes
-   */
-  static async requireAdmin(request: NextRequest) {
-    return await this.authenticate(request, {
-      requireAuth: true,
-      allowedRoles: ['admin'],
-      rateLimitKey: 'admin-access',
-      rateLimitAttempts: 20,
-      auditAction: 'admin_access'
-    });
+  // من Cookie
+  const token = request.cookies.get('auth_token')?.value;
+  if (token) {
+    return token;
   }
 
-  /**
-   * Middleware for editor and admin routes
-   */
-  static async requireEditor(request: NextRequest) {
-    return await this.authenticate(request, {
-      requireAuth: true,
-      allowedRoles: ['editor', 'admin'],
-      rateLimitKey: 'editor-access',
-      rateLimitAttempts: 30,
-      auditAction: 'editor_access'
-    });
-  }
-
-  /**
-   * Middleware for authenticated users
-   */
-  static async requireAuth(request: NextRequest) {
-    return await this.authenticate(request, {
-      requireAuth: true,
-      rateLimitKey: 'auth-access',
-      rateLimitAttempts: 60,
-      auditAction: 'auth_access'
-    });
-  }
-
-  /**
-   * Middleware for login attempts
-   */
-  static async loginAttempt(request: NextRequest) {
-    const securityContext = RequestSecurity.createSecurityContext(request);
-    const rateLimitId = `login:${securityContext.ipAddress}`;
-    
-    if (RateLimiter.isRateLimited(rateLimitId, 5, 15 * 60 * 1000)) {
-      return {
-        success: false,
-        error: 'تم تجاوز الحد المسموح من محاولات تسجيل الدخول',
-        response: NextResponse.json(
-          { 
-            error: 'تم تجاوز الحد المسموح من محاولات تسجيل الدخول',
-            retryAfter: 900 // 15 minutes
-          },
-          { status: 429 }
-        )
-      };
-    }
-
-    return { success: true };
-  }
-
-  /**
-   * Middleware for registration attempts
-   */
-  static async registrationAttempt(request: NextRequest) {
-    const securityContext = RequestSecurity.createSecurityContext(request);
-    const rateLimitId = `register:${securityContext.ipAddress}`;
-    
-    if (RateLimiter.isRateLimited(rateLimitId, 3, 60 * 60 * 1000)) {
-      return {
-        success: false,
-        error: 'تم تجاوز الحد المسموح من محاولات التسجيل',
-        response: NextResponse.json(
-          { 
-            error: 'تم تجاوز الحد المسموح من محاولات التسجيل',
-            retryAfter: 3600 // 1 hour
-          },
-          { status: 429 }
-        )
-      };
-    }
-
-    return { success: true };
-  }
+  return null;
 }
 
-// Input Validation Middleware
-export class ValidationMiddleware {
-  /**
-   * Validate registration input
-   */
-  static validateRegistration(data: any): {
-    isValid: boolean;
-    errors: string[];
-  } {
-    const errors: string[] = [];
-
-    // Email validation
-    if (!data.email || !RequestSecurity.validateEmail(data.email)) {
-      errors.push('البريد الإلكتروني غير صالح');
+/**
+ * التحقق من صحة التوكن
+ */
+async function verifyToken(token: string): Promise<AuthUser | null> {
+  try {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error('JWT_SECRET not configured');
     }
 
-    // Name validation
-    if (!data.name || data.name.length < 2) {
-      errors.push('الاسم يجب أن يكون حرفين على الأقل');
+    const decoded = jwt.verify(token, secret) as any;
+    
+    // جلب معلومات المستخدم من قاعدة البيانات
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        is_active: true,
+        is_verified: true,
+        failed_login_attempts: true,
+        locked_until: true
+      }
+    });
+
+    if (!user) {
+      return null;
     }
 
-    // Password validation
-    if (!data.password) {
-      errors.push('كلمة المرور مطلوبة');
+    // التحقق من حالة الحساب
+    if (!user.is_active) {
+      return null;
     }
 
-    // Sanitize inputs
-    if (data.name) {
-      data.name = RequestSecurity.sanitizeInput(data.name);
+    // التحقق من قفل الحساب
+    if (user.locked_until && user.locked_until > new Date()) {
+      return null;
     }
+
+    // تحديث آخر نشاط
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { last_login: new Date() }
+    });
 
     return {
-      isValid: errors.length === 0,
-      errors
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      is_active: user.is_active,
+      is_verified: user.is_verified
     };
-  }
 
-  /**
-   * Validate login input
-   */
-  static validateLogin(data: any): {
-    isValid: boolean;
-    errors: string[];
-  } {
-    const errors: string[] = [];
-
-    // Email validation
-    if (!data.email || !RequestSecurity.validateEmail(data.email)) {
-      errors.push('البريد الإلكتروني غير صالح');
-    }
-
-    // Password validation
-    if (!data.password) {
-      errors.push('كلمة المرور مطلوبة');
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors
-    };
-  }
-
-  /**
-   * Validate password change input
-   */
-  static validatePasswordChange(data: any): {
-    isValid: boolean;
-    errors: string[];
-  } {
-    const errors: string[] = [];
-
-    // Current password validation
-    if (!data.currentPassword) {
-      errors.push('كلمة المرور الحالية مطلوبة');
-    }
-
-    // New password validation
-    if (!data.newPassword) {
-      errors.push('كلمة المرور الجديدة مطلوبة');
-    }
-
-    // Confirm password validation
-    if (data.newPassword !== data.confirmPassword) {
-      errors.push('كلمة المرور الجديدة وتأكيدها غير متطابقين');
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors
-    };
-  }
-}
-
-// Security Headers Middleware
-export class SecurityHeadersMiddleware {
-  /**
-   * Add security headers to response
-   */
-  static addSecurityHeaders(response: NextResponse): NextResponse {
-    // Prevent XSS attacks
-    response.headers.set('X-XSS-Protection', '1; mode=block');
-    
-    // Prevent clickjacking
-    response.headers.set('X-Frame-Options', 'DENY');
-    
-    // Prevent MIME type sniffing
-    response.headers.set('X-Content-Type-Options', 'nosniff');
-    
-    // Enforce HTTPS
-    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-    
-    // Content Security Policy
-    response.headers.set('Content-Security-Policy', 
-      "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-      "style-src 'self' 'unsafe-inline'; " +
-      "img-src 'self' data: https:; " +
-      "font-src 'self' data:; " +
-      "connect-src 'self' https:; " +
-      "frame-ancestors 'none';"
-    );
-    
-    // Referrer Policy
-    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-    
-    return response;
-  }
-}
-
-// CORS Middleware
-export class CORSMiddleware {
-  /**
-   * Handle CORS for API routes
-   */
-  static handleCORS(request: NextRequest): NextResponse | null {
-    // Handle preflight requests
-    if (request.method === 'OPTIONS') {
-      return new NextResponse(null, {
-        status: 200,
-        headers: {
-          'Access-Control-Allow-Origin': process.env.FRONTEND_URL || '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-CSRF-Token',
-          'Access-Control-Allow-Credentials': 'true',
-          'Access-Control-Max-Age': '86400'
-        }
-      });
-    }
-
+  } catch (error) {
+    console.error('Token verification error:', error);
     return null;
   }
+}
 
-  /**
-   * Add CORS headers to response
-   */
-  static addCORSHeaders(response: NextResponse): NextResponse {
-    response.headers.set('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-    response.headers.set('Access-Control-Allow-Credentials', 'true');
-    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token');
+/**
+ * Middleware للمصادقة
+ */
+export async function authMiddleware(request: NextRequest): Promise<AuthResult> {
+  try {
+    const clientIp = request.headers.get('x-forwarded-for') || 
+      request.headers.get('x-real-ip') || 
+      'unknown';
+
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+
+    // التحقق من حد الطلبات
+    if (!checkRateLimit(`auth_${clientIp}`, 100)) { // 100 طلب في الدقيقة
+      logSecurityEvent({
+        type: 'rate_limit_exceeded',
+        ip: clientIp,
+        userAgent,
+        details: { endpoint: request.url }
+      });
+
+      return {
+        success: false,
+        error: 'Too many requests. Please try again later.'
+      };
+    }
+
+    const token = extractToken(request);
     
-    return response;
+    if (!token) {
+      return {
+        success: false,
+        error: 'No authentication token provided'
+      };
+    }
+
+    const user = await verifyToken(token);
+    
+    if (!user) {
+      logSecurityEvent({
+        type: 'invalid_token',
+        ip: clientIp,
+        userAgent,
+        details: { token: token.substring(0, 10) + '...' }
+      });
+
+      return {
+        success: false,
+        error: 'Invalid or expired token'
+      };
+    }
+
+    // تسجيل نشاط المستخدم
+    await prisma.auditLog.create({
+      data: {
+        user_id: user.id,
+        action: 'api_access',
+        resource: 'authentication',
+        details: {
+          endpoint: request.url,
+          method: request.method,
+          ip: clientIp,
+          userAgent
+        },
+        ip_address: clientIp,
+        user_agent: userAgent,
+        success: true
+      }
+    });
+
+    return {
+      success: true,
+      user
+    };
+
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    return {
+      success: false,
+      error: 'Authentication failed'
+    };
   }
 }
 
-// Export all classes and interfaces
-export default {
-  AuthMiddleware,
-  ValidationMiddleware,
-  SecurityHeadersMiddleware,
-  CORSMiddleware
-}; 
+/**
+ * التحقق من الصلاحيات
+ */
+export function hasPermission(user: AuthUser, requiredRole: string | string[]): boolean {
+  const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+  
+  // تدرج الصلاحيات
+  const roleHierarchy: Record<string, number> = {
+    'reader': 1,
+    'editor': 2,
+    'admin': 3
+  };
+
+  const userLevel = roleHierarchy[user.role] || 0;
+  const requiredLevel = Math.min(...roles.map(role => roleHierarchy[role] || 999));
+
+  return userLevel >= requiredLevel;
+}
+
+/**
+ * Middleware للتحقق من الصلاحيات
+ */
+export async function requirePermission(
+  request: NextRequest,
+  requiredRole: string | string[]
+): Promise<AuthResult> {
+  const authResult = await authMiddleware(request);
+  
+  if (!authResult.success || !authResult.user) {
+    return authResult;
+  }
+
+  if (!hasPermission(authResult.user, requiredRole)) {
+    const clientIp = request.headers.get('x-forwarded-for') || 
+      'unknown';
+
+    logSecurityEvent({
+      type: 'insufficient_permissions',
+      userId: authResult.user.id,
+      ip: clientIp,
+      details: {
+        userRole: authResult.user.role,
+        requiredRole,
+        endpoint: request.url
+      }
+    });
+
+    return {
+      success: false,
+      error: 'Insufficient permissions'
+    };
+  }
+
+  return authResult;
+}
+
+/**
+ * Middleware للتحقق من ملكية المورد
+ */
+export async function requireOwnership(
+  request: NextRequest,
+  resourceType: string,
+  resourceId: string,
+  userIdField: string = 'author_id'
+): Promise<AuthResult> {
+  const authResult = await authMiddleware(request);
+  
+  if (!authResult.success || !authResult.user) {
+    return authResult;
+  }
+
+  // الأدمن يمكنه الوصول لكل شيء
+  if (authResult.user.role === 'admin') {
+    return authResult;
+  }
+
+  try {
+    let resource: any = null;
+
+    // جلب المورد حسب نوعه
+    switch (resourceType) {
+      case 'article':
+        resource = await prisma.article.findUnique({
+          where: { id: resourceId },
+          select: { [userIdField]: true }
+        });
+        break;
+      case 'media':
+        resource = await prisma.mediaFile.findUnique({
+          where: { id: resourceId },
+          select: { uploaded_by: true }
+        });
+        break;
+      // يمكن إضافة أنواع أخرى من الموارد
+    }
+
+    if (!resource) {
+      return {
+        success: false,
+        error: 'Resource not found'
+      };
+    }
+
+    const ownerId = resource[userIdField] || resource.uploaded_by;
+    
+    if (ownerId !== authResult.user.id) {
+      logSecurityEvent({
+        type: 'unauthorized_access_attempt',
+        userId: authResult.user.id,
+        details: {
+          resourceType,
+          resourceId,
+          ownerId
+        }
+      });
+
+      return {
+        success: false,
+        error: 'You do not have permission to access this resource'
+      };
+    }
+
+    return authResult;
+
+  } catch (error) {
+    console.error('Ownership check error:', error);
+    return {
+      success: false,
+      error: 'Failed to verify resource ownership'
+    };
+  }
+}
+
+/**
+ * إنشاء JWT token
+ */
+export function createToken(user: AuthUser): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET not configured');
+  }
+
+  const payload = {
+    userId: user.id,
+    email: user.email,
+    role: user.role,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 ساعة
+  };
+
+  return jwt.sign(payload, secret);
+}
+
+/**
+ * إنشاء refresh token
+ */
+export function createRefreshToken(user: AuthUser): string {
+  const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_REFRESH_SECRET not configured');
+  }
+
+  const payload = {
+    userId: user.id,
+    type: 'refresh',
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 أيام
+  };
+
+  return jwt.sign(payload, secret);
+}
+
+/**
+ * تحديث التوكن
+ */
+export async function refreshToken(refreshToken: string): Promise<{
+  success: boolean;
+  accessToken?: string;
+  refreshToken?: string;
+  error?: string;
+}> {
+  try {
+    const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error('JWT_REFRESH_SECRET not configured');
+    }
+
+    const decoded = jwt.verify(refreshToken, secret) as any;
+    
+    if (decoded.type !== 'refresh') {
+      return { success: false, error: 'Invalid refresh token' };
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        is_active: true,
+        is_verified: true
+      }
+    });
+
+    if (!user || !user.is_active) {
+      return { success: false, error: 'User not found or inactive' };
+    }
+
+    const authUser: AuthUser = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      is_active: user.is_active,
+      is_verified: user.is_verified
+    };
+
+    const newAccessToken = createToken(authUser);
+    const newRefreshToken = createRefreshToken(authUser);
+
+    return {
+      success: true,
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken
+    };
+
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    return { success: false, error: 'Invalid refresh token' };
+  }
+}
+
+/**
+ * إبطال التوكن (تسجيل خروج)
+ */
+export async function invalidateToken(token: string): Promise<boolean> {
+  try {
+    // في تطبيق حقيقي، يمكن إضافة blacklist للتوكنات المبطلة
+    // أو تخزين التوكنات النشطة في قاعدة البيانات
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    
+    // تسجيل نشاط تسجيل الخروج
+    await prisma.auditLog.create({
+      data: {
+        user_id: decoded.userId,
+        action: 'logout',
+        resource: 'authentication',
+        success: true
+      }
+    });
+
+    return true;
+  } catch (error) {
+    console.error('Token invalidation error:', error);
+    return false;
+  }
+} 

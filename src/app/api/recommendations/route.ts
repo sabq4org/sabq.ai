@@ -8,154 +8,97 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import { z } from 'zod';
-import { RecommendationsEngine } from '@/lib/recommendations-engine';
-import { checkRateLimit } from '@/lib/rate-limiter';
-import { RequestSecurity } from '@/lib/auth-security';
-
-const prisma = new PrismaClient();
-const recommendationsEngine = RecommendationsEngine.getInstance();
-
-// Validation schemas
-const getRecommendationsSchema = z.object({
-  userId: z.string().uuid('معرف المستخدم غير صحيح'),
-  type: z.enum(['content', 'category', 'mixed']).default('mixed'),
-  limit: z.number().min(1).max(20).default(5),
-  excludeViewed: z.boolean().default(true),
-  timeWindow: z.number().min(1).max(365).default(30),
-});
-
-const feedbackSchema = z.object({
-  userId: z.string().uuid('معرف المستخدم غير صحيح'),
-  recommendationId: z.string().min(1, 'معرف التوصية مطلوب'),
-  feedback: z.enum(['like', 'dislike', 'view', 'click', 'share']),
-  metadata: z.any().optional(),
-});
-
-const analyzeInterestsSchema = z.object({
-  userId: z.string().uuid('معرف المستخدم غير صحيح'),
-  forceUpdate: z.boolean().default(false),
-});
+import { recommendationEngine } from '../../../../lib/recommendation-engine';
+import { collaborativeFilteringEngine } from '../../../../lib/recommendation/collaborative-filtering';
+import { graphBasedRecommendationEngine } from '../../../../lib/recommendation/graph-based';
 
 /**
  * GET /api/recommendations
- * Get personalized recommendations for a user
+ * جلب التوصيات للمستخدم
  */
 export async function GET(request: NextRequest) {
   try {
-    // Rate limiting
-    const rateLimitResult = await checkRateLimit(request, 'general');
-    if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { error: 'تم تجاوز الحد الأقصى للطلبات' },
-        { status: 429 }
-      );
-    }
-
     const { searchParams } = new URL(request.url);
-    const queryParams = {
-      userId: searchParams.get('userId') || '',
-      type: searchParams.get('type') || 'mixed',
-      limit: parseInt(searchParams.get('limit') || '5'),
-      excludeViewed: searchParams.get('excludeViewed') !== 'false',
-      timeWindow: parseInt(searchParams.get('timeWindow') || '30'),
-    };
-
-    // Validate input
-    const validation = getRecommendationsSchema.safeParse(queryParams);
-    if (!validation.success) {
+    
+    // استخراج المعاملات
+    const userId = searchParams.get('userId') || undefined;
+    const sessionId = searchParams.get('sessionId') || undefined;
+    const algorithmType = searchParams.get('type') as any || 'mixed';
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const categoryFilter = searchParams.get('category') || undefined;
+    const excludeIds = searchParams.get('exclude')?.split(',') || [];
+    
+    // التحقق من صحة المعاملات
+    if (limit < 1 || limit > 50) {
       return NextResponse.json(
-        { 
-          error: 'بيانات غير صحيحة',
-          details: validation.error.errors.map(err => ({
-            field: err.path.join('.'),
-            message: err.message,
-          }))
-        },
+        { error: 'Limit must be between 1 and 50' },
         { status: 400 }
       );
     }
 
-    const { userId, type, limit, excludeViewed, timeWindow } = validation.data;
-
-    // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, name: true, role: true },
-    });
-
-    if (!user) {
+    const validAlgorithms = ['personal', 'collaborative', 'graph', 'ai', 'trending', 'mixed'];
+    if (!validAlgorithms.includes(algorithmType)) {
       return NextResponse.json(
-        { error: 'المستخدم غير موجود' },
-        { status: 404 }
+        { error: 'Invalid algorithm type' },
+        { status: 400 }
       );
     }
 
-    // Generate recommendations
-    const result = await recommendationsEngine.generateRecommendations(userId, {
-      type: type as 'content' | 'category' | 'mixed',
+    // إنشاء طلب التوصية
+    const recommendationRequest = {
+      userId,
+      sessionId,
+      algorithmType,
       limit,
-      excludeViewed,
-      timeWindow,
-    });
+      excludeArticleIds: excludeIds,
+      categoryFilter,
+      contextData: {
+        timestamp: new Date().toISOString(),
+        userAgent: request.headers.get('user-agent'),
+        referer: request.headers.get('referer')
+      }
+    };
 
-    // Save recommendations to database
-    if (result.recommendations.length > 0) {
-      await recommendationsEngine.saveRecommendations(result.recommendations);
+    // جلب التوصيات
+    let recommendations;
+    
+    switch (algorithmType) {
+      case 'collaborative':
+        recommendations = await collaborativeFilteringEngine.getHybridRecommendations(recommendationRequest);
+        break;
+      case 'graph':
+        recommendations = await graphBasedRecommendationEngine.getGraphBasedRecommendations(recommendationRequest);
+        break;
+      default:
+        recommendations = await recommendationEngine.getRecommendations(recommendationRequest);
+        break;
     }
 
-    // Log the request
-    await prisma.analyticsEvent.create({
-      data: {
-        user_id: userId,
-        event_type: 'recommendations_requested',
-        metadata: {
-          type,
-          limit,
-          excludeViewed,
-          timeWindow,
-          recommendationsCount: result.recommendations.length,
-          confidence: result.confidence,
-        },
-        ip_address: RequestSecurity.getClientIP(request),
-        user_agent: RequestSecurity.getUserAgent(request),
-        created_at: new Date(),
-      },
-    });
-
-    return NextResponse.json({
+    // إضافة معلومات إضافية
+    const response = {
       success: true,
       data: {
-        recommendations: result.recommendations.map(rec => ({
-          id: rec.id,
-          contentType: rec.content_type,
-          contentId: rec.content_id,
-          title: rec.title,
-          description: rec.description,
-          url: rec.url,
-          score: Math.round(rec.score * 100) / 100, // تقريب إلى منزلتين عشريتين
-          reasonType: rec.reason_type,
-          reasonData: rec.reason_data,
-          createdAt: rec.created_at,
-        })),
-        reasoning: result.reasoning,
-        confidence: Math.round(result.confidence * 100) / 100,
+        recommendations,
         metadata: {
-          userId,
-          type,
-          limit,
-          excludeViewed,
-          timeWindow,
-          generatedAt: new Date(),
-        },
-      },
-    });
+          algorithm: algorithmType,
+          count: recommendations.length,
+          userId: userId || null,
+          sessionId: sessionId || null,
+          timestamp: new Date().toISOString(),
+          filters: {
+            category: categoryFilter || null,
+            excluded: excludeIds.length
+          }
+        }
+      }
+    };
+
+    return NextResponse.json(response);
 
   } catch (error) {
-    console.error('Get recommendations error:', error);
+    console.error('Error fetching recommendations:', error);
     return NextResponse.json(
-      { error: 'خطأ في جلب التوصيات' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -163,408 +106,189 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/recommendations
- * Record user feedback on recommendations or trigger analysis
+ * إنشاء توصيات مخصصة مع معايير متقدمة
  */
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting
-    const rateLimitResult = await checkRateLimit(request, 'general');
-    if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { error: 'تم تجاوز الحد الأقصى للطلبات' },
-        { status: 429 }
-      );
-    }
-
     const body = await request.json();
-    const { action } = body;
-
-    switch (action) {
-      case 'feedback':
-        return await handleFeedback(request, body);
-      case 'analyze_interests':
-        return await handleAnalyzeInterests(request, body);
-      case 'refresh_recommendations':
-        return await handleRefreshRecommendations(request, body);
-      default:
-        return NextResponse.json(
-          { error: 'عملية غير مدعومة' },
-          { status: 400 }
-        );
-    }
-
-  } catch (error) {
-    console.error('Post recommendations error:', error);
-    return NextResponse.json(
-      { error: 'خطأ في معالجة الطلب' },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * Handle user feedback on recommendations
- */
-async function handleFeedback(request: NextRequest, body: any) {
-  try {
-    const validation = feedbackSchema.safeParse(body);
-    if (!validation.success) {
-      return NextResponse.json(
-        { 
-          error: 'بيانات غير صحيحة',
-          details: validation.error.errors.map(err => ({
-            field: err.path.join('.'),
-            message: err.message,
-          }))
-        },
-        { status: 400 }
-      );
-    }
-
-    const { userId, recommendationId, feedback, metadata } = validation.data;
-
-    // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'المستخدم غير موجود' },
-        { status: 404 }
-      );
-    }
-
-    // Check if recommendation exists
-    const recommendation = await prisma.recommendation.findUnique({
-      where: { id: recommendationId },
-      select: { id: true, user_id: true, content_id: true },
-    });
-
-    if (!recommendation) {
-      return NextResponse.json(
-        { error: 'التوصية غير موجودة' },
-        { status: 404 }
-      );
-    }
-
-    if (recommendation.user_id !== userId) {
-      return NextResponse.json(
-        { error: 'غير مصرح لك بالوصول لهذه التوصية' },
-        { status: 403 }
-      );
-    }
-
-    // Record feedback
-    await recommendationsEngine.recordRecommendationFeedback(
+    
+    const {
       userId,
-      recommendationId,
-      feedback,
-      metadata
-    );
+      sessionId,
+      algorithms = ['mixed'],
+      limit = 10,
+      filters = {},
+      contextData = {},
+      diversityFactor = 0.3,
+      freshnessFactor = 0.2
+    } = body;
 
-    // Log the feedback
-    await prisma.analyticsEvent.create({
-      data: {
-        user_id: userId,
-        event_type: 'recommendation_feedback',
-        metadata: {
-          recommendationId,
-          feedback,
-          contentId: recommendation.content_id,
-          ...metadata,
-        },
-        ip_address: RequestSecurity.getClientIP(request),
-        user_agent: RequestSecurity.getUserAgent(request),
-        created_at: new Date(),
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: 'تم تسجيل ردود الفعل بنجاح',
-      data: {
-        userId,
-        recommendationId,
-        feedback,
-        recordedAt: new Date(),
-      },
-    });
-
-  } catch (error) {
-    console.error('Handle feedback error:', error);
-    return NextResponse.json(
-      { error: 'خطأ في تسجيل ردود الفعل' },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * Handle user interests analysis
- */
-async function handleAnalyzeInterests(request: NextRequest, body: any) {
-  try {
-    const validation = analyzeInterestsSchema.safeParse(body);
-    if (!validation.success) {
+    // التحقق من صحة البيانات
+    if (!Array.isArray(algorithms) || algorithms.length === 0) {
       return NextResponse.json(
-        { 
-          error: 'بيانات غير صحيحة',
-          details: validation.error.errors.map(err => ({
-            field: err.path.join('.'),
-            message: err.message,
-          }))
-        },
+        { error: 'Algorithms must be a non-empty array' },
         { status: 400 }
       );
     }
 
-    const { userId, forceUpdate } = validation.data;
-
-    // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, name: true },
-    });
-
-    if (!user) {
+    if (limit < 1 || limit > 100) {
       return NextResponse.json(
-        { error: 'المستخدم غير موجود' },
-        { status: 404 }
+        { error: 'Limit must be between 1 and 100' },
+        { status: 400 }
       );
     }
 
-    // Check if recent analysis exists (unless forced)
-    if (!forceUpdate) {
-      const recentAnalysis = await prisma.userInterest.findFirst({
-        where: { 
-          user_id: userId,
-          created_at: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // آخر 24 ساعة
-          },
-        },
-      });
+    // تنفيذ التوصيات المتعددة
+    const allRecommendations = [];
+    const resultsPerAlgorithm = Math.ceil(limit / algorithms.length);
 
-      if (recentAnalysis) {
-        return NextResponse.json(
-          { error: 'تم تحليل اهتمامات المستخدم مؤخراً' },
-          { status: 409 }
-        );
+    for (const algorithm of algorithms) {
+      try {
+        const recommendationRequest = {
+          userId,
+          sessionId,
+          algorithmType: algorithm,
+          limit: resultsPerAlgorithm,
+          excludeArticleIds: filters.excludeIds || [],
+          categoryFilter: filters.category,
+          contextData: {
+            ...contextData,
+            timestamp: new Date().toISOString(),
+            userAgent: request.headers.get('user-agent')
+          }
+        };
+
+        let recommendations;
+        
+        switch (algorithm) {
+          case 'collaborative':
+            recommendations = await collaborativeFilteringEngine.getHybridRecommendations(recommendationRequest);
+            break;
+          case 'graph':
+            recommendations = await graphBasedRecommendationEngine.getGraphBasedRecommendations(recommendationRequest);
+            break;
+          default:
+            recommendations = await recommendationEngine.getRecommendations(recommendationRequest);
+            break;
+        }
+
+        allRecommendations.push(...recommendations);
+      } catch (algorithmError) {
+        console.error(`Error with algorithm ${algorithm}:`, algorithmError);
+        // استمرار مع الخوارزميات الأخرى
       }
     }
 
-    // Analyze user interests
-    const analysis = await recommendationsEngine.analyzeUserInterests(userId);
+    // تطبيق التنويع والحداثة
+    const diversifiedRecommendations = applyDiversityAndFreshness(
+      allRecommendations,
+      diversityFactor,
+      freshnessFactor
+    );
 
-    // Update user interests in database
-    await recommendationsEngine.updateUserInterests(userId, analysis);
+    // إزالة المكررات وترتيب النتائج
+    const uniqueRecommendations = removeDuplicates(diversifiedRecommendations);
+    const finalRecommendations = uniqueRecommendations
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
 
-    // Log the analysis
-    await prisma.analyticsEvent.create({
-      data: {
-        user_id: userId,
-        event_type: 'interests_analyzed',
-        metadata: {
-          dataPoints: analysis.dataPoints,
-          overallEngagement: analysis.overallEngagement,
-          categoriesCount: Object.keys(analysis.categoryInterests).length,
-          keywordsCount: Object.keys(analysis.keywordInterests).length,
-          forceUpdate,
-        },
-        ip_address: RequestSecurity.getClientIP(request),
-        user_agent: RequestSecurity.getUserAgent(request),
-        created_at: new Date(),
-      },
-    });
-
-    return NextResponse.json({
+    const response = {
       success: true,
-      message: 'تم تحليل اهتمامات المستخدم بنجاح',
       data: {
-        userId,
-        analysis: {
-          dataPoints: analysis.dataPoints,
-          overallEngagement: Math.round(analysis.overallEngagement * 100) / 100,
-          topCategories: Object.entries(analysis.categoryInterests)
-            .sort(([,a], [,b]) => b - a)
-            .slice(0, 5)
-            .map(([category, score]) => ({
-              category,
-              score: Math.round(score * 100) / 100,
-            })),
-          topKeywords: Object.entries(analysis.keywordInterests)
-            .sort(([,a], [,b]) => b - a)
-            .slice(0, 10)
-            .map(([keyword, score]) => ({
-              keyword,
-              score: Math.round(score * 100) / 100,
-            })),
-          lastUpdated: analysis.lastUpdated,
-        },
-      },
-    });
+        recommendations: finalRecommendations,
+        metadata: {
+          algorithmsUsed: algorithms,
+          totalCandidates: allRecommendations.length,
+          finalCount: finalRecommendations.length,
+          diversityFactor,
+          freshnessFactor,
+          userId: userId || null,
+          sessionId: sessionId || null,
+          timestamp: new Date().toISOString(),
+          filters
+        }
+      }
+    };
+
+    return NextResponse.json(response);
 
   } catch (error) {
-    console.error('Handle analyze interests error:', error);
+    console.error('Error creating custom recommendations:', error);
     return NextResponse.json(
-      { error: 'خطأ في تحليل اهتمامات المستخدم' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
 }
 
 /**
- * Handle refresh recommendations
+ * تطبيق التنويع والحداثة
  */
-async function handleRefreshRecommendations(request: NextRequest, body: any) {
-  try {
-    const { userId, clearOld = false } = body;
+function applyDiversityAndFreshness(
+  recommendations: any[],
+  diversityFactor: number,
+  freshnessFactor: number
+): any[] {
+  return recommendations.map(rec => {
+    let adjustedScore = rec.score;
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'معرف المستخدم مطلوب' },
-        { status: 400 }
-      );
+    // تطبيق عامل التنويع
+    if (diversityFactor > 0) {
+      const categoryDiversity = calculateCategoryDiversity(rec, recommendations);
+      adjustedScore += categoryDiversity * diversityFactor;
     }
 
-    // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'المستخدم غير موجود' },
-        { status: 404 }
-      );
+    // تطبيق عامل الحداثة
+    if (freshnessFactor > 0 && rec.article.published_at) {
+      const freshnessScore = calculateFreshnessScore(rec.article.published_at);
+      adjustedScore += freshnessScore * freshnessFactor;
     }
 
-    // Clear old recommendations if requested
-    if (clearOld) {
-      await prisma.recommendation.deleteMany({
-        where: { 
-          user_id: userId,
-          created_at: {
-            lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // أقدم من 7 أيام
-          },
-        },
-      });
-    }
-
-    // Generate fresh recommendations
-    const result = await recommendationsEngine.generateRecommendations(userId, {
-      type: 'mixed',
-      limit: 10,
-      excludeViewed: true,
-      timeWindow: 30,
-    });
-
-    // Save new recommendations
-    if (result.recommendations.length > 0) {
-      await recommendationsEngine.saveRecommendations(result.recommendations);
-    }
-
-    // Log the refresh
-    await prisma.analyticsEvent.create({
-      data: {
-        user_id: userId,
-        event_type: 'recommendations_refreshed',
-        metadata: {
-          recommendationsCount: result.recommendations.length,
-          confidence: result.confidence,
-          clearOld,
-        },
-        ip_address: RequestSecurity.getClientIP(request),
-        user_agent: RequestSecurity.getUserAgent(request),
-        created_at: new Date(),
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: 'تم تحديث التوصيات بنجاح',
-      data: {
-        userId,
-        recommendationsCount: result.recommendations.length,
-        confidence: Math.round(result.confidence * 100) / 100,
-        refreshedAt: new Date(),
-      },
-    });
-
-  } catch (error) {
-    console.error('Handle refresh recommendations error:', error);
-    return NextResponse.json(
-      { error: 'خطأ في تحديث التوصيات' },
-      { status: 500 }
-    );
-  }
+    return {
+      ...rec,
+      score: adjustedScore,
+      originalScore: rec.score
+    };
+  });
 }
 
 /**
- * DELETE /api/recommendations
- * Clear user recommendations
+ * حساب تنوع الفئات
  */
-export async function DELETE(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+function calculateCategoryDiversity(recommendation: any, allRecommendations: any[]): number {
+  const categoryCount = allRecommendations.filter(
+    rec => rec.article.category_id === recommendation.article.category_id
+  ).length;
+  
+  const totalCount = allRecommendations.length;
+  const categoryRatio = categoryCount / totalCount;
+  
+  // كلما قل التكرار، زاد التنوع
+  return 1 - categoryRatio;
+}
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'معرف المستخدم مطلوب' },
-        { status: 400 }
-      );
+/**
+ * حساب نقاط الحداثة
+ */
+function calculateFreshnessScore(publishedAt: string): number {
+  const publishedDate = new Date(publishedAt);
+  const now = new Date();
+  const daysDiff = (now.getTime() - publishedDate.getTime()) / (1000 * 60 * 60 * 24);
+  
+  // النقاط تقل مع الوقت
+  return Math.max(0, 1 - daysDiff / 30);
+}
+
+/**
+ * إزالة المكررات
+ */
+function removeDuplicates(recommendations: any[]): any[] {
+  const seen = new Set<string>();
+  return recommendations.filter(rec => {
+    if (seen.has(rec.article.id)) {
+      return false;
     }
-
-    // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'المستخدم غير موجود' },
-        { status: 404 }
-      );
-    }
-
-    // Delete user recommendations
-    const deletedCount = await prisma.recommendation.deleteMany({
-      where: { user_id: userId },
-    });
-
-    // Log the deletion
-    await prisma.analyticsEvent.create({
-      data: {
-        user_id: userId,
-        event_type: 'recommendations_cleared',
-        metadata: {
-          deletedCount: deletedCount.count,
-        },
-        ip_address: RequestSecurity.getClientIP(request),
-        user_agent: RequestSecurity.getUserAgent(request),
-        created_at: new Date(),
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: 'تم حذف التوصيات بنجاح',
-      data: {
-        userId,
-        deletedCount: deletedCount.count,
-        clearedAt: new Date(),
-      },
-    });
-
-  } catch (error) {
-    console.error('Delete recommendations error:', error);
-    return NextResponse.json(
-      { error: 'خطأ في حذف التوصيات' },
-      { status: 500 }
-    );
-  }
+    seen.add(rec.article.id);
+    return true;
+  });
 } 
