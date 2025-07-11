@@ -1,414 +1,609 @@
 /**
- * API Routes لاختبار موفري الخدمات
- * Provider Testing API Endpoints
+ * API Routes for Integration Testing
+ * 
+ * @description Tests integration connectivity and configuration
+ * @author Sabq AI CMS Team
  * @version 1.0.0
- * @author Sabq AI Team
+ * @created 2024-01-15
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { providersManager } from '../../../../../lib/integrations/providers';
-import { privacyManager, PersonalDataType, ProcessingPurpose } from '../../../../../lib/privacy-controls';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/db';
+import { z } from 'zod';
+import { logAuditEvent } from '@/lib/audit-logger';
+import { validateUserPermissions } from '@/lib/permissions';
+import { decrypt } from '@/lib/encryption';
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
+// Validation schemas
+const paramsSchema = z.object({
+  id: z.string().uuid('معرف التكامل غير صحيح'),
+});
+
+const testRequestSchema = z.object({
+  testType: z.enum(['CONNECTION', 'AUTHENTICATION', 'FULL']).default('CONNECTION'),
+  customEndpoint: z.string().url().optional(),
+  timeout: z.number().positive().max(30000).default(10000),
+});
+
+/**
+ * Test functions for different integration types
+ */
+class IntegrationTester {
+  private static async testCDNIntegration(config: any, testType: string) {
+    const results = {
+      connection: false,
+      authentication: false,
+      upload: false,
+      download: false,
+      errors: [] as string[],
+    };
+
+    try {
+      // Test basic connectivity
+      const response = await fetch(config.endpoint || config.baseUrl, {
+        method: 'HEAD',
+        timeout: 10000,
+      });
+
+      results.connection = response.ok;
+      
+      if (!response.ok) {
+        results.errors.push(`Connection failed: ${response.status} ${response.statusText}`);
+      }
+
+      // Test authentication if required
+      if (testType !== 'CONNECTION' && config.apiKey) {
+        const authResponse = await fetch(`${config.endpoint}/test`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${config.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000,
+        });
+
+        results.authentication = authResponse.ok;
+        
+        if (!authResponse.ok) {
+          results.errors.push(`Authentication failed: ${authResponse.status}`);
+        }
+      }
+
+      // Full test includes upload/download test
+      if (testType === 'FULL') {
+        // Test upload capability
+        const testData = new Blob(['test content'], { type: 'text/plain' });
+        const formData = new FormData();
+        formData.append('file', testData, 'test.txt');
+
+        const uploadResponse = await fetch(`${config.endpoint}/upload`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${config.apiKey}`,
+          },
+          body: formData,
+          timeout: 15000,
+        });
+
+        results.upload = uploadResponse.ok;
+        
+        if (!uploadResponse.ok) {
+          results.errors.push(`Upload test failed: ${uploadResponse.status}`);
+        }
+      }
+
+    } catch (error) {
+      results.errors.push(`Test error: ${error.message}`);
+    }
+
+    return results;
+  }
+
+  private static async testAnalyticsIntegration(config: any, testType: string) {
+    const results = {
+      connection: false,
+      authentication: false,
+      apiAccess: false,
+      errors: [] as string[],
+    };
+
+    try {
+      // Test API endpoint
+      const response = await fetch(`${config.endpoint}/health`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${config.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 10000,
+      });
+
+      results.connection = response.ok;
+      results.authentication = response.ok;
+
+      if (!response.ok) {
+        results.errors.push(`API test failed: ${response.status} ${response.statusText}`);
+      }
+
+      // Test API access with sample query
+      if (testType === 'FULL' && response.ok) {
+        const testQuery = await fetch(`${config.endpoint}/test-query`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${config.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: 'SELECT 1',
+            test: true,
+          }),
+          timeout: 15000,
+        });
+
+        results.apiAccess = testQuery.ok;
+        
+        if (!testQuery.ok) {
+          results.errors.push(`API access test failed: ${testQuery.status}`);
+        }
+      }
+
+    } catch (error) {
+      results.errors.push(`Analytics test error: ${error.message}`);
+    }
+
+    return results;
+  }
+
+  private static async testPaymentIntegration(config: any, testType: string) {
+    const results = {
+      connection: false,
+      authentication: false,
+      webhook: false,
+      errors: [] as string[],
+    };
+
+    try {
+      // Test API connectivity
+      const response = await fetch(`${config.endpoint}/health`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${config.secretKey}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 10000,
+      });
+
+      results.connection = response.ok;
+      results.authentication = response.ok;
+
+      if (!response.ok) {
+        results.errors.push(`Payment API test failed: ${response.status}`);
+      }
+
+      // Test webhook endpoint if configured
+      if (testType === 'FULL' && config.webhookUrl) {
+        const webhookTest = await fetch(config.webhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            test: true,
+            timestamp: new Date().toISOString(),
+          }),
+          timeout: 10000,
+        });
+
+        results.webhook = webhookTest.ok;
+        
+        if (!webhookTest.ok) {
+          results.errors.push(`Webhook test failed: ${webhookTest.status}`);
+        }
+      }
+
+    } catch (error) {
+      results.errors.push(`Payment test error: ${error.message}`);
+    }
+
+    return results;
+  }
+
+  private static async testEmailIntegration(config: any, testType: string) {
+    const results = {
+      connection: false,
+      authentication: false,
+      sendTest: false,
+      errors: [] as string[],
+    };
+
+    try {
+      // Test SMTP or API connectivity
+      if (config.smtpHost) {
+        // SMTP test
+        const { createTransport } = require('nodemailer');
+        const transporter = createTransport({
+          host: config.smtpHost,
+          port: config.smtpPort,
+          secure: config.smtpSecure,
+          auth: {
+            user: config.smtpUser,
+            pass: config.smtpPassword,
+          },
+        });
+
+        const verified = await transporter.verify();
+        results.connection = verified;
+        results.authentication = verified;
+
+        if (!verified) {
+          results.errors.push('SMTP connection/authentication failed');
+        }
+
+        // Test sending email
+        if (testType === 'FULL' && verified) {
+          const testEmail = await transporter.sendMail({
+            from: config.fromEmail,
+            to: config.testEmail || 'test@example.com',
+            subject: 'Test Email from Sabq CMS',
+            text: 'This is a test email to verify email integration.',
+          });
+
+          results.sendTest = !!testEmail.messageId;
+          
+          if (!testEmail.messageId) {
+            results.errors.push('Failed to send test email');
+          }
+        }
+      } else {
+        // API-based email service test
+        const response = await fetch(`${config.endpoint}/send`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${config.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            test: true,
+            to: config.testEmail || 'test@example.com',
+            subject: 'Test Email',
+            text: 'This is a test email.',
+          }),
+          timeout: 10000,
+        });
+
+        results.connection = response.ok;
+        results.authentication = response.ok;
+        results.sendTest = response.ok;
+
+        if (!response.ok) {
+          results.errors.push(`Email API test failed: ${response.status}`);
+        }
+      }
+
+    } catch (error) {
+      results.errors.push(`Email test error: ${error.message}`);
+    }
+
+    return results;
+  }
+
+  private static async testSocialIntegration(config: any, testType: string) {
+    const results = {
+      connection: false,
+      authentication: false,
+      apiAccess: false,
+      errors: [] as string[],
+    };
+
+    try {
+      // Test API connectivity
+      const response = await fetch(`${config.endpoint}/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${config.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 10000,
+      });
+
+      results.connection = response.ok;
+      results.authentication = response.ok;
+
+      if (!response.ok) {
+        results.errors.push(`Social API test failed: ${response.status}`);
+      }
+
+      // Test API access with sample query
+      if (testType === 'FULL' && response.ok) {
+        const testPost = await fetch(`${config.endpoint}/test-post`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${config.accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: 'Test post from Sabq CMS',
+            test: true,
+          }),
+          timeout: 15000,
+        });
+
+        results.apiAccess = testPost.ok;
+        
+        if (!testPost.ok) {
+          results.errors.push(`Social API access test failed: ${testPost.status}`);
+        }
+      }
+
+    } catch (error) {
+      results.errors.push(`Social test error: ${error.message}`);
+    }
+
+    return results;
+  }
+
+  private static async testStorageIntegration(config: any, testType: string) {
+    const results = {
+      connection: false,
+      authentication: false,
+      upload: false,
+      download: false,
+      errors: [] as string[],
+    };
+
+    try {
+      // Test bucket/container access
+      const response = await fetch(`${config.endpoint}/${config.bucket}`, {
+        method: 'HEAD',
+        headers: {
+          'Authorization': `Bearer ${config.accessToken}`,
+        },
+        timeout: 10000,
+      });
+
+      results.connection = response.ok;
+      results.authentication = response.ok;
+
+      if (!response.ok) {
+        results.errors.push(`Storage access test failed: ${response.status}`);
+      }
+
+      // Test upload/download
+      if (testType === 'FULL' && response.ok) {
+        const testData = new Blob(['test content'], { type: 'text/plain' });
+        const uploadResponse = await fetch(`${config.endpoint}/${config.bucket}/test-file.txt`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${config.accessToken}`,
+            'Content-Type': 'text/plain',
+          },
+          body: testData,
+          timeout: 15000,
+        });
+
+        results.upload = uploadResponse.ok;
+        
+        if (!uploadResponse.ok) {
+          results.errors.push(`Storage upload test failed: ${uploadResponse.status}`);
+        }
+
+        // Test download
+        const downloadResponse = await fetch(`${config.endpoint}/${config.bucket}/test-file.txt`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${config.accessToken}`,
+          },
+          timeout: 10000,
+        });
+
+        results.download = downloadResponse.ok;
+        
+        if (!downloadResponse.ok) {
+          results.errors.push(`Storage download test failed: ${downloadResponse.status}`);
+        }
+
+        // Cleanup test file
+        if (uploadResponse.ok) {
+          await fetch(`${config.endpoint}/${config.bucket}/test-file.txt`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${config.accessToken}`,
+            },
+          });
+        }
+      }
+
+    } catch (error) {
+      results.errors.push(`Storage test error: ${error.message}`);
+    }
+
+    return results;
+  }
+
+  public static async testIntegration(type: string, config: any, testType: string) {
+    switch (type) {
+      case 'CDN':
+        return this.testCDNIntegration(config, testType);
+      case 'ANALYTICS':
+        return this.testAnalyticsIntegration(config, testType);
+      case 'PAYMENT':
+        return this.testPaymentIntegration(config, testType);
+      case 'EMAIL':
+        return this.testEmailIntegration(config, testType);
+      case 'SOCIAL':
+        return this.testSocialIntegration(config, testType);
+      case 'STORAGE':
+        return this.testStorageIntegration(config, testType);
+      default:
+        throw new Error(`Unsupported integration type: ${type}`);
+    }
+  }
 }
 
 /**
  * POST /api/integrations/[id]/test
- * اختبار شامل لموفر خدمة محدد
+ * Tests integration connectivity and functionality
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = params;
-    const { testType, testData } = await request.json();
-
-    if (!id) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'MISSING_PROVIDER_ID',
-          message: 'معرف موفر الخدمة مطلوب'
-        }
-      }, { status: 400 });
+    // Authentication check
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: 'غير مصرح بالوصول' },
+        { status: 401 }
+      );
     }
 
-    const provider = providersManager.getProvider(id);
-    if (!provider) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'PROVIDER_NOT_FOUND',
-          message: `موفر الخدمة غير موجود: ${id}`
-        }
-      }, { status: 404 });
+    // Permission check
+    const hasPermission = await validateUserPermissions(
+      session.user.id,
+      'integrations',
+      'test'
+    );
+    if (!hasPermission) {
+      return NextResponse.json(
+        { error: 'لا تملك صلاحية لاختبار التكاملات' },
+        { status: 403 }
+      );
     }
 
-    // تسجيل عملية الاختبار
-    await privacyManager.logDataProcessing({
-      id: Date.now().toString(),
-      userId: 'tester',
-      action: 'read',
-      dataType: PersonalDataType.SENSITIVE,
-      purpose: ProcessingPurpose.SECURITY,
-      timestamp: new Date(),
-      ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-      justification: `Testing provider: ${id} (${testType})`
+    // Validate params
+    const validatedParams = paramsSchema.parse(params);
+    
+    // Parse request body
+    const body = await request.json();
+    const validatedData = testRequestSchema.parse(body);
+
+    // Get integration
+    const integration = await prisma.integration.findUnique({
+      where: { id: validatedParams.id },
+    });
+    
+    if (!integration) {
+      return NextResponse.json(
+        { error: 'التكامل غير موجود' },
+        { status: 404 }
+      );
+    }
+
+    if (!integration.isActive) {
+      return NextResponse.json(
+        { error: 'التكامل غير نشط' },
+        { status: 400 }
+      );
+    }
+
+    // Decrypt configuration
+    const decryptedConfig = { ...integration.configuration };
+    
+    if (decryptedConfig.apiKey) {
+      decryptedConfig.apiKey = await decrypt(decryptedConfig.apiKey);
+    }
+    if (decryptedConfig.secretKey) {
+      decryptedConfig.secretKey = await decrypt(decryptedConfig.secretKey);
+    }
+    if (decryptedConfig.accessToken) {
+      decryptedConfig.accessToken = await decrypt(decryptedConfig.accessToken);
+    }
+
+    // Run integration test
+    const startTime = Date.now();
+    const testResults = await IntegrationTester.testIntegration(
+      integration.type,
+      decryptedConfig,
+      validatedData.testType
+    );
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+
+    // Determine overall success
+    const success = testResults.connection && 
+                   (validatedData.testType === 'CONNECTION' || testResults.authentication);
+
+    // Update integration test results
+    await prisma.integration.update({
+      where: { id: validatedParams.id },
+      data: {
+        lastTestedAt: new Date(),
+        testResults: testResults,
+        isHealthy: success,
+        updatedAt: new Date(),
+      },
     });
 
-    const testResults = {
-      providerId: id,
-      providerName: provider.name,
-      testType: testType || 'comprehensive',
-      timestamp: new Date(),
-      results: {} as any
-    };
-
-    try {
-      switch (testType) {
-        case 'connection':
-          testResults.results = await runConnectionTest(id);
-          break;
-
-        case 'authentication':
-          testResults.results = await runAuthenticationTest(id);
-          break;
-
-        case 'performance':
-          testResults.results = await runPerformanceTest(id);
-          break;
-
-        case 'api_endpoints':
-          testResults.results = await runEndpointsTest(id, testData);
-          break;
-
-        case 'comprehensive':
-        default:
-          testResults.results = await runComprehensiveTest(id);
-          break;
-      }
-
-      // حساب النتيجة الإجمالية
-      const overallScore = calculateOverallScore(testResults.results);
-      testResults.results.overallScore = overallScore;
-      testResults.results.status = overallScore >= 80 ? 'excellent' : 
-                                   overallScore >= 60 ? 'good' : 
-                                   overallScore >= 40 ? 'fair' : 'poor';
-
-      return NextResponse.json({
-        success: true,
-        data: testResults,
-        metadata: {
-          timestamp: new Date(),
-          requestId: Date.now().toString()
-        }
-      });
-
-    } catch (testError) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'TEST_EXECUTION_ERROR',
-          message: 'خطأ في تنفيذ الاختبار',
-          details: testError
-        },
-        data: {
-          providerId: id,
-          providerName: provider.name,
-          testType: testType || 'comprehensive',
-          timestamp: new Date(),
-          partialResults: testResults.results
-        }
-      }, { status: 500 });
-    }
-
-  } catch (error) {
-    console.error('خطأ في اختبار موفر الخدمة:', error);
-    
-    return NextResponse.json({
-      success: false,
-      error: {
-        code: 'PROVIDER_TEST_ERROR',
-        message: 'خطأ في اختبار موفر الخدمة',
-        details: process.env.NODE_ENV === 'development' ? error : undefined
-      }
-    }, { status: 500 });
-  }
-}
-
-/**
- * GET /api/integrations/[id]/test
- * جلب نتائج آخر اختبار لموفر الخدمة
- */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
-    const { id } = params;
-
-    if (!id) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'MISSING_PROVIDER_ID',
-          message: 'معرف موفر الخدمة مطلوب'
-        }
-      }, { status: 400 });
-    }
-
-    const provider = providersManager.getProvider(id);
-    if (!provider) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'PROVIDER_NOT_FOUND',
-          message: `موفر الخدمة غير موجود: ${id}`
-        }
-      }, { status: 404 });
-    }
-
-    // في تطبيق حقيقي، ستُجلب النتائج من قاعدة البيانات
-    // هنا سنرجع حالة صحية مبسطة
-    const healthStatus = await providersManager.healthCheck(id);
-    
-    const testSummary = {
-      providerId: id,
-      providerName: provider.name,
-      lastTestDate: provider.metadata.lastHealthCheck || new Date(),
-      currentStatus: provider.metadata.healthStatus || 'unknown',
-      quickHealthCheck: healthStatus,
-      recommendations: generateRecommendations(provider, healthStatus)
-    };
+    // Log audit event
+    await logAuditEvent({
+      userId: session.user.id,
+      action: 'TEST_INTEGRATION',
+      resource: 'integrations',
+      resourceId: integration.id,
+      metadata: {
+        integrationName: integration.name,
+        provider: integration.provider,
+        testType: validatedData.testType,
+        success,
+        duration,
+        results: testResults,
+        timestamp: new Date().toISOString(),
+      },
+    });
 
     return NextResponse.json({
       success: true,
-      data: testSummary,
+      data: {
+        integrationId: integration.id,
+        integrationName: integration.name,
+        provider: integration.provider,
+        type: integration.type,
+        testType: validatedData.testType,
+        testResults,
+        duration,
+        testedAt: new Date().toISOString(),
+      },
+      message: success ? 'تم اختبار التكامل بنجاح' : 'فشل اختبار التكامل',
+    });
+
+  } catch (error) {
+    console.error('Error testing integration:', error);
+    
+    // Handle validation errors
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { 
+          error: 'بيانات غير صحيحة',
+          details: error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message,
+          })),
+        },
+        { status: 400 }
+      );
+    }
+
+    // Log error
+    await logAuditEvent({
+      userId: session?.user?.id || 'unknown',
+      action: 'TEST_INTEGRATION_ERROR',
+      resource: 'integrations',
+      resourceId: params.id,
       metadata: {
-        timestamp: new Date(),
-        requestId: Date.now().toString()
-      }
+        error: error.message,
+        timestamp: new Date().toISOString(),
+      },
     });
 
-  } catch (error) {
-    console.error('خطأ في جلب نتائج الاختبار:', error);
-    
-    return NextResponse.json({
-      success: false,
-      error: {
-        code: 'GET_TEST_RESULTS_ERROR',
-        message: 'خطأ في جلب نتائج الاختبار',
-        details: process.env.NODE_ENV === 'development' ? error : undefined
-      }
-    }, { status: 500 });
+    return NextResponse.json(
+      { 
+        error: 'خطأ في اختبار التكامل',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      },
+      { status: 500 }
+    );
   }
-}
-
-// وظائف اختبار مختلفة
-async function runConnectionTest(providerId: string) {
-  const startTime = Date.now();
-  
-  try {
-    const response = await providersManager.makeApiCall(providerId, '/health', {
-      method: 'GET'
-    });
-
-    const duration = Date.now() - startTime;
-
-    return {
-      connection: {
-        success: response.success,
-        statusCode: response.statusCode,
-        responseTime: duration,
-        score: response.success ? (duration < 1000 ? 100 : duration < 3000 ? 80 : 60) : 0
-      }
-    };
-  } catch (error) {
-    return {
-      connection: {
-        success: false,
-        error: error,
-        responseTime: Date.now() - startTime,
-        score: 0
-      }
-    };
-  }
-}
-
-async function runAuthenticationTest(providerId: string) {
-  const provider = providersManager.getProvider(providerId);
-  if (!provider) {
-    return { authentication: { success: false, score: 0, message: 'Provider not found' } };
-  }
-
-  // اختبار وجود بيانات المصادقة
-  const hasCredentials = provider.authentication.credentials && 
-                         Object.keys(provider.authentication.credentials).length > 0;
-  
-  const hasHeaders = provider.authentication.headers && 
-                     Object.keys(provider.authentication.headers).length > 0;
-
-  const authScore = (hasCredentials ? 50 : 0) + (hasHeaders ? 50 : 0);
-
-  return {
-    authentication: {
-      success: hasCredentials || hasHeaders,
-      hasCredentials,
-      hasHeaders,
-      authType: provider.authentication.type,
-      score: authScore,
-      message: authScore >= 100 ? 'تم تكوين المصادقة بشكل كامل' :
-               authScore >= 50 ? 'تكوين مصادقة جزئي' : 'لم يتم تكوين المصادقة'
-    }
-  };
-}
-
-async function runPerformanceTest(providerId: string) {
-  const testEndpoints = ['/health', '/status', '/info'];
-  const results = [];
-
-  for (const endpoint of testEndpoints) {
-    const startTime = Date.now();
-    
-    try {
-      const response = await providersManager.makeApiCall(providerId, endpoint, {
-        method: 'GET'
-      });
-      
-      const duration = Date.now() - startTime;
-      
-      results.push({
-        endpoint,
-        success: response.success,
-        responseTime: duration,
-        statusCode: response.statusCode
-      });
-    } catch (error) {
-      results.push({
-        endpoint,
-        success: false,
-        responseTime: Date.now() - startTime,
-        error: 'Connection failed'
-      });
-    }
-  }
-
-  const avgResponseTime = results.reduce((sum, r) => sum + r.responseTime, 0) / results.length;
-  const successRate = (results.filter(r => r.success).length / results.length) * 100;
-  
-  const performanceScore = successRate * 0.7 + 
-                          (avgResponseTime < 500 ? 30 : avgResponseTime < 1500 ? 20 : 10);
-
-  return {
-    performance: {
-      averageResponseTime: Math.round(avgResponseTime),
-      successRate: Math.round(successRate),
-      testedEndpoints: results.length,
-      score: Math.round(performanceScore),
-      details: results
-    }
-  };
-}
-
-async function runEndpointsTest(providerId: string, testData: any) {
-  const provider = providersManager.getProvider(providerId);
-  if (!provider) {
-    return { endpoints: { success: false, score: 0, message: 'Provider not found' } };
-  }
-
-  const endpoints = Object.values(provider.endpoints).filter(Boolean);
-  const results = [];
-
-  for (const endpoint of endpoints) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      const response = await fetch(endpoint as string, {
-        method: 'HEAD',
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      results.push({
-        endpoint,
-        available: response.ok,
-        statusCode: response.status
-      });
-    } catch (error) {
-      results.push({
-        endpoint,
-        available: false,
-        error: 'Not reachable'
-      });
-    }
-  }
-
-  const availabilityRate = (results.filter(r => r.available).length / results.length) * 100;
-
-  return {
-    endpoints: {
-      totalEndpoints: endpoints.length,
-      availableEndpoints: results.filter(r => r.available).length,
-      availabilityRate: Math.round(availabilityRate),
-      score: Math.round(availabilityRate),
-      details: results
-    }
-  };
-}
-
-async function runComprehensiveTest(providerId: string) {
-  const [connection, auth, performance, endpoints] = await Promise.all([
-    runConnectionTest(providerId),
-    runAuthenticationTest(providerId),
-    runPerformanceTest(providerId),
-    runEndpointsTest(providerId, {})
-  ]);
-
-  return {
-    ...connection,
-    ...auth,
-    ...performance,
-    ...endpoints,
-    testDate: new Date(),
-    testDuration: '45 seconds'
-  };
-}
-
-function calculateOverallScore(results: any): number {
-  const scores = [];
-  
-  if (results.connection?.score !== undefined) scores.push(results.connection.score * 0.3);
-  if (results.authentication?.score !== undefined) scores.push(results.authentication.score * 0.2);
-  if (results.performance?.score !== undefined) scores.push(results.performance.score * 0.3);
-  if (results.endpoints?.score !== undefined) scores.push(results.endpoints.score * 0.2);
-
-  return scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0)) : 0;
-}
-
-function generateRecommendations(provider: any, healthStatus: boolean): string[] {
-  const recommendations = [];
-
-  if (!healthStatus) {
-    recommendations.push('فحص حالة الاتصال مع الخدمة');
-    recommendations.push('التحقق من إعدادات المصادقة');
-  }
-
-  if (provider.status !== 'active') {
-    recommendations.push('تفعيل موفر الخدمة');
-  }
-
-  if (!provider.metadata.lastHealthCheck || 
-      Date.now() - new Date(provider.metadata.lastHealthCheck).getTime() > 86400000) {
-    recommendations.push('إجراء فحص دوري للصحة');
-  }
-
-  if (provider.configuration.timeout > 30000) {
-    recommendations.push('تقليل مهلة الاتصال لتحسين الأداء');
-  }
-
-  if (recommendations.length === 0) {
-    recommendations.push('موفر الخدمة يعمل بشكل مثالي');
-  }
-
-  return recommendations;
 } 

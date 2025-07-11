@@ -5,7 +5,7 @@
  * @author Sabq AI Team
  */
 
-import { getCookie, setCookie } from 'js-cookie';
+import Cookies from 'js-cookie';
 
 // أنواع الأحداث المدعومة
 export enum EventType {
@@ -469,11 +469,11 @@ export class AdvancedAnalytics {
 
   // الحصول على معرف الجلسة
   private getOrCreateSessionId(): string {
-    let sessionId = getCookie('analytics_session');
+    let sessionId = Cookies.get('analytics_session');
     
     if (!sessionId) {
       sessionId = this.generateSessionId();
-      setCookie('analytics_session', sessionId, { expires: 1 }); // يوم واحد
+      Cookies.set('analytics_session', sessionId, { expires: 1 }); // يوم واحد
     }
     
     return sessionId;
@@ -549,7 +549,7 @@ export class AdvancedAnalytics {
 
   // الحصول على وقت بداية الجلسة
   private getSessionStartTime(): number {
-    const stored = getCookie('session_start_time');
+    const stored = Cookies.get('session_start_time');
     if (stored) {
       return parseInt(stored);
     }
@@ -643,7 +643,4 @@ export const trackNewsletterSignup = (email: string, source: string) => {
     timestamp: new Date().toISOString()
   });
 };
-
-// تصدير الثوابت
-export { EventType };
 export type { AnalyticsEvent, DeviceInfo, TrackingConfig }; 

@@ -260,7 +260,7 @@ async function main() {
             location: 'Saudi Arabia',
             duration: randomEvent === 'read_time' ? Math.floor(Math.random() * 300) : null
           },
-          created_at: randomDate
+          timestamp: randomDate
         }
       });
     }
@@ -278,7 +278,7 @@ async function main() {
         enabled: true,
         events: ['page_view', 'article_view', 'user_signup']
       },
-      isActive: true
+      is_active: true
     },
     {
       name: 'Facebook Pixel',
@@ -288,7 +288,7 @@ async function main() {
         enabled: true,
         events: ['page_view', 'article_view', 'conversion']
       },
-      isActive: true
+      is_active: true
     },
     {
       name: 'Twitter API',
@@ -298,7 +298,7 @@ async function main() {
         enabled: false,
         autoShare: true
       },
-      isActive: false
+      is_active: false
     }
   ];
 
@@ -306,7 +306,12 @@ async function main() {
     await prisma.integration.upsert({
       where: { name: integration.name },
       update: {},
-      create: integration
+      create: {
+        name: integration.name,
+        type: integration.type,
+        config: integration.config,
+        is_active: integration.is_active,
+      },
     });
   }
 

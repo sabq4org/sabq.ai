@@ -1,446 +1,534 @@
 /**
- * API Routes لموفر خدمة محدد
- * Individual Provider API Endpoints
+ * API Routes for Individual Integration Management
+ * 
+ * @description Handles CRUD operations for specific integration by ID
+ * @author Sabq AI CMS Team
  * @version 1.0.0
- * @author Sabq AI Team
+ * @created 2024-01-15
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { providersManager, ProviderStatus, ProviderUtils, ServiceProvider } from '../../../../lib/integrations/providers';
-import { privacyManager, PersonalDataType, ProcessingPurpose } from '../../../../lib/privacy-controls';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/db';
+import { z } from 'zod';
+import { logAuditEvent } from '@/lib/audit-logger';
+import { validateUserPermissions } from '@/lib/permissions';
+import { encrypt, decrypt } from '@/lib/encryption';
 
-interface RouteParams {
-  params: {
-    id: string;
+// Validation schemas
+const integrationUpdateSchema = z.object({
+  name: z.string().min(1, 'اسم التكامل مطلوب').optional(),
+  type: z.enum(['CDN', 'ANALYTICS', 'PAYMENT', 'EMAIL', 'SOCIAL', 'STORAGE']).optional(),
+  provider: z.string().min(1, 'مقدم الخدمة مطلوب').optional(),
+  configuration: z.record(z.any()).optional(),
+  isActive: z.boolean().optional(),
+  description: z.string().optional(),
+  webhookUrl: z.string().url().optional(),
+  apiVersion: z.string().optional(),
+  rateLimitPerHour: z.number().positive().optional(),
+  timeoutSeconds: z.number().positive().optional(),
+  retryAttempts: z.number().min(0).max(5).optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+const paramsSchema = z.object({
+  id: z.string().uuid('معرف التكامل غير صحيح'),
+});
+
+/**
+ * Helper function to check if integration exists
+ */
+async function getIntegrationById(id: string) {
+  const integration = await prisma.integration.findUnique({
+    where: { id },
+    include: {
+      createdBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      updatedBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      auditLogs: {
+        take: 10,
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      },
+      _count: {
+        select: {
+          auditLogs: true,
+        },
+      },
+    },
+  });
+
+  if (!integration) {
+    return null;
+  }
+
+  // Decrypt sensitive configuration data
+  const decryptedConfig = { ...integration.configuration };
+  
+  if (decryptedConfig.apiKey) {
+    decryptedConfig.apiKey = await decrypt(decryptedConfig.apiKey);
+  }
+  if (decryptedConfig.secretKey) {
+    decryptedConfig.secretKey = await decrypt(decryptedConfig.secretKey);
+  }
+  if (decryptedConfig.accessToken) {
+    decryptedConfig.accessToken = await decrypt(decryptedConfig.accessToken);
+  }
+
+  return {
+    ...integration,
+    configuration: decryptedConfig,
   };
 }
 
 /**
  * GET /api/integrations/[id]
- * جلب معلومات موفر خدمة محدد
+ * Retrieves a specific integration by ID
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = params;
-
-    if (!id) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'MISSING_PROVIDER_ID',
-          message: 'معرف موفر الخدمة مطلوب'
-        }
-      }, { status: 400 });
+    // Authentication check
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: 'غير مصرح بالوصول' },
+        { status: 401 }
+      );
     }
 
-    const provider = providersManager.getProvider(id);
+    // Permission check
+    const hasPermission = await validateUserPermissions(
+      session.user.id,
+      'integrations',
+      'read'
+    );
+    if (!hasPermission) {
+      return NextResponse.json(
+        { error: 'لا تملك صلاحية لعرض التكاملات' },
+        { status: 403 }
+      );
+    }
+
+    // Validate params
+    const validatedParams = paramsSchema.parse(params);
     
-    if (!provider) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'PROVIDER_NOT_FOUND',
-          message: `موفر الخدمة غير موجود: ${id}`
-        }
-      }, { status: 404 });
+    // Get integration
+    const integration = await getIntegrationById(validatedParams.id);
+    
+    if (!integration) {
+      return NextResponse.json(
+        { error: 'التكامل غير موجود' },
+        { status: 404 }
+      );
     }
 
-    // تسجيل عملية الوصول للبيانات
-    await privacyManager.logDataProcessing({
-      id: Date.now().toString(),
-      userId: 'api-user',
-      action: 'read',
-      dataType: PersonalDataType.SENSITIVE,
-      purpose: ProcessingPurpose.SECURITY,
-      timestamp: new Date(),
-      ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-      userAgent: request.headers.get('user-agent') || undefined,
-      justification: `Get provider details: ${id}`
+    // Log audit event
+    await logAuditEvent({
+      userId: session.user.id,
+      action: 'VIEW_INTEGRATION',
+      resource: 'integrations',
+      resourceId: integration.id,
+      metadata: {
+        integrationName: integration.name,
+        provider: integration.provider,
+        timestamp: new Date().toISOString(),
+      },
     });
-
-    // تصفية البيانات الحساسة
-    const sanitizedProvider = {
-      id: provider.id,
-      name: provider.name,
-      type: provider.type,
-      status: provider.status,
-      version: provider.version,
-      description: provider.description,
-      website: provider.website,
-      documentation: provider.documentation,
-      pricing: provider.pricing,
-      features: provider.features,
-      limitations: provider.limitations,
-      endpoints: {
-        health: provider.endpoints.health,
-        documentation: provider.endpoints.documentation,
-        support: provider.endpoints.support
-      },
-      configuration: {
-        baseUrl: provider.configuration.baseUrl,
-        timeout: provider.configuration.timeout,
-        retryAttempts: provider.configuration.retryAttempts,
-        retryDelay: provider.configuration.retryDelay,
-        rateLimiting: provider.configuration.rateLimiting,
-        region: provider.configuration.region,
-        environment: provider.configuration.environment
-        // إخفاء customHeaders
-      },
-      metadata: provider.metadata
-      // إخفاء authentication credentials
-    };
 
     return NextResponse.json({
       success: true,
-      data: sanitizedProvider,
-      metadata: {
-        timestamp: new Date(),
-        requestId: Date.now().toString()
-      }
+      data: integration,
+      message: 'تم جلب التكامل بنجاح',
     });
 
   } catch (error) {
-    console.error('خطأ في جلب موفر الخدمة:', error);
+    console.error('Error fetching integration:', error);
     
-    return NextResponse.json({
-      success: false,
-      error: {
-        code: 'FETCH_PROVIDER_ERROR',
-        message: 'خطأ في جلب موفر الخدمة',
-        details: process.env.NODE_ENV === 'development' ? error : undefined
-      }
-    }, { status: 500 });
+    // Handle validation errors
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { 
+          error: 'معرف التكامل غير صحيح',
+          details: error.errors,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Log error
+    await logAuditEvent({
+      userId: session?.user?.id || 'unknown',
+      action: 'VIEW_INTEGRATION_ERROR',
+      resource: 'integrations',
+      resourceId: params.id,
+      metadata: {
+        error: error.message,
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    return NextResponse.json(
+      { 
+        error: 'خطأ في جلب التكامل',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      },
+      { status: 500 }
+    );
   }
 }
 
 /**
  * PUT /api/integrations/[id]
- * تحديث موفر خدمة محدد
+ * Updates a specific integration
  */
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = params;
-    const updates = await request.json();
-
-    if (!id) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'MISSING_PROVIDER_ID',
-          message: 'معرف موفر الخدمة مطلوب'
-        }
-      }, { status: 400 });
+    // Authentication check
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: 'غير مصرح بالوصول' },
+        { status: 401 }
+      );
     }
 
-    const existingProvider = providersManager.getProvider(id);
-    if (!existingProvider) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'PROVIDER_NOT_FOUND',
-          message: `موفر الخدمة غير موجود: ${id}`
-        }
-      }, { status: 404 });
+    // Permission check
+    const hasPermission = await validateUserPermissions(
+      session.user.id,
+      'integrations',
+      'update'
+    );
+    if (!hasPermission) {
+      return NextResponse.json(
+        { error: 'لا تملك صلاحية لتحديث التكاملات' },
+        { status: 403 }
+      );
     }
 
-    // التحقق من صحة التحديثات
-    if (updates.id && updates.id !== id) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'ID_MISMATCH',
-          message: 'لا يمكن تغيير معرف موفر الخدمة'
-        }
-      }, { status: 400 });
-    }
-
-    // تحديث البيانات الوصفية
-    const updatedProvider = {
-      ...updates,
-      metadata: {
-        ...existingProvider.metadata,
-        lastUpdated: new Date()
-      }
-    };
-
-    const success = providersManager.updateProvider(id, updatedProvider);
+    // Validate params
+    const validatedParams = paramsSchema.parse(params);
     
-    if (!success) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'UPDATE_FAILED',
-          message: 'فشل في تحديث موفر الخدمة'
-        }
-      }, { status: 500 });
+    // Check if integration exists
+    const existingIntegration = await prisma.integration.findUnique({
+      where: { id: validatedParams.id },
+    });
+    
+    if (!existingIntegration) {
+      return NextResponse.json(
+        { error: 'التكامل غير موجود' },
+        { status: 404 }
+      );
     }
 
-    // تسجيل عملية التحديث
-    await privacyManager.logDataProcessing({
-      id: Date.now().toString(),
-      userId: 'admin',
-      action: 'update',
-      dataType: PersonalDataType.SENSITIVE,
-      purpose: ProcessingPurpose.SECURITY,
-      timestamp: new Date(),
-      ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-      justification: `Updated provider: ${id}`
+    // Parse and validate request body
+    const body = await request.json();
+    const validatedData = integrationUpdateSchema.parse(body);
+
+    // Encrypt sensitive configuration data if provided
+    let encryptedConfig = validatedData.configuration;
+    if (encryptedConfig) {
+      encryptedConfig = { ...encryptedConfig };
+      
+      if (encryptedConfig.apiKey) {
+        encryptedConfig.apiKey = await encrypt(encryptedConfig.apiKey);
+      }
+      if (encryptedConfig.secretKey) {
+        encryptedConfig.secretKey = await encrypt(encryptedConfig.secretKey);
+      }
+      if (encryptedConfig.accessToken) {
+        encryptedConfig.accessToken = await encrypt(encryptedConfig.accessToken);
+      }
+    }
+
+    // Check for duplicate integration name (if name is being updated)
+    if (validatedData.name && validatedData.name !== existingIntegration.name) {
+      const duplicateIntegration = await prisma.integration.findFirst({
+        where: {
+          name: validatedData.name,
+          provider: validatedData.provider || existingIntegration.provider,
+          id: { not: validatedParams.id },
+        },
+      });
+
+      if (duplicateIntegration) {
+        return NextResponse.json(
+          { error: 'يوجد تكامل آخر بنفس الاسم ومقدم الخدمة' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Update integration
+    const updatedIntegration = await prisma.integration.update({
+      where: { id: validatedParams.id },
+      data: {
+        ...validatedData,
+        configuration: encryptedConfig,
+        updatedById: session.user.id,
+        updatedAt: new Date(),
+      },
+      include: {
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        updatedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
+
+    // Log audit event
+    await logAuditEvent({
+      userId: session.user.id,
+      action: 'UPDATE_INTEGRATION',
+      resource: 'integrations',
+      resourceId: updatedIntegration.id,
+      metadata: {
+        integrationName: updatedIntegration.name,
+        provider: updatedIntegration.provider,
+        changes: validatedData,
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    // Decrypt configuration for response
+    const decryptedConfig = { ...updatedIntegration.configuration };
+    if (decryptedConfig.apiKey) {
+      decryptedConfig.apiKey = await decrypt(decryptedConfig.apiKey);
+    }
+    if (decryptedConfig.secretKey) {
+      decryptedConfig.secretKey = await decrypt(decryptedConfig.secretKey);
+    }
+    if (decryptedConfig.accessToken) {
+      decryptedConfig.accessToken = await decrypt(decryptedConfig.accessToken);
+    }
 
     return NextResponse.json({
       success: true,
       data: {
-        id,
-        message: 'تم تحديث موفر الخدمة بنجاح',
-        updatedFields: Object.keys(updates)
+        ...updatedIntegration,
+        configuration: decryptedConfig,
       },
-      metadata: {
-        timestamp: new Date(),
-        requestId: Date.now().toString()
-      }
+      message: 'تم تحديث التكامل بنجاح',
     });
 
   } catch (error) {
-    console.error('خطأ في تحديث موفر الخدمة:', error);
+    console.error('Error updating integration:', error);
     
-    return NextResponse.json({
-      success: false,
-      error: {
-        code: 'UPDATE_PROVIDER_ERROR',
-        message: 'خطأ في تحديث موفر الخدمة',
-        details: process.env.NODE_ENV === 'development' ? error : undefined
-      }
-    }, { status: 500 });
+    // Handle validation errors
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { 
+          error: 'بيانات غير صحيحة',
+          details: error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message,
+          })),
+        },
+        { status: 400 }
+      );
+    }
+
+    // Log error
+    await logAuditEvent({
+      userId: session?.user?.id || 'unknown',
+      action: 'UPDATE_INTEGRATION_ERROR',
+      resource: 'integrations',
+      resourceId: params.id,
+      metadata: {
+        error: error.message,
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    return NextResponse.json(
+      { 
+        error: 'خطأ في تحديث التكامل',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      },
+      { status: 500 }
+    );
   }
 }
 
 /**
  * DELETE /api/integrations/[id]
- * حذف موفر خدمة محدد
+ * Deletes a specific integration (soft delete)
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = params;
-    const { searchParams } = new URL(request.url);
-    const force = searchParams.get('force') === 'true';
-
-    if (!id) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'MISSING_PROVIDER_ID',
-          message: 'معرف موفر الخدمة مطلوب'
-        }
-      }, { status: 400 });
+    // Authentication check
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: 'غير مصرح بالوصول' },
+        { status: 401 }
+      );
     }
 
-    const provider = providersManager.getProvider(id);
-    if (!provider) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'PROVIDER_NOT_FOUND',
-          message: `موفر الخدمة غير موجود: ${id}`
-        }
-      }, { status: 404 });
+    // Permission check
+    const hasPermission = await validateUserPermissions(
+      session.user.id,
+      'integrations',
+      'delete'
+    );
+    if (!hasPermission) {
+      return NextResponse.json(
+        { error: 'لا تملك صلاحية لحذف التكاملات' },
+        { status: 403 }
+      );
     }
 
-    // منع حذف الموفرين النشطين بدون force
-    if (provider.status === ProviderStatus.ACTIVE && !force) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'ACTIVE_PROVIDER_DELETE',
-          message: 'لا يمكن حذف موفر خدمة نشط. استخدم force=true للحذف القسري',
-          warning: 'هذا قد يؤثر على وظائف النظام'
-        }
-      }, { status: 409 });
-    }
-
-    const success = providersManager.removeProvider(id);
+    // Validate params
+    const validatedParams = paramsSchema.parse(params);
     
-    if (!success) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'DELETE_FAILED',
-          message: 'فشل في حذف موفر الخدمة'
-        }
-      }, { status: 500 });
+    // Check if integration exists
+    const existingIntegration = await prisma.integration.findUnique({
+      where: { id: validatedParams.id },
+    });
+    
+    if (!existingIntegration) {
+      return NextResponse.json(
+        { error: 'التكامل غير موجود' },
+        { status: 404 }
+      );
     }
 
-    // تسجيل عملية الحذف
-    await privacyManager.logDataProcessing({
-      id: Date.now().toString(),
-      userId: 'admin',
-      action: 'delete',
-      dataType: PersonalDataType.SENSITIVE,
-      purpose: ProcessingPurpose.SECURITY,
-      timestamp: new Date(),
-      ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-      justification: `Deleted provider: ${id} (${provider.name})`
+    // Check if integration is actively used
+    const isActivelyUsed = await prisma.article.findFirst({
+      where: {
+        integrations: {
+          some: {
+            id: validatedParams.id,
+          },
+        },
+      },
+    });
+
+    if (isActivelyUsed) {
+      return NextResponse.json(
+        { error: 'لا يمكن حذف التكامل لأنه مستخدم في مقالات' },
+        { status: 400 }
+      );
+    }
+
+    // Soft delete integration
+    const deletedIntegration = await prisma.integration.update({
+      where: { id: validatedParams.id },
+      data: {
+        isActive: false,
+        deletedAt: new Date(),
+        updatedById: session.user.id,
+        updatedAt: new Date(),
+      },
+      include: {
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        updatedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    // Log audit event
+    await logAuditEvent({
+      userId: session.user.id,
+      action: 'DELETE_INTEGRATION',
+      resource: 'integrations',
+      resourceId: deletedIntegration.id,
+      metadata: {
+        integrationName: deletedIntegration.name,
+        provider: deletedIntegration.provider,
+        timestamp: new Date().toISOString(),
+      },
     });
 
     return NextResponse.json({
       success: true,
-      data: {
-        id,
-        name: provider.name,
-        message: 'تم حذف موفر الخدمة بنجاح'
-      },
-      metadata: {
-        timestamp: new Date(),
-        requestId: Date.now().toString()
-      }
+      data: deletedIntegration,
+      message: 'تم حذف التكامل بنجاح',
     });
 
   } catch (error) {
-    console.error('خطأ في حذف موفر الخدمة:', error);
+    console.error('Error deleting integration:', error);
     
-    return NextResponse.json({
-      success: false,
-      error: {
-        code: 'DELETE_PROVIDER_ERROR',
-        message: 'خطأ في حذف موفر الخدمة',
-        details: process.env.NODE_ENV === 'development' ? error : undefined
-      }
-    }, { status: 500 });
-  }
-}
-
-/**
- * PATCH /api/integrations/[id]
- * تحديث جزئي لموفر خدمة (مثل تغيير الحالة فقط)
- */
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  try {
-    const { id } = params;
-    const { action, data } = await request.json();
-
-    if (!id) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'MISSING_PROVIDER_ID',
-          message: 'معرف موفر الخدمة مطلوب'
-        }
-      }, { status: 400 });
+    // Handle validation errors
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { 
+          error: 'معرف التكامل غير صحيح',
+          details: error.errors,
+        },
+        { status: 400 }
+      );
     }
 
-    const provider = providersManager.getProvider(id);
-    if (!provider) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'PROVIDER_NOT_FOUND',
-          message: `موفر الخدمة غير موجود: ${id}`
-        }
-      }, { status: 404 });
-    }
-
-    let updateResult;
-    let message = '';
-
-    switch (action) {
-      case 'change_status':
-        if (!data.status) {
-          return NextResponse.json({
-            success: false,
-            error: {
-              code: 'MISSING_STATUS',
-              message: 'الحالة الجديدة مطلوبة'
-            }
-          }, { status: 400 });
-        }
-
-        updateResult = providersManager.updateProvider(id, { status: data.status });
-        message = `تم تغيير حالة موفر الخدمة إلى: ${data.status}`;
-        break;
-
-      case 'health_check':
-        const isHealthy = await providersManager.healthCheck(id);
-        
-        return NextResponse.json({
-          success: true,
-          data: {
-            id,
-            name: provider.name,
-            healthy: isHealthy,
-            lastCheck: new Date()
-          },
-          metadata: {
-            timestamp: new Date(),
-            requestId: Date.now().toString()
-          }
-        });
-
-      case 'test_connection':
-        // اختبار الاتصال بموفر الخدمة
-        const testResult = await providersManager.makeApiCall(id, '/health', { method: 'GET' });
-        
-        return NextResponse.json({
-          success: true,
-          data: {
-            id,
-            name: provider.name,
-            connectionTest: {
-              success: testResult.success,
-              statusCode: testResult.statusCode,
-              duration: testResult.metadata.duration,
-              timestamp: testResult.metadata.timestamp
-            }
-          },
-          metadata: {
-            timestamp: new Date(),
-            requestId: Date.now().toString()
-          }
-        });
-
-      default:
-        return NextResponse.json({
-          success: false,
-          error: {
-            code: 'INVALID_ACTION',
-            message: 'الإجراء المطلوب غير صحيح',
-            supportedActions: ['change_status', 'health_check', 'test_connection']
-          }
-        }, { status: 400 });
-    }
-
-    if (updateResult === false) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'UPDATE_FAILED',
-          message: 'فشل في تحديث موفر الخدمة'
-        }
-      }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        id,
-        name: provider.name,
-        action,
-        message
-      },
+    // Log error
+    await logAuditEvent({
+      userId: session?.user?.id || 'unknown',
+      action: 'DELETE_INTEGRATION_ERROR',
+      resource: 'integrations',
+      resourceId: params.id,
       metadata: {
-        timestamp: new Date(),
-        requestId: Date.now().toString()
-      }
+        error: error.message,
+        timestamp: new Date().toISOString(),
+      },
     });
 
-  } catch (error) {
-    console.error('خطأ في تحديث موفر الخدمة:', error);
-    
-    return NextResponse.json({
-      success: false,
-      error: {
-        code: 'PATCH_PROVIDER_ERROR',
-        message: 'خطأ في تحديث موفر الخدمة',
-        details: process.env.NODE_ENV === 'development' ? error : undefined
-      }
-    }, { status: 500 });
+    return NextResponse.json(
+      { 
+        error: 'خطأ في حذف التكامل',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      },
+      { status: 500 }
+    );
   }
 } 

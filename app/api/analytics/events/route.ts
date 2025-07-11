@@ -1,116 +1,119 @@
-import { NextRequest, NextResponse } from 'next/server'
+/**
+ * API لاستقبال الأحداث التحليلية
+ * Analytics Events API
+ * @version 3.0.0
+ */
 
-// Mock analytics data
-const mockEvents = [
+import { NextRequest, NextResponse } from 'next/server';
+
+// بيانات أحداث التحليل التجريبية
+const analyticsEvents = [
   {
     id: '1',
     type: 'page_view',
-    page: '/dashboard',
-    userId: '1',
+    page: '/',
+    userId: 'user-1',
     timestamp: new Date().toISOString(),
-    metadata: { referrer: 'direct' }
+    data: { referrer: 'direct' }
   },
   {
     id: '2',
     type: 'article_view',
     articleId: '1',
-    userId: '2',
+    userId: 'user-2',
     timestamp: new Date().toISOString(),
-    metadata: { readTime: 120 }
+    data: { readingTime: 120 }
+  },
+  {
+    id: '3',
+    type: 'login',
+    userId: 'user-1',
+    timestamp: new Date().toISOString(),
+    data: { method: 'email' }
   }
-]
+];
 
+// GET /api/analytics/events - جلب أحداث التحليل
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const type = searchParams.get('type')
-    const startDate = searchParams.get('startDate')
-    const endDate = searchParams.get('endDate')
-    const limit = parseInt(searchParams.get('limit') || '100')
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const type = searchParams.get('type');
+    const userId = searchParams.get('userId');
 
-    let filteredEvents = [...mockEvents]
+    let filteredEvents = [...analyticsEvents];
 
-    // Filter by event type
     if (type) {
-      filteredEvents = filteredEvents.filter(event => event.type === type)
+      filteredEvents = filteredEvents.filter(event => event.type === type);
     }
 
-    // Filter by date range
-    if (startDate || endDate) {
-      filteredEvents = filteredEvents.filter(event => {
-        const eventDate = new Date(event.timestamp)
-        if (startDate && eventDate < new Date(startDate)) return false
-        if (endDate && eventDate > new Date(endDate)) return false
-        return true
-      })
+    if (userId) {
+      filteredEvents = filteredEvents.filter(event => event.userId === userId);
     }
 
-    // Limit results
-    const limitedEvents = filteredEvents.slice(0, limit)
-
-    // Generate summary statistics
-    const summary = {
-      totalEvents: filteredEvents.length,
-      eventTypes: [...new Set(filteredEvents.map(e => e.type))],
-      uniqueUsers: [...new Set(filteredEvents.map(e => e.userId))].length,
-      dateRange: {
-        start: startDate || filteredEvents[0]?.timestamp,
-        end: endDate || filteredEvents[filteredEvents.length - 1]?.timestamp
-      }
-    }
+    const limitedEvents = filteredEvents.slice(0, limit);
 
     return NextResponse.json({
       success: true,
-      data: limitedEvents,
-      summary
-    })
+      events: limitedEvents,
+      total: filteredEvents.length,
+      timestamp: new Date().toISOString()
+    });
 
   } catch (error) {
-    console.error('Get analytics events error:', error)
+    console.error('Error fetching analytics events:', error);
     return NextResponse.json(
-      { error: 'حدث خطأ في جلب بيانات التحليلات' },
+      { error: 'حدث خطأ في جلب أحداث التحليل' },
       { status: 500 }
-    )
+    );
   }
 }
 
+// POST /api/analytics/events - إضافة حدث تحليل جديد
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { type, page, articleId, userId, metadata = {} } = body
+    const body = await request.json();
+    const { type, data, userId, articleId, page } = body;
 
-    // Validation
     if (!type) {
       return NextResponse.json(
         { error: 'نوع الحدث مطلوب' },
         { status: 400 }
-      )
+      );
     }
 
-    // Create new event
     const newEvent = {
-      id: (mockEvents.length + 1).toString(),
+      id: `${analyticsEvents.length + 1}`,
       type,
-      page,
-      articleId,
       userId: userId || 'anonymous',
+      articleId: articleId || null,
+      page: page || null,
       timestamp: new Date().toISOString(),
-      metadata
-    }
+      data: data || {}
+    };
 
-    mockEvents.push(newEvent)
+    analyticsEvents.push(newEvent);
 
     return NextResponse.json({
       success: true,
-      message: 'تم تسجيل الحدث بنجاح',
-      data: newEvent
-    }, { status: 201 })
+      event: newEvent,
+      message: 'تم تسجيل الحدث بنجاح'
+    }, { status: 201 });
 
   } catch (error) {
-    console.error('Create analytics event error:', error)
+    console.error('Error creating analytics event:', error);
     return NextResponse.json(
       { error: 'حدث خطأ في تسجيل الحدث' },
       { status: 500 }
-    )
+    );
   }
+}
+
+// OPTIONS - للتحقق من توفر الخدمة
+export async function OPTIONS() {
+  return NextResponse.json({
+    success: true,
+    message: 'Analytics service is available',
+    methods: ['GET', 'POST', 'OPTIONS']
+  });
 } 

@@ -1,74 +1,45 @@
-import type { NextConfig } from 'next'
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Enable experimental features
+  reactStrictMode: true,
+  swcMinify: true,
+  
+  // إعدادات التجريبية
   experimental: {
-    // Enable server components logging
-    serverComponentsExternalPackages: ['@prisma/client'],
+    // تم نقل serverComponentsExternalPackages إلى serverExternalPackages
+    // serverExternalPackages: ['@prisma/client'],
   },
-
-  // Image optimization configuration
+  
+  // External packages for server components
+  serverExternalPackages: ['@prisma/client'],
+  
+  // إعدادات الصور
   images: {
-    domains: [
-      'localhost',
-      'sabq-ai.com',
-      'res.cloudinary.com',
-      'images.unsplash.com',
-      'via.placeholder.com'
-    ],
-    formats: ['image/webp', 'image/avif'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 60,
-  },
-
-  // Internationalization handled by app router
-  // Note: Next.js 15 with app router uses different i18n approach
-
-  // Environment variables to expose to the client
-  env: {
-    CUSTOM_KEY: process.env.CUSTOM_KEY,
-  },
-
-  // Public runtime configuration
-  publicRuntimeConfig: {
-    // Will be available on both server and client
-    staticFolder: '/static',
-  },
-
-  // Server runtime configuration
-  serverRuntimeConfig: {
-    // Will only be available on the server side
-    mySecret: 'secret',
-  },
-
-  // Webpack configuration
-  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Custom webpack configuration
-    config.module.rules.push({
-      test: /\.svg$/,
-      use: ['@svgr/webpack']
-    })
-
-    // Performance optimizations
-    config.optimization = {
-      ...config.optimization,
-      splitChunks: {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-          },
-        },
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
       },
-    }
-
-    return config
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+    ],
   },
-
-  // Headers configuration
+  
+  // إعادة توجيه للـ ML service
+  async rewrites() {
+    const mlServiceUrl = process.env.ML_SERVICE_URL || 'http://localhost:8000';
+    
+    return [
+      {
+        source: '/api/ml/:path*',
+        destination: `${mlServiceUrl}/:path*`,
+      },
+    ];
+  },
+  
+  // إعدادات CORS
   async headers() {
     return [
       {
@@ -76,9 +47,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Access-Control-Allow-Origin',
-            value: process.env.NODE_ENV === 'production' 
-              ? 'https://sabq-ai.com' 
-              : 'http://localhost:3000',
+            value: process.env.CORS_ORIGINS || '*',
           },
           {
             key: 'Access-Control-Allow-Methods',
@@ -86,100 +55,63 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Access-Control-Allow-Headers',
-            value: 'Content-Type, Authorization',
+            value: 'Content-Type, Authorization, X-Requested-With',
           },
         ],
       },
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: https: blob:",
-              "connect-src 'self' https://api.openai.com https://api.anthropic.com",
-              "frame-ancestors 'none'",
-            ].join('; '),
-          },
-        ],
-      },
-    ]
+    ];
   },
-
-  // Redirects configuration
+  
+  // إعدادات الأمان
   async redirects() {
     return [
       {
         source: '/admin',
-        destination: '/dashboard',
-        permanent: true,
+        destination: '/auth/login',
+        permanent: false,
       },
-      {
-        source: '/cms',
-        destination: '/dashboard',
-        permanent: true,
-      },
-    ]
+    ];
   },
-
-  // Rewrites configuration for API routes
-  async rewrites() {
-    return [
-      {
-        source: '/api/ml/:path*',
-        destination: `${process.env.ML_SERVICE_URL}/:path*`,
-      },
-    ]
+  
+  // إعدادات Webpack
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    
+    return config;
   },
-
-  // Compression and performance
+  
+  // إعدادات البيئة
+  env: {
+    CUSTOM_KEY: process.env.CUSTOM_KEY,
+  },
+  
+  // إعدادات الضغط
   compress: true,
+  
+  // إعدادات التتبع
+  trailingSlash: false,
+  
+  // إعدادات الأداء
   poweredByHeader: false,
   
-  // Build output configuration
-  output: 'standalone',
-  
-  // TypeScript configuration
+  // إعدادات TypeScript
   typescript: {
-    // Dangerously allow production builds to successfully complete even if
-    // your project has type errors.
+    // تجاهل أخطاء TypeScript أثناء البناء (للتطوير فقط)
     ignoreBuildErrors: false,
   },
-
-  // ESLint configuration
+  
+  // إعدادات ESLint
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
+    // تجاهل أخطاء ESLint أثناء البناء (للتطوير فقط)
     ignoreDuringBuilds: false,
-    dirs: ['pages', 'components', 'lib', 'app'],
   },
+};
 
-  // Trailing slash configuration
-  trailingSlash: false,
-
-  // poweredByHeader already set above
-
-  // Enable SWC minification
-  swcMinify: true,
-
-  // React strict mode
-  reactStrictMode: true,
-}
-
-export default nextConfig
+export default nextConfig;

@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import ReasonFeedback from '@/components/recommendation/ReasonFeedback';
-import { trackEvent, trackArticleView, EventType } from '@/lib/analytics-core';
-import { useAuth } from '@/hooks/useAuth';
+import Card from '../ui/Card';
+import Button from '../ui/Button';
+import ReasonFeedback from '../recommendation/ReasonFeedback';
+import { trackEvent, trackArticleView, EventType } from '../../lib/analytics-core';
+import { useAuth } from '../../hooks/useAuth';
 
 interface Article {
   id: string;

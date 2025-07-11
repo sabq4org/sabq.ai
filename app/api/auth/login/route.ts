@@ -1,57 +1,76 @@
-import { NextRequest, NextResponse } from 'next/server'
-// import { verifyPassword } from '@/lib/security' // Will be enabled after lib structure is complete
+import { NextRequest, NextResponse } from 'next/server';
+
+// بيانات المستخدمين التجريبية
+const users = [
+  {
+    id: '1',
+    email: 'admin@sabq.org',
+    password: 'admin123',
+    name: 'المدير العام',
+    role: 'admin'
+  },
+  {
+    id: '2',
+    email: 'editor@sabq.org',
+    password: 'editor123',
+    name: 'محرر المحتوى',
+    role: 'editor'
+  },
+  {
+    id: '3',
+    email: 'writer@sabq.org',
+    password: 'writer123',
+    name: 'كاتب المحتوى',
+    role: 'writer'
+  }
+];
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { email, password } = body
+    const body = await request.json();
+    const { email, password } = body;
 
-    // Validation
+    // التحقق من البيانات المطلوبة
     if (!email || !password) {
       return NextResponse.json(
         { error: 'البريد الإلكتروني وكلمة المرور مطلوبان' },
         { status: 400 }
-      )
+      );
     }
 
-    // TODO: Implement actual user authentication with database
-    // For now, return mock response
-    const isValidUser = email === 'admin@sabq.ai' && password === 'password123'
+    // البحث عن المستخدم
+    const user = users.find(u => u.email === email && u.password === password);
 
-    if (!isValidUser) {
+    if (!user) {
       return NextResponse.json(
-        { error: 'بيانات الدخول غير صحيحة' },
+        { error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' },
         { status: 401 }
-      )
+      );
     }
 
-    // TODO: Generate actual JWT token
-    const token = 'mock-jwt-token'
+    // إرجاع بيانات المستخدم (بدون كلمة المرور)
+    const { password: _, ...userData } = user;
 
     return NextResponse.json({
       success: true,
-      message: 'تم تسجيل الدخول بنجاح',
-      token,
-      user: {
-        id: '1',
-        email,
-        name: 'مدير النظام',
-        role: 'admin'
-      }
-    })
+      user: userData,
+      token: `fake-jwt-token-${user.id}` // رمز وهمي للاختبار
+    });
 
   } catch (error) {
-    console.error('Login error:', error)
+    console.error('Login error:', error);
     return NextResponse.json(
-      { error: 'حدث خطأ في الخادم' },
+      { error: 'حدث خطأ في تسجيل الدخول' },
       { status: 500 }
-    )
+    );
   }
 }
 
-export async function GET() {
-  return NextResponse.json(
-    { message: 'استخدم POST لتسجيل الدخول' },
-    { status: 405 }
-  )
+// OPTIONS - للتحقق من توفر الخدمة
+export async function OPTIONS() {
+  return NextResponse.json({
+    success: true,
+    message: 'Authentication service is available',
+    methods: ['POST', 'OPTIONS']
+  });
 } 
